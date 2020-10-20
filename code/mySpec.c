@@ -1,10 +1,15 @@
 /* mySpec.c */
-
+#include <string.h>
 #include "mySpec.h"
 
 mySpec* specInit(char* id){
 	mySpec* newSpec = malloc(sizeof(mySpec));
 	newSpec->specID = strdup(id);
+	newSpec->matches = NULL;
+}
+
+void updateSpecMatches(mySpec* spec, myMatches* matches){
+	spec->matches = matches;
 }
 
 specList* specListInit(){

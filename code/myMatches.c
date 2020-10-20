@@ -11,7 +11,7 @@ matchesInfo* matchesInfoInit(){
 	return newInfo;
 }
 
-void matchesAdd(matchesInfo* myInfo, mySpec* spec){
+myMatches* matchesAdd(matchesInfo* myInfo, mySpec* spec){
 
 		// Init new Match
 	myMatches* newMatch = myMatchesInit();
@@ -24,6 +24,8 @@ void matchesAdd(matchesInfo* myInfo, mySpec* spec){
 
 		// Update Info Stats
 	myInfo->entries++;
+
+	return newMatch;
 }
 
 
@@ -71,6 +73,14 @@ void deleteMatches(myMatches* match){
 	while(count > 0){
 		free(match->specsTable[--count]);
 	}
+
+		// Fix list pointers
+	myMatches* temp = match->prev;
+	if(match->prev != NULL)
+		match->prev->next = metch->next;
+	if(metch->next != NULL)
+		match->next->prev = temp;
+
 }
 
 void deleteInfo(matchesInfo* myInfo){
@@ -86,10 +96,30 @@ void deleteInfo(matchesInfo* myInfo){
 	}
 }
 
+void mergeMatches(myMatches* match1, myMatches match2){
 
+	// Combine matches Tables
 
-//
-//	TO DO:
-//		 	- DELETE METHODS
-//			- MERGE METHOD
-//
+		// Count total specs
+	int totalCounts = match1->specsCount + match2->specsCount;
+
+		// Realloc Mem at match1
+	mySpec** tempTable = realloc(match1->specsTable, totalCounts);
+	if(tempTable == NULL){
+		printf("Error at realloc (merge) !!\n");
+		return;
+	}
+	match1->specsTable = tempTable;
+
+		// Copy Specs from match2 -> match1
+	int i = 0;
+	while(match1->specsCount < totalCounts){
+		match1->specsTable[match1->specsCount] = match2->specsTable[i];
+		match1->specsCount++;
+		i++;
+	}
+
+		// Delete match2
+	deleteMatches(match2);  //Note: deleteMatches() DOES fix the list pointers !!
+
+}

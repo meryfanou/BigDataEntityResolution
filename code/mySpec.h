@@ -1,5 +1,5 @@
 /* mySpec.h */
-
+#include "myMatches.h"
 // -----------------------------
 
 typedef struct mySpec mySpec;
@@ -7,6 +7,7 @@ typedef struct specListNode specNode;
 typedef struct specList specList;
 
 struct mySpec{
+	myMatches* matches;
 	char* specID;
 };
 
@@ -30,3 +31,4 @@ void specAdd(specList*, mySpec*);
 void deleteList(specList*);
 void deleteNodes(specNode*);
 void deleteSpec(mySpec*);
+void updateSpecMatches(mySpec*, myMatches*);

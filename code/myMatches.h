@@ -4,6 +4,7 @@
 
 typedef struct myMatches myMatches;
 typedef struct matchesInfo matchesInfo;
+typedef struct mySpec mySpec;
 
 struct myMatches{
 	int specsCount;
@@ -22,7 +23,7 @@ struct matchesInfo{
 
 
 matchesInfo* matchesInfoInit();
-void matchesAdd(matchesInfo*, mySpec*);
+myMatches* matchesAdd(matchesInfo*, mySpec*);
 
 myMatches* myMatchesInit();
 void pushMatch(myMatches*, mySpec*);
