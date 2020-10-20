@@ -66,9 +66,26 @@ void pushMatch(myMatches* curMatch, mySpec* spec){
 
 }
 
-void deleteMatch(myMatches*){
-
+void deleteMatches(myMatches* match){
+	int count = match->specsCount;
+	while(count > 0){
+		free(match->specsTable[--count]);
+	}
 }
+
+void deleteInfo(matchesInfo* myInfo){
+	int count = myInfo->entries;
+	while(count > 0){
+		
+		myMatches* temp = myInfo->head;
+		myInfo->head = myInfo->head->next;
+		
+		deleteMatches(temp);
+		
+		count--;
+	}
+}
+
 
 
 //
