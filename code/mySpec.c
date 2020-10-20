@@ -2,6 +2,11 @@
 
 #include "mySpec.h"
 
+mySpec* specInit(char* id){
+	mySpec* newSpec = malloc(sizeof(mySpec));
+	newSpec->specID = strdup(id);
+}
+
 specList* specListInit(){
 	specList* newList = malloc(sizeof(specList));
 	newList->count = 0;
@@ -24,4 +29,26 @@ void specAdd(specList* myList, mySpec* spec){
 	myList->head = myNode;
 
 	myList->count++;
+}
+
+void deleteList(specList* myList){
+	deleteNodes(myList->head);
+}
+
+void deleteNodes(specNode* myNode){
+	if(myNode->next != NULL)
+		deleteNodes(myNode->next);
+
+	deleteSpec(myNode->spec);
+	free(myNode);
+}
+
+void deleteSpec(mySpec* spec){
+
+	//
+	//	ADD FREES FOR CHAR* / MALLOCS etc
+	//
+
+	free(spec->specID);
+
 }

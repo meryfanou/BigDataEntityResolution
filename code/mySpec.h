@@ -24,5 +24,9 @@ struct specList{
 
 specList* specListInit();
 specNode* specNodeInit();
+mySpec* specInit(char*);
 
 void specAdd(specList*, mySpec*);
+void deleteList(specList*);
+void deleteNodes(specNode*);
+void deleteSpec(mySpec*);
