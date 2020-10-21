@@ -1,4 +1,6 @@
 /* myMatches.c */
+#include <stdio.h>
+#include <stdlib.h>
 #include "myMatches.h"
 
 matchesInfo* matchesInfoInit(){
@@ -77,8 +79,8 @@ void deleteMatches(myMatches* match){
 		// Fix list pointers
 	myMatches* temp = match->prev;
 	if(match->prev != NULL)
-		match->prev->next = metch->next;
-	if(metch->next != NULL)
+		match->prev->next = match->next;
+	if(match->next != NULL)
 		match->next->prev = temp;
 
 }
@@ -96,7 +98,7 @@ void deleteInfo(matchesInfo* myInfo){
 	}
 }
 
-void mergeMatches(myMatches* match1, myMatches match2){
+void mergeMatches(myMatches* match1, myMatches* match2){
 
 	// Combine matches Tables
 

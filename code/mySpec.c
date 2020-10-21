@@ -1,5 +1,7 @@
 /* mySpec.c */
 #include <string.h>
+#include <stdio.h>
+#include <stdlib.h>
 #include "mySpec.h"
 
 mySpec* specInit(char* id){
@@ -27,7 +29,7 @@ specNode* specNodeInit(){
 }
 
 void specAdd(specList* myList, mySpec* spec){
-	specNode myNode = specNodeInit();
+	specNode* myNode = specNodeInit();
 	
 	myNode->spec = spec;
 	myNode->next = myList->head;

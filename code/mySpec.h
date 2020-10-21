@@ -13,12 +13,12 @@ struct mySpec{
 
 struct specListNode{
 	mySpec* spec;
-	specListNode* next;
+	specNode* next;
 };
 
 struct specList{
 	int count;
-	specListNode* head;
+	specNode* head;
 };
 
 // ------------------------------

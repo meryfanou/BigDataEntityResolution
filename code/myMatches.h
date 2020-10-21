@@ -12,12 +12,12 @@ struct myMatches{
 
 	myMatches* next;
 	myMatches* prev;
-}
+};
 
 struct matchesInfo{
 	int entries;
 	myMatches* head;
-}
+};
 
 // -------------------------
 
