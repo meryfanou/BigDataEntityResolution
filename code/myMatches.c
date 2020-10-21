@@ -17,13 +17,16 @@ myMatches* matchesAdd(matchesInfo* myInfo, mySpec* spec){
 
 		// Init new Match
 	myMatches* newMatch = myMatchesInit();
+	// printf("ekane init\n");
 	pushMatch(newMatch, spec);
+ // printf("ontws\n");
 
 		// Insert on Head
-	myInfo->head->prev = newMatch;
+ 	if(myInfo->head != NULL)
+		myInfo->head->prev = newMatch;
+// printf("ekane insert\n");
 	newMatch->next = myInfo->head;
 	myInfo->head = newMatch;
-
 		// Update Info Stats
 	myInfo->entries++;
 
@@ -71,10 +74,7 @@ void pushMatch(myMatches* curMatch, mySpec* spec){
 }
 
 void deleteMatches(myMatches* match){
-	int count = match->specsCount;
-	while(count > 0){
-		free(match->specsTable[--count]);
-	}
+	free(match->specsTable);
 
 		// Fix list pointers
 	myMatches* temp = match->prev;
@@ -83,12 +83,13 @@ void deleteMatches(myMatches* match){
 	if(match->next != NULL)
 		match->next->prev = temp;
 
+	free(match);
 }
 
 void deleteInfo(matchesInfo* myInfo){
 	int count = myInfo->entries;
 	while(count > 0){
-		
+		// printf("delete Info count: %d\n", count);
 		myMatches* temp = myInfo->head;
 		myInfo->head = myInfo->head->next;
 		
@@ -96,6 +97,7 @@ void deleteInfo(matchesInfo* myInfo){
 		
 		count--;
 	}
+	free(myInfo);
 }
 
 void mergeMatches(myMatches* match1, myMatches* match2){
@@ -124,4 +126,27 @@ void mergeMatches(myMatches* match1, myMatches* match2){
 		// Delete match2
 	deleteMatches(match2);  //Note: deleteMatches() DOES fix the list pointers !!
 
+}
+
+
+void printMatchesList(matchesInfo* myInfo){
+	printf("~ Matches\n");
+	printf("--------------------------------\n");
+
+	myMatches* temp = myInfo->head;
+	
+	int countEntries = 0;
+	while(countEntries < myInfo->entries){
+		int countSpecsMatches = temp->specsCount;
+		printf("Group %d specIDs:\n", countEntries);
+		printf("\t-> ");
+		while(countSpecsMatches > 0){
+			printf("%s, ", temp->specsTable[--countSpecsMatches]->specID);
+		}
+		printf("\n");
+		countEntries++;
+	}
+	printf("--------------------------------\n");
+
+printf("\n\n");
 }

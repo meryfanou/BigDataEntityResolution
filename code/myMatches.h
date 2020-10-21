@@ -1,10 +1,13 @@
 /* myMatches.h */
+#ifndef MYMATCHES_H
+#define MYMATCHES_H
+#include "mySpec.h"
 
 // -------------------------
 
 typedef struct myMatches myMatches;
 typedef struct matchesInfo matchesInfo;
-typedef struct mySpec mySpec;
+// typedef struct mySpec mySpec;
 
 struct myMatches{
 	int specsCount;
@@ -32,3 +35,7 @@ void deleteMatches(myMatches*);
 void deleteInfo(matchesInfo*);
 
 void mergeMatches(myMatches*, myMatches*);
+
+void printMatchesList(matchesInfo*); 		// TESTING
+
+#endif 
