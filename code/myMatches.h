@@ -1,4 +1,7 @@
 /* myMatches.h */
+#ifndef MYMATCHES_H
+#define MYMATCHES_H
+#include "mySpec.h"
 
 // -------------------------
 
@@ -11,18 +14,18 @@ struct myMatches{
 
 	myMatches* next;
 	myMatches* prev;
-}
+};
 
 struct matchesInfo{
 	int entries;
 	myMatches* head;
-}
+};
 
 // -------------------------
 
 
 matchesInfo* matchesInfoInit();
-void matchesAdd(matchesInfo*, mySpec*);
+myMatches* matchesAdd(matchesInfo*, mySpec*);
 
 myMatches* myMatchesInit();
 void pushMatch(myMatches*, mySpec*);
@@ -30,4 +33,8 @@ void pushMatch(myMatches*, mySpec*);
 void deleteMatches(myMatches*);
 void deleteInfo(matchesInfo*);
 
-void mergeMatches(myMatches*, myMatches*);
+void mergeMatches(matchesInfo*, myMatches*, myMatches*);
+
+void printMatchesList(matchesInfo*); 		// TESTING
+
+#endif 
