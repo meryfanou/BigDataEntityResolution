@@ -22,8 +22,11 @@ int main(void){
 
     // Read from datasetX
     while((siteDir = readdir(datasetX)) != NULL){
-        printf("%s\n", siteDir->d_name);
-        dirpath = (char*)malloc(strlen(PATH_X) + strlen(siteDir->d_name) + 1);
+        if(!strcmp(siteDir->d_name, ".") || !strcmp(siteDir->d_name, ".."))
+            continue;
+
+        //printf("%s\n", siteDir->d_name);
+        dirpath = (char*)malloc(strlen(PATH_X) + strlen(siteDir->d_name));
         strcpy(dirpath,PATH_X);
         strcat(dirpath, siteDir->d_name);
 
@@ -33,8 +36,11 @@ int main(void){
         }
 
         while((specFile = readdir(sitePtr)) != NULL){
-            printf("\t%s\n", specFile->d_name);
-            filepath = (char*)malloc(strlen(dirpath) + strlen(specFile->d_name) + 1);
+            if(!strcmp(specFile->d_name, ".") || !strcmp(specFile->d_name, ".."))
+                continue;
+
+            //printf("\t%s\n", specFile->d_name);
+            filepath = (char*)malloc(strlen(dirpath) + strlen("/") + strlen(specFile->d_name));
             strcpy(filepath, dirpath);
             strcat(filepath, "/");
             strcat(filepath, specFile->d_name);
@@ -45,15 +51,21 @@ int main(void){
             }
 
             while(fgets(line, sizeof(line), specFd) != NULL){
-                printf("\t\t%s\n", line);
+                if(!strcmp(line, "{") || !strcmp(line, "}"))
+                    continue;
+
+                //printf("\t\t%s\n", line);
+                // Remove '"",' characters from string  (e.g. "shutter": "4-1/2000 sec",) 
             }
 
             fclose(specFd);
             free(filepath);
+            filepath = NULL;
         }
 
         closedir(sitePtr);
         free(dirpath);
+        dirpath = NULL;
     }
 
     closedir(datasetX);
