@@ -17,16 +17,15 @@ myMatches* matchesAdd(matchesInfo* myInfo, mySpec* spec){
 
 		// Init new Match
 	myMatches* newMatch = myMatchesInit();
-	// printf("ekane init\n");
 	pushMatch(newMatch, spec);
- // printf("ontws\n");
 
 		// Insert on Head
- 	if(myInfo->head != NULL)
+ 	if(myInfo->entries != 0)
 		myInfo->head->prev = newMatch;
-// printf("ekane insert\n");
+
 	newMatch->next = myInfo->head;
 	myInfo->head = newMatch;
+
 		// Update Info Stats
 	myInfo->entries++;
 
@@ -55,7 +54,7 @@ void pushMatch(myMatches* curMatch, mySpec* spec){
 		curMatch->specsTable = malloc(sizeof(mySpec*));
 	}
 	else{
-		mySpec** temp = realloc(curMatch->specsTable, sizeof(mySpec*)*curMatch->specsCount+1);
+		mySpec** temp = realloc(curMatch->specsTable, sizeof(mySpec*)*(curMatch->specsCount+1));
 		if(temp == NULL){
 			printf("Error at realloc !!");
 			//
@@ -100,12 +99,14 @@ void deleteInfo(matchesInfo* myInfo){
 	free(myInfo);
 }
 
-void mergeMatches(myMatches* match1, myMatches* match2){
+void mergeMatches(matchesInfo* myInfo, myMatches* match1, myMatches* match2){
+
+	// !! MERGE AT MATCH_1 !!
 
 	// Check if match 2 (to be deleteed after) is head
 	// if its is, swap
-	if(match2->next == NULL){
-		mergeMatches(match2, match1);
+	if(match2->prev == NULL){
+		mergeMatches(myInfo, match2, match1);
 		return;
 	}
 
@@ -116,7 +117,7 @@ void mergeMatches(myMatches* match1, myMatches* match2){
 	int totalCounts = match1->specsCount + match2->specsCount;
 
 		// Realloc Mem at match1
-	mySpec** tempTable = realloc(match1->specsTable, totalCounts);
+	mySpec** tempTable = realloc(match1->specsTable, totalCounts*sizeof(mySpec*));
 	if(tempTable == NULL){
 		printf("Error at realloc (merge) !!\n");
 		return;
@@ -134,6 +135,7 @@ void mergeMatches(myMatches* match1, myMatches* match2){
 		// Delete match2
 	deleteMatches(match2);  //Note: deleteMatches() DOES fix the list pointers !!
 
+	myInfo->entries--;
 }
 
 
@@ -143,6 +145,7 @@ void printMatchesList(matchesInfo* myInfo){
 
 	myMatches* temp = myInfo->head;
 	
+	printf("Matches Entries: %d\n", myInfo->entries);
 	int countEntries = 0;
 	while(countEntries < myInfo->entries){
 		int countSpecsMatches = temp->specsCount;
@@ -153,6 +156,7 @@ void printMatchesList(matchesInfo* myInfo){
 		}
 		printf("\n");
 		countEntries++;
+		temp = temp->next;
 	}
 	printf("--------------------------------\n");
 

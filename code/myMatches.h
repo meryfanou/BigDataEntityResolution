@@ -33,7 +33,7 @@ void pushMatch(myMatches*, mySpec*);
 void deleteMatches(myMatches*);
 void deleteInfo(matchesInfo*);
 
-void mergeMatches(myMatches*, myMatches*);
+void mergeMatches(matchesInfo*, myMatches*, myMatches*);
 
 void printMatchesList(matchesInfo*); 		// TESTING
 

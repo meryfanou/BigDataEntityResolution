@@ -1,6 +1,6 @@
 // #include "myList.h"
 // #include "myPatient.h"
-#include "RBT.h"
+#include "mySpec.h"
 
 typedef struct hashTable hashTable;
 typedef struct bucket bucket;
@@ -22,11 +22,7 @@ struct bucket{
 
 struct record{
 	record* next;
-
-	int entries;
-
-	char* key;
-	RBT* myTree;
+	mySpec* spec;
 };
 
 hashTable* hash_create(int HashSize, int BucSize);
