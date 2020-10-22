@@ -7,7 +7,6 @@
 
 typedef struct myMatches myMatches;
 typedef struct matchesInfo matchesInfo;
-// typedef struct mySpec mySpec;
 
 struct myMatches{
 	int specsCount;

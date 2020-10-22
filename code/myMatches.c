@@ -102,6 +102,14 @@ void deleteInfo(matchesInfo* myInfo){
 
 void mergeMatches(myMatches* match1, myMatches* match2){
 
+	// Check if match 2 (to be deleteed after) is head
+	// if its is, swap
+	if(match2->next == NULL){
+		mergeMatches(match2, match1);
+		return;
+	}
+
+
 	// Combine matches Tables
 
 		// Count total specs
