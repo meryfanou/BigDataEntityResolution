@@ -1,7 +1,7 @@
 #include <stdio.h>
 #include <stdlib.h>
 #include <string.h>
-#include "myHash.h"
+#include "../include/myHash.h"
 
 
 hashTable* hash_create(int HashSize, int BucSize){
@@ -33,7 +33,6 @@ void hash_destroy(hashTable* table){
 	int i = 0;
 	while(i < table->tableSize){
 		if(table->myTable[i] != NULL){
-			// printf("cell: %d\n",i);
 			bucket_destroy(table->myTable[i]);
 		}
 		i++;
@@ -62,7 +61,7 @@ int hash1(char* key){
 	return sum;
 }
 
-void hash_add(hashTable* table, char* key, list_node* lNode, int hash){
+void hash_add(hashTable* table, mySpec* newSpec, int hash){
 
 	int cell = hash % (table->tableSize);		/// FIND HASH TABLE CELL
 	if(cell < 0)
@@ -76,19 +75,19 @@ void hash_add(hashTable* table, char* key, list_node* lNode, int hash){
 	bucket* tempBuc = table->myTable[cell];
 	int flag = 0;		// 0 ~ new key / 1 ~ existing key
 	record* existingRec = NULL;
-	if((existingRec = search_bucket(tempBuc, key)) != NULL)
+	if((existingRec = search_bucket(tempBuc, newSpec->specID)) != NULL)
 		flag = 1;
 	
 	while(tempBuc->next != NULL && flag == 0){	/// FIND LAST BUCKET
 		tempBuc = tempBuc->next;				/// + SEARCH FOR REC IN BUCS
-		if((existingRec = search_bucket(tempBuc, key)) != NULL){
+		if((existingRec = search_bucket(tempBuc, newSpec->specID)) != NULL){
 			flag = 1;
 			break;
 		}
 	}
 
 	if(flag == 1){
-		record_add(existingRec, lNode);
+		// specID duplicates should not exist!
 	}
 	else{
 		if(tempBuc->cur >= table->maxRecs){			/// CHECK IF ITS FULL
@@ -96,7 +95,7 @@ void hash_add(hashTable* table, char* key, list_node* lNode, int hash){
 			tempBuc = tempBuc->next;
 		}
 
-		bucket_add(tempBuc, key, lNode);					/// ADD AT BUCKET
+		bucket_add(tempBuc, newSpec);					/// ADD AT BUCKET
 	}
 
 }
@@ -105,7 +104,6 @@ void hash_print(hashTable* t){
 	int i = 0;
 	while(i < t->tableSize){
 		if(t->myTable[i] != NULL){
-			// printf("Tcell: %d\n",i);
 			bucket_print(t->myTable[i]);
 		}
 		i++;
@@ -123,9 +121,9 @@ bucket* bucket_create(int size){				/// INIT BUCKET
 	return newBucket;
 }
 
-void bucket_add(bucket* buc, char* key, list_node* p){
+void bucket_add(bucket* buc, mySpec* newSpec){
 	if(buc->rec == NULL){
-		buc->rec = record_create(key, p);
+		buc->rec = record_create(newSpec);
 		buc->cur++;
 		return;
 	}
@@ -135,7 +133,7 @@ void bucket_add(bucket* buc, char* key, list_node* p){
 		tempRec = tempRec->next;
 	}
 
-	tempRec->next = record_create(key, p);				/// ADD RECORD
+	tempRec->next = record_create(newSpec);				/// ADD RECORD
 	buc->cur++;
 
 }
@@ -144,7 +142,7 @@ record* search_bucket(bucket* b, char* key){
 	record* temp = b->rec;
 
 	while(temp != NULL){
-		if(strcmp(temp->key, key) == 0)
+		if(strcmp(temp->spec->specID, key) == 0)
 			return temp;
 		temp = temp->next;
 	}
@@ -162,68 +160,37 @@ void bucket_print(bucket* b){
 	if(b->next != NULL){
 		bucket_print(b->next);
 	}
-	// printf("\n");
 }
 
 void bucket_destroy(bucket* buc){				/// FREE BUC
-	// printf("buc->entries %d\n", buc->cur);
 	if(buc->next != NULL)
 		bucket_destroy(buc->next);
 
 	record_destroy(buc->rec);
-	// printf("elante\n");
 	free(buc);
 
 }
 
 
-record* record_create(char* key, list_node* p){
+record* record_create(mySpec* spec){
 	record* newRec = malloc(sizeof(record));
 
+	// newRec->spec = specInit(spec->specID, spec->properties, spec->propNum);
+	newRec->spec = spec;
 	newRec->next = NULL;
-	newRec->entries = 0;
-	newRec->key = strdup(key);
-	newRec->myTree = NULL;
-	// printf("APO CREATE\n");
-	record_add(newRec, p);
-	// !!!!!!!!!!!!!!!
-	// newRec->treePtr = tree_add(newRec);
-	// !!!!!!!!!!!!!!!
 
 	return newRec;
 }
 
-void record_add(record* rec, list_node* p){
-	// printf("My match !!, rec key: %s\n", rec->key);
-	rec->entries++;
-
-	if(rec->myTree == NULL){
-		rec->myTree = RBT_create();
-	}
-
-	RBT_add(rec->myTree, p);
-
-}
-
 void record_print(record* rec){
-	printf("\t\t>key: %s, entries: %d\n", rec->key, rec->entries);
-
+	printSpec(rec->spec);
 }
 
 void record_destroy(record* rec){				/// FREE REC
-	// printf("(skata)\n");
 	if(rec->next != NULL){
-		// printf("???\n");
 		record_destroy(rec->next);
 	}
-	// printf("les\n");
-	free(rec->key);
 
-	RBT_destroy(rec->myTree);
-
-	// free(treePtr)
-			/// ETSI H ME KSEXWRISTH SYNARTHSH GIA DELETE TREE???
-
+	deleteSpec(rec->spec);
 	free(rec);
-
 }
