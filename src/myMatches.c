@@ -1,7 +1,7 @@
 /* myMatches.c */
 #include <stdio.h>
 #include <stdlib.h>
-#include "myMatches.h"
+#include "../include/myMatches.h"
 
 matchesInfo* matchesInfoInit(){
 		// Init new Info List

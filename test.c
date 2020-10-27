@@ -9,7 +9,7 @@ int main(void){
 	matchesInfo* testMatchesList = matchesInfoInit();
 
 	// Create Specs List
-	specList* testSpecsList = specListInit();
+	//specList* testSpecsList = specListInit();
 
 
 	// TEST SPEC INIT

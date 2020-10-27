@@ -2,19 +2,30 @@
 #include <string.h>
 #include <stdio.h>
 #include <stdlib.h>
-#include "mySpec.h"
+#include "../include/mySpec.h"
 
-mySpec* specInit(char* id){
+mySpec* specInit(char* id, char**** properties, int propNum){
 	mySpec* newSpec = malloc(sizeof(mySpec));
 
 	newSpec->specID = strdup(id);
 	newSpec->matches = NULL;
+	newSpec->propNum = propNum;
+
+	newSpec->properties = (char***)malloc(propNum*sizeof(char**));
+	for(int i=0; i<propNum; i++){
+		newSpec->properties[i] = (char**)malloc(2*sizeof(char*));
+		newSpec->properties[i][0] = strdup((*properties)[i][0]);
+		newSpec->properties[i][1] = strdup((*properties)[i][1]);
+	}
+
+	return newSpec;
 }
 
 void updateSpecMatches(mySpec* spec, myMatches* matches){
 	spec->matches = matches;
 }
 
+/*
 specList* specListInit(){
 	specList* newList = malloc(sizeof(specList));
 	
@@ -53,6 +64,7 @@ void deleteNodes(specNode* myNode){
 	deleteSpec(myNode->spec);
 	free(myNode);
 }
+*/
 
 void deleteSpec(mySpec* spec){
 
@@ -60,9 +72,27 @@ void deleteSpec(mySpec* spec){
 	//	ADD FREES FOR CHAR* / MALLOCS etc
 	//
 	free(spec->specID);
+
+	for(int i=0; i<spec->propNum; i++){
+		free(spec->properties[i][0]);
+		free(spec->properties[i][1]);
+		free(spec->properties[i]);
+	}
+	free(spec->properties);
+
 	free(spec);
 }
 
+void printSpec(mySpec* spec){
+	printf("specID: %s\n", spec->specID);
+
+	printf("Properties:\n");
+	for(int i=0; i<spec->propNum; i++){
+		printf("%s:\t%s\n", spec->properties[i][0], spec->properties[i][1]);
+	}
+}
+
+/*
 void printList(specList* myList){
 	specNode* temp = NULL;
 
@@ -78,6 +108,7 @@ void printList(specList* myList){
 	printf("--------------------------------\n");
 	printf("\n\n");
 }
+*/
 
 
 
