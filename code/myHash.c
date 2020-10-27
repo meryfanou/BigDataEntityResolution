@@ -206,7 +206,7 @@ void record_add(record* rec, list_node* p){
 }
 
 void record_print(record* rec){
-	printf("\t\t>key: %s, entries: %d\n", rec->key, rec->entries);
+	printf("\t\t>key: %s\n", rec->spec->specID);
 
 }
 
@@ -216,14 +216,6 @@ void record_destroy(record* rec){				/// FREE REC
 		// printf("???\n");
 		record_destroy(rec->next);
 	}
-	// printf("les\n");
-	free(rec->key);
-
-	RBT_destroy(rec->myTree);
-
-	// free(treePtr)
-			/// ETSI H ME KSEXWRISTH SYNARTHSH GIA DELETE TREE???
-
 	free(rec);
 
 }
