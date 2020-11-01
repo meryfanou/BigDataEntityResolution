@@ -72,128 +72,151 @@ int main(void){
             free(filename);
 
             // Read spec's properties
-            while(fgets(line, sizeof(line), specFd) != NULL){
+            fgets(line, sizeof(line), specFd);
+            while(line != NULL){
                 // Ignore '{' and '}' lines in json file
-                if(line[0] == '{' || line[0] == '}')
+                if(line[0] == '{'){
+                    fgets(line, sizeof(line), specFd);
                     continue;
-
+                }
+                if( line[0] == '}')
+                    break;
+                
                 char    *rest = line;
-                char    *token = NULL;
-                int     index = 0;
+                char    *token = NULL, *str = NULL, *prev = NULL, *temp = NULL;
+                int     index = 0, str_len = 0, need_extra = 0;
 
                 // Seperate the key from the value in the ("key" : "value") pair
-                token = strtok_r(rest, ":", &rest);
                 while(index < 2){
-                    char    *temp = NULL, *str = NULL, *extra = NULL;
+                    need_extra = 0;
 
-                    // Remove extra \" and , from key string
-                    if(index == 0){
-                        while((temp = strtok_r(token, ",\"", &token)))
-                            str = temp;
-                    }   // Remove extra \" and , from value string
-                    else{
-                        //if(!strcmp(specID, "www.ebay.com//48630"))
-                        //    printf("here\n");
-                        int     need_extra = 0;
-
-                        // If the string does not end in  \",\n   or  \"\n then there is more to read from the file
-                        if(strlen(rest) > 2 && (rest[strlen(rest)-3] != '\"' || rest[strlen(rest)-2] != ',' || rest[strlen(rest)-1] != '\n') && (rest[strlen(rest)-2] != '\"' || rest[strlen(rest)-1] != '\n'))
-                            need_extra = 1;
-
-                        // If it is a string
-                        if(strlen(rest) > 1 && (rest[0] == '\"' || rest[1] == '\"')){
-                            char    *str_all = NULL;
-
-                            while((temp = strtok_r(rest, "\"", &rest)))
-                                if(strcmp(temp, ",") && strcmp(temp, ",\n"))
-                                {
-                                    if(str_all == NULL){
-                                        str_all = strdup(temp);
-                                    }
-                                    else{
-                                        int len = strlen(str_all);
-                                        str_all = realloc(str_all, len + strlen(temp) + 1);
-                                        strcat(str_all, temp);
-                                    }
-                                }
-
-                            temp = strdup(str_all);
-                            str = temp;
-                            free(str_all);
-                            str_all = NULL;
-                        }   // If it is an 'array' of strings
-                        else if(strlen(rest) > 1 &&  (rest[0] == '[' || rest[1] == '[')){
-                            char    *temp = strdup(rest);
-                            int     len = strlen(rest);
-
-                            str = temp;
-                            // Until the end of the 'array' (string is "]" or ends in either "]\n" or "],\n")
-                            while((len == 1 && rest[0] != ']') || (len == 2 && rest[0] != ']' && rest[1] != ']') || (len >= 3 && !(rest[len-2] == ']' && rest[len-1] == '\n') && !(rest[len-3] == ']' && rest[len-2] == ',' && rest[len-1] == '\n'))){
-                                fgets(line, sizeof(line), specFd);
-                                extra = realloc(extra, strlen(str) + strlen(line) + 1);
-                                strcpy(extra, str);
-                                rest = line;
-
-                                strcat(extra, rest);
-                                free(temp);
-                                temp = strdup(extra);
-                                str = temp;
-                                len = strlen(rest);
-                            }
-
-                            // Remove extra ','
-                            if(extra[strlen(extra)-2] == ',' && extra[strlen(extra)-3] == ']')
-                                extra[strlen(extra)-2] = extra[strlen(extra)-1];
+                    // Remove extra \" and , from the string
+                    while((token = strtok_r(rest, "\"", &rest)) != NULL){
+                        // If it is the end of the key string or the value string
+                        if(!strcmp(token,": ") || !strcmp(token,": [\n") || !strcmp(token,",\n") || !strcmp(token,"\n")){
+                            if(!strcmp(token, ": [\n"))
+                                prev = strdup(token);
 
                             need_extra = 0;
-                            str = extra;
-                            free(temp);
+                            break;
                         }
 
-                        // If string's length is greater than sizeof(line)
+                        if(str != NULL)
+                            temp = strdup(str);
+
+                        str = realloc(str, str_len + strlen(token) + 1);
+                        if(temp != NULL){
+                            strcpy(str, temp);
+                            strcat(str, token);
+                            free(temp);
+                            temp = NULL;
+                        }
+                        else{
+                            strcpy(str, token);
+                        }
+
+                        str_len = strlen(str);
+                    }
+
+                    // If there is more to read from the file for the value string
+                    if(token == NULL && index == 1){
+                        need_extra = 1;
+
+                        // If the value string is an 'array' of strings
+                        if(prev != NULL && !strcmp(prev, ": [\n")){
+                            if(str != NULL)
+                                temp = strdup(str);
+
+                            str = realloc(str, str_len + strlen("[\n") + 1);
+                            if(temp != NULL){
+                                strcpy(str, temp);
+                                strcat(str, "[\n");
+                                free(temp);
+                                temp = NULL;
+                            }
+                            else{
+                                strcpy(str, "[\n");
+                            }
+
+                            str_len = strlen(str);
+                            free(prev);
+                            prev = NULL;
+
+                            while(need_extra){
+                                fgets(line, sizeof(line), specFd);
+                                rest = line;
+
+                                // Remove extra \" and , from the string
+                                while((token = strtok_r(rest, "\"", &rest)) != NULL){
+                                    // Read from the file until ']' is found
+                                    if(!strcmp(token,"],\n") || !strcmp(token,"    ],\n") || !strcmp(token,"]\n") || !strcmp(token,"    ]\n")){
+                                        if(str != NULL)
+                                            temp = strdup(str);
+
+                                        str = realloc(str, str_len + strlen(token) + 1);
+                                        if(temp != NULL){
+                                            strcpy(str, temp);
+                                            strcat(str, token);
+                                            free(temp);
+                                            temp = NULL;
+                                        }
+                                        else{
+                                            strcpy(str, token);
+                                        }
+
+                                        str_len = strlen(str);
+                                        need_extra = 0;
+                                        break;
+                                    }
+
+                                    if(str != NULL)
+                                        temp = strdup(str);
+
+                                    str = realloc(str, str_len + strlen(token) + 1);
+                                    if(temp != NULL){
+                                        strcpy(str, temp);
+                                        strcat(str, token);
+                                        free(temp);
+                                        temp = NULL;
+                                    }
+                                    else{
+                                        strcpy(str, token);
+                                    }
+
+                                    str_len = strlen(str);
+                                }
+                            }
+                        }
+
+                        // If the value is a string
                         while(need_extra){
                             fgets(line, sizeof(line), specFd);
                             rest = line;
 
-                            // If it is the end of the string
-                            if(!strcmp(rest, "\"\n") || !strcmp(rest, ",\n") || !strcmp(rest, "\",\n")){
-                                if(extra != NULL)
-                                    free(extra);
+                            // Remove extra \" and , from the string
+                            while((token = strtok_r(rest, "\"", &rest)) != NULL){
+                                // Read until the end of the string (and the line) is reached
+                                if(!strcmp(token,",\n") || !strcmp(token,"\n")){
+                                    need_extra = 0;
+                                    break;
+                                }
 
-                                extra = strdup(str);
-                                need_extra = 0;
-                                break;
+                                if(str != NULL)
+                                    temp = strdup(str);
+
+                                str = realloc(str, str_len + strlen(token) + 1);
+                                if(temp != NULL){
+                                    strcpy(str, temp);
+                                    strcat(str, token);
+                                    free(temp);
+                                    temp = NULL;
+                                }
+                                else{
+                                    strcpy(str, token);
+                                }
+
+                                str_len = strlen(str);
                             }
-
-                            need_extra = 0;
-                            // Check if there is still more to read (string does not end in  \",\n )
-                            if(strlen(rest) > 2 && (rest[strlen(rest)-3] != '\"' || rest[strlen(rest)-2] != ',' || rest[strlen(rest)-1] != '\n'))
-                                need_extra = 1;
-
-                            extra = realloc(extra, strlen(str) + strlen(rest) + 1);
-                            strcpy(extra, str);
-
-                            if(str == temp){
-                                free(temp);
-                                temp = NULL;
-                            }
-
-                            str = "";
-                            while((temp = strtok_r(rest, "\"", &rest)))
-                                if(strcmp(temp, ",") && strcmp(temp, ",\n"))
-                                    str = temp;
-
-                            strcat(extra, str);
-                            temp = strdup(extra);
-                            str = temp;
-                        }
-
-                        if(extra != NULL){
-                            if(str == temp){
-                                free(temp);
-                                temp = NULL;
-                            }
-                            str = extra;
                         }
                     }
 
@@ -206,18 +229,16 @@ int main(void){
 
                     //printf("%s\n", specID);
                     properties[propNum][index] = strdup(str);
+                    free(str);
+                    str = NULL;
+                    str_len = 0;
 
-                    if(str == temp){
-                        free(temp);
-                        temp = NULL;
-                    }
-                    if(extra != NULL){
-                        free(extra);
-                        extra = NULL;
-                    }
                     index++;
                 }
+
+                fgets(line, sizeof(line), specFd);
             }
+
             propNum++;
 
             // Create spec node
