@@ -6,10 +6,15 @@
 #include "../include/myMatches.h"
 #include "../include/myHash.h"
 
-#define PATH_X "../camera_specs/2013_camera_specs/"
+#define PATH_X "../camera_specs_small/2013_camera_specs/"
 #define PATH_W "../sigmod_large_labelled_dataset.csv"
 
+#define HASH_SIZE 10
+#define BUC_SIZE 100
+
 int main(void){
+
+    hashTable* hashT = hash_create(HASH_SIZE, BUC_SIZE);
 
     int             propNum = -1;
     char            line[512];
@@ -223,7 +228,8 @@ int main(void){
             // Create spec node
             mySpec *newSpec = specInit(specID, &properties, propNum);
             //printSpec(newSpec);
-            deleteSpec(newSpec);
+            hash_add(hashT, newSpec, hash1(newSpec->specID));
+            // deleteSpec(newSpec);
 
             fclose(specFd);
             free(filepath);
@@ -246,6 +252,9 @@ int main(void){
     }
 
     closedir(datasetX);
+
+    hash_print(hashT);
+    hash_destroy(hashT);
 
     return 0;
 }

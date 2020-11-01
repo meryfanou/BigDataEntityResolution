@@ -101,9 +101,11 @@ void hash_add(hashTable* table, mySpec* newSpec, int hash){
 }
 
 void hash_print(hashTable* t){
+	printf("HASH_SIZE: %d\n", t->tableSize);
 	int i = 0;
 	while(i < t->tableSize){
 		if(t->myTable[i] != NULL){
+			printf("cell [%d]:\n", i);
 			bucket_print(t->myTable[i]);
 		}
 		i++;
@@ -151,7 +153,7 @@ record* search_bucket(bucket* b, char* key){
 }
 
 void bucket_print(bucket* b){
-	printf("\t>buc:\n");
+	printf("\t>buc: (%d)\n", b->cur);
 	record* temp = b->rec;
 	while(temp != NULL){
 		record_print(temp);
@@ -175,7 +177,6 @@ void bucket_destroy(bucket* buc){				/// FREE BUC
 record* record_create(mySpec* spec){
 	record* newRec = malloc(sizeof(record));
 
-	// newRec->spec = specInit(spec->specID, spec->properties, spec->propNum);
 	newRec->spec = spec;
 	newRec->next = NULL;
 
@@ -183,22 +184,16 @@ record* record_create(mySpec* spec){
 }
 
 void record_print(record* rec){
-<<<<<<< HEAD:code/myHash.c
 	printf("\t\t>key: %s\n", rec->spec->specID);
 
-=======
-	printSpec(rec->spec);
->>>>>>> 7d341a27c68569f11f5359842ed169a0dfeee497:src/myHash.c
+	// printSpec(rec->spec);
 }
 
 void record_destroy(record* rec){				/// FREE REC
 	if(rec->next != NULL){
 		record_destroy(rec->next);
 	}
-<<<<<<< HEAD:code/myHash.c
-=======
 
 	deleteSpec(rec->spec);
->>>>>>> 7d341a27c68569f11f5359842ed169a0dfeee497:src/myHash.c
 	free(rec);
 }
