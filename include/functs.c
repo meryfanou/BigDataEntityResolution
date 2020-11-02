@@ -1,0 +1,2 @@
+/*	functs.c
+	Functs for main*/

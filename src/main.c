@@ -6,8 +6,8 @@
 #include "../include/myMatches.h"
 #include "../include/myHash.h"
 
-#define PATH_X "../camera_specs_small/2013_camera_specs/"
-#define PATH_W "../sigmod_large_labelled_dataset.csv"
+#define PATH_X "../testSpecs/camera_specs_small/2013_camera_specs/"
+#define PATH_W "../testSpecs/sigmod_large_labelled_dataset.csv"
 
 #define HASH_SIZE 10
 #define BUC_SIZE 100
