@@ -5,22 +5,21 @@
 #include "../include/mySpec.h"
 #include "../include/myMatches.h"
 #include "../include/myHash.h"
+#include "../include/myMatches.h"
 #include "../include/functs.h"
 
-// <<<<<<< HEAD
-#define PATH_X "../testSpecs/camera_specs_small/2013_camera_specs/"
+#define PATH_X "../testSpecs/camera_specs/2013_camera_specs/"
 #define PATH_W "../testSpecs/sigmod_large_labelled_dataset.csv"
-// =======
-// #define PATH_X "../camera_specs/2013_camera_specs/"
-// #define PATH_W "../sigmod_large_labelled_dataset.csv"
-// >>>>>>> 5088f4e21aa970de9af0dceb3f4a8f05906482c7
+
 
 #define HASH_SIZE 10
 #define BUC_SIZE 100
 
 int main(void){
 
+    printf("Building Hash ...\n");
     hashTable* hashT = hash_create(HASH_SIZE, BUC_SIZE);
+    matchesInfo* allMatches = matchesInfoInit();
 
     int             propNum = -1;
     //char            line[512];
@@ -90,6 +89,7 @@ int main(void){
             mySpec *newSpec = specInit(specID, &properties, propNum);
             //printSpec(newSpec);
             hash_add(hashT, newSpec, hash1(newSpec->specID));
+            matchesAdd(allMatches, newSpec);            
             // deleteSpec(newSpec);
 
             fclose(specFd);
@@ -114,7 +114,12 @@ int main(void){
 
     closedir(datasetX);
 
-    hash_print(hashT);
+    printf("Reading CSV ...\n");
+    readCSV(PATH_W, hashT, allMatches);
+
+    deleteInfo(allMatches);
+
+    // hash_print(hashT);
     hash_destroy(hashT);
 
     return 0;

@@ -1,9 +1,11 @@
-// <<<<<<< HEAD
-#include "myHash.h"
 /* functs.h
 	Functs for main*/
 
-int readCSV(char* fileName, hashTable* hashT);
-// =======
+#include "myHash.h"
+#include "myMatches.h"
+#include "mySpec.h"
+
+int readCSV(char* , hashTable* , matchesInfo*); //reads csv, creates matches at hash values
 char*** readFile(FILE*, int*, char***);
-// >>>>>>> 5088f4e21aa970de9af0dceb3f4a8f05906482c7
+
+void swapSpecsMatches(mySpec*, mySpec*);

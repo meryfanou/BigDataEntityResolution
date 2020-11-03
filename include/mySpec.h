@@ -1,7 +1,7 @@
 /* mySpec.h */
 #ifndef MYSPEC_H
 #define MYSPEC_H
-// #include "myMatches.h"
+#include "myMatches.h"
 
 // -----------------------------
 
@@ -24,6 +24,7 @@ void deleteSpec(mySpec*);
 void updateSpecMatches(mySpec*, myMatches*);
 
 void printSpec(mySpec*);
+
 //void printList(specList*); // FOR TESTING
 //void printSpecMatches(mySpec*); 		// TESTING
 

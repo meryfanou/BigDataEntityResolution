@@ -92,6 +92,7 @@ void printSpec(mySpec* spec){
 	}
 }
 
+
 /*
 void printList(specList* myList){
 	specNode* temp = NULL;

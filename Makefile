@@ -10,6 +10,7 @@ IDIR = include
 DEPS = $(wildcard $(IDIR)/*.h)
 ODIR = build
 
+# LES = $(SRC)/%.c
 
 $(ODIR)/%.o: $(SRCDIR)/%.c 
 		@echo "Creating object " $@
