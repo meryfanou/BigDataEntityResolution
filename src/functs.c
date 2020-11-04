@@ -1,11 +1,99 @@
 #include <stdio.h>
 #include <stdlib.h>
-#include <string.h>
+# include <string.h>
 #include <dirent.h>
 #include "../include/functs.h"
 #include "../include/mySpec.h"
+#include "../include/myHash.h"
 
-char*** readFile(FILE *specFd, int *propNum, char ***properties){
+
+void readDataset(DIR *datasetX, char *path, hashTable **hashT, matchesInfo* allMatches){
+    int             propNum = -1;
+    char            *dirpath = NULL, *filepath = NULL;
+    specInfo        **properties = NULL;
+    DIR             *sitePtr = NULL;
+    FILE            *specFd = NULL;
+    struct dirent   *siteDir = NULL, *specFile = NULL;
+
+    // Read from datasetX
+    while((siteDir = readdir(datasetX)) != NULL){
+        // Ignore . and ..
+        if(!strcmp(siteDir->d_name, ".") || !strcmp(siteDir->d_name, ".."))
+            continue;
+
+        // Keep the full path
+        dirpath = (char*)malloc(strlen(path) + strlen(siteDir->d_name) + 1);
+        strcpy(dirpath,path);
+        strcat(dirpath, siteDir->d_name);
+
+        // Open current directory (website)
+        if((sitePtr = opendir(dirpath)) == NULL){
+            perror("opendir");
+            exit(-1);
+        }
+
+        // Read the files in the directory
+        while((specFile = readdir(sitePtr)) != NULL){
+            // Ignore . and ..
+            if(!strcmp(specFile->d_name, ".") || !strcmp(specFile->d_name, ".."))
+                continue;
+
+            // Keep the full path
+            filepath = (char*)malloc(strlen(dirpath) + strlen("/") + strlen(specFile->d_name) + 1);
+            strcpy(filepath, dirpath);
+            strcat(filepath, "/");
+            strcat(filepath, specFile->d_name);
+
+            // Open current file (spec)
+            if((specFd = fopen(filepath, "r")) == NULL){
+                perror("fopen");
+                exit(-2);
+            }
+
+            char    *filename = strdup(specFile->d_name);
+            char    *specID = NULL;
+
+            // Keep specID (<website_name>//<spec_num>)
+            filename = strtok(filename, ".");
+            specID = malloc(strlen(siteDir->d_name) + strlen("//") + strlen(filename) + 1);
+            strcpy(specID, siteDir->d_name);
+            strcat(specID, "//");
+            strcat(specID, filename);
+            free(filename);
+
+            // Get array with the properties of current spec
+            properties = readFile(specFd, &propNum, properties);
+            propNum++;
+
+            // Create spec node
+            mySpec *newSpec = specInit(specID, properties, propNum);
+            //printSpec(newSpec);
+            hash_add(*hashT, newSpec, hash1(newSpec->specID));
+            matchesAdd(allMatches, newSpec);
+            //deleteSpec(newSpec);
+
+            fclose(specFd);
+            free(filepath);
+            filepath = NULL;
+
+            free(specID);
+            for(int i=0; i<propNum; i++){
+                specDelInfo(properties[i]);
+                free(properties[i]);
+            }
+            free(properties);
+            properties = NULL;
+            propNum = -1;
+        }
+
+        closedir(sitePtr);
+        free(dirpath);
+        dirpath = NULL;
+    }
+}
+
+
+specInfo** readFile(FILE *specFd, int *propNum, specInfo **properties){
     char    line[512];
 
     // Read spec's properties
@@ -21,7 +109,7 @@ char*** readFile(FILE *specFd, int *propNum, char ***properties){
 
         char    *rest = line;
         char    *token = NULL, *str = NULL, *prev = NULL, *temp = NULL;
-        int     index = 0, str_len = 0, need_extra = 0;
+        int     index = 0, str_len = 0, need_extra = 0, str_array = 0;
 
         // Seperate the key from the value in the ("key" : "value") pair
         while(index < 2){
@@ -61,6 +149,8 @@ char*** readFile(FILE *specFd, int *propNum, char ***properties){
 
                 // If the value string is an 'array' of strings
                 if(prev != NULL && !strcmp(prev, ": [\n")){
+                    str_array = 1;
+
                     if(str != NULL)
                         temp = strdup(str);
 
@@ -157,14 +247,53 @@ char*** readFile(FILE *specFd, int *propNum, char ***properties){
                 }
             }
 
-            // Will save key,value in a 2D array
+            // If it is the key
             if(index == 0){
                 (*propNum)++;
-                properties = realloc(properties, ((*propNum)+1)*sizeof(char**));
-                properties[*propNum] = malloc(2*sizeof(char*));
+                properties = realloc(properties, ((*propNum)+1)*sizeof(specInfo*));
+                properties[*propNum] = malloc(sizeof(specInfo));
             }
 
-            properties[*propNum][index] = strdup(str);
+            // Store the key
+            if(index == 0){
+                (properties[*propNum])->key = strdup(str);
+            }
+            else{
+                // If the value string is an 'array' of strings, will keep a list of the values
+                if(str_array){
+                    temp = str;
+
+                    specValue   *head = NULL, *current = NULL, *prev = NULL;
+                    while((token = strtok_r(temp, "\n", &temp)) != NULL){
+                        if(!strcmp(token, "[") || !strcmp(token, "    ]") || !strcmp(token, "    ],"))
+                            continue;
+
+                        // Create a specValue node
+                        current = malloc(sizeof(specValue));
+                        current->value = strdup(token);
+                        if(current->value[strlen(current->value)-1] == ',')
+                            current->value[strlen(current->value)-1] = '\0';
+                        current->next = NULL;
+
+                        // If it is the first value
+                        if(head == NULL)
+                            head = current;
+                        // If it is not the first value
+                        if(prev != NULL)
+                            prev->next = current;
+
+                        prev = current;
+                    }
+
+                    (properties[*propNum])->values = head;
+                }
+                // If the value is a string
+                else{
+                    (properties[*propNum])->values = malloc(sizeof(specValue));
+                    (properties[*propNum])->values->value = strdup(str);
+                    (properties[*propNum])->values->next = NULL;
+                }
+            }
             free(str);
             str = NULL;
             str_len = 0;
@@ -206,16 +335,15 @@ int readCSV(char* fName, hashTable* hashT, matchesInfo* allMatches){
                         // CHECK KEYS - UNCOMMENT FOR TESTING
         // printf("\tkey1: %s, key2: %s, isMatch: %s\n", key1, key2, isMatch);
 
-                        // SCAN HASH FOR ENTRIES
-        mySpec* spec1 = findRecord_byKey(hashT, key1);
-        mySpec* spec2 = findRecord_byKey(hashT, key2);
-
         // printf("\tspec1: %s counts: %d, spec2: %s counts: %d\n", spec1->specID, spec1->matches->specsCount, spec2->specID, spec2->matches->specsCount);
 
                           // MERGE MATCHES + FIX POINTERS
                                 // !! Check if match2 (to be deleted by merge)
                                 // is head then swap them 
         if(strcmp(isMatch, "1") == 0){
+                // SCAN HASH FOR ENTRIES
+            mySpec *spec1 = findRecord_byKey(hashT, key1);
+            mySpec *spec2 = findRecord_byKey(hashT, key2);
 
             if(spec2->matches == spec1->matches){
                 // MATCHES ALREADY TOGETHER -> NO NEED TO MERGE

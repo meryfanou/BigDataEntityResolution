@@ -38,5 +38,6 @@ void deleteInfo(matchesInfo*);
 void mergeMatches(matchesInfo*, myMatches*, myMatches*);
 
 void printMatchesList(matchesInfo*); 		// TESTING
+void extractMatches(matchesInfo*, char*);
 
 #endif 

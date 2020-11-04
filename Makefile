@@ -37,7 +37,8 @@ clean:
 		@echo "Cleaning up..."
 		$(RM) $(ODIR)/*
 		$(RM) $(BDIR)/*
+		rm -r -f Outputs
 
 
 run:	bin/main
-		./bin/main
+		time ./bin/main -o matches_log

@@ -2,7 +2,13 @@
 #include <stdio.h>
 #include <stdlib.h>
 #include <string.h>
+#include <sys/stat.h>
+#include <errno.h>
+#include <error.h>
+#include <unistd.h>
 #include "../include/myMatches.h"
+
+#define PATH "./Outputs"
 
 matchesInfo* matchesInfoInit(){
 		// Init new Info List
@@ -188,5 +194,67 @@ void printMatchesList(matchesInfo* myInfo){
 	}
 	printf("--------------------------------\n");
 
-printf("\n\n");
+	printf("\n\n");
+}
+
+void extractMatches(matchesInfo* allMatches, char* fname){
+
+	int totalPairs = 0;		// count total pairs (just for fun)
+
+	FILE* fpout;
+	if(fname != NULL){
+		int len = strlen(PATH) + 1 + strlen(fname) + 1;
+
+		if(chdir(PATH) == -1){
+			if(mkdir(PATH, S_IRWXU|S_IRWXG|S_IROTH)){ 
+	    	  error(EXIT_FAILURE, errno, "Failed to create directory");
+	   		}
+	   	}
+	   	else{
+	   		chdir("..");
+	   	}
+
+		char* target = malloc(len);
+		memset(target, 0 , len);
+
+		strcat(target, PATH);
+		strcat(target, "/");
+		strcat(target, fname);
+
+		printf("target: %s\n", target);
+		fpout = fopen(target, "w+");
+	}	
+	else{
+		fpout = stdout;
+	}
+		
+	myMatches* tempMatches = allMatches->head;
+
+printf("Info entries: %d\n", allMatches->entries);
+printf("Head entries: %d\n", tempMatches->specsCount);
+	
+	while(tempMatches != NULL){
+		if(tempMatches->specsCount > 1){
+			int printed = 0;
+			while(printed < tempMatches->specsCount-1){
+
+				int inside = printed + 1;
+				while(inside < tempMatches->specsCount){
+					fprintf(fpout, "%s, %s\n", tempMatches->specsTable[printed]->specID, tempMatches->specsTable[inside]->specID);
+
+					inside++;
+					totalPairs++;
+				}
+				printed++;
+			}
+			fprintf(fpout, "\t~ ~ ~ ~ ~ ~ ~ ~ ~ ~ ~ ~ ~ ~ ~ ~\n");
+		}
+		tempMatches = tempMatches->next;
+	}
+
+			// STATS PRINTS (EXTRA) - COMMENT IF U LIKE
+	fprintf(fpout, "\t~ ~ ~ ~ ~ ~ ~ ~ ~ ~ ~ ~ ~ ~ ~ ~\n");
+	fprintf(fpout, "Total Matches (Groups): %d\n", allMatches->entries);
+	fprintf(fpout, "Total Pairs: %d\n", totalPairs);
+
 }
