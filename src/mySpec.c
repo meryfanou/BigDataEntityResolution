@@ -127,6 +127,7 @@ void specDelInfo(specInfo *info){
 	}
 }
 
+
 /*
 void printList(specList* myList){
 	specNode* temp = NULL;

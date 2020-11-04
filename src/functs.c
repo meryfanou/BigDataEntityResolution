@@ -1,4 +1,4 @@
-# include <stdio.h>
+#include <stdio.h>
 #include <stdlib.h>
 # include <string.h>
 #include <dirent.h>
@@ -304,4 +304,88 @@ specInfo** readFile(FILE *specFd, int *propNum, specInfo **properties){
     }
 
     return properties;
+}
+
+int readCSV(char* fName, hashTable* hashT, matchesInfo* allMatches){
+    
+            // READ FILE
+    FILE* fpin = NULL;
+    fpin = fopen(fName, "r+");
+
+    if(fpin == NULL){
+        printf("Can't Open CSV File !\n");
+        return -1;
+    }
+
+
+    char line[100];
+    memset(line, 0, 100);
+    fgets(line, 100, fpin);
+    memset(line, 0, 100);
+
+    int count = 0;
+    while(fgets(line, 100, fpin) != NULL){
+        // printf("count: %d\n", count);
+                        // GET SPEC'S KEYS
+        char* key1 = strtok(line, ",\n");
+        char* key2 = strtok(NULL, ",\n");
+        char* isMatch = strtok(NULL, ",\n");
+
+                        // CHECK KEYS - UNCOMMENT FOR TESTING
+        // printf("\tkey1: %s, key2: %s, isMatch: %s\n", key1, key2, isMatch);
+
+        // printf("\tspec1: %s counts: %d, spec2: %s counts: %d\n", spec1->specID, spec1->matches->specsCount, spec2->specID, spec2->matches->specsCount);
+
+                          // MERGE MATCHES + FIX POINTERS
+                                // !! Check if match2 (to be deleted by merge)
+                                // is head then swap them 
+        if(strcmp(isMatch, "1") == 0){
+                // SCAN HASH FOR ENTRIES
+            mySpec *spec1 = findRecord_byKey(hashT, key1);
+            mySpec *spec2 = findRecord_byKey(hashT, key2);
+
+            if(spec2->matches == spec1->matches){
+                // MATCHES ALREADY TOGETHER -> NO NEED TO MERGE
+                memset(line, 0, 100);
+                count++;
+                continue;
+            }
+            else if(spec2->matches->prev != NULL){
+                swapSpecsMatches(spec1, spec2);
+                mergeMatches(allMatches, spec1->matches, spec2->matches);
+                spec2->matches = spec1->matches;
+            }
+            else{
+                // printf(" ------ SWAPED --------- \n");
+                swapSpecsMatches(spec2, spec1);
+                mergeMatches(allMatches, spec2->matches, spec1->matches);
+                spec1->matches = spec2->matches;
+            }
+        }
+
+        memset(line, 0, 100);
+
+        count++;
+    }
+    
+    fclose(fpin);
+
+    return 1;
+}
+
+void swapSpecsMatches(mySpec* dest, mySpec* source){
+
+    // printf("\tSWAPING VALUES ... \n");
+
+    int i = 0;
+
+    while(i < source->matches->specsCount){
+        // printf("\t\t\t i: %d\n", i);
+        if(source->matches->specsTable[i] != source)
+            source->matches->specsTable[i]->matches = dest->matches;
+        i++;
+    }
+
+    // printf("\t\t .. DONE !!\n");
+
 }

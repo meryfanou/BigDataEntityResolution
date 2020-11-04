@@ -141,6 +141,8 @@ void bucket_add(bucket* buc, mySpec* newSpec){
 }
 
 record* search_bucket(bucket* b, char* key){
+	if(b == NULL)
+		return NULL;
 	record* temp = b->rec;
 
 	while(temp != NULL){
@@ -196,4 +198,41 @@ void record_destroy(record* rec){				/// FREE REC
 
 	deleteSpec(rec->spec);
 	free(rec);
+}
+
+mySpec* findRecord_byKey(hashTable* table, char* key){
+	int cell = hash1(key) % (table->tableSize);		/// FIND HASH TABLE CELL
+	if(cell < 0)
+		cell = 0;
+	// printf("cell: %d, tSize: %d, maxRecs/buc: %d\n", cell, table->tableSize, table->maxRecs);
+
+	if(table == NULL){
+		printf("edw\n");
+		return NULL;
+	}
+
+	if(table->myTable[cell] == NULL){
+		printf("edw edw\n");
+		return NULL;
+	}
+
+
+	bucket* tempBuc = table->myTable[cell];
+	// printf("cell: %d\n", cell);
+	int flag = 0;		// 0 ~ not found / 1 ~ found
+	record* existingRec = NULL;
+	
+	while(flag == 0){	/// FIND LAST BUCKET
+		if((existingRec = search_bucket(tempBuc, key)) != NULL){
+			flag = 1;
+			break;
+		}
+		if(tempBuc->next == NULL)
+			break;
+		tempBuc = tempBuc->next;
+	}
+
+	if(flag == 0)
+		return NULL;
+	return existingRec->spec;
 }

@@ -1,11 +1,16 @@
 /* myMatches.c */
 #include <stdio.h>
 #include <stdlib.h>
+#include <string.h>
 #include "../include/myMatches.h"
 
 matchesInfo* matchesInfoInit(){
 		// Init new Info List
 	matchesInfo* newInfo = malloc(sizeof(matchesInfo));
+	if(newInfo == NULL){
+		printf("ERROR ~ Cant allocate MEM ( matchesInfoInit() )\n");
+		return NULL;
+	}
 
 	newInfo->entries = 0;
 	newInfo->head = NULL;
@@ -14,6 +19,9 @@ matchesInfo* matchesInfoInit(){
 }
 
 myMatches* matchesAdd(matchesInfo* myInfo, mySpec* spec){
+		// CHECK IF SPEC ALREADY HAS MATCHES
+	if(spec->matches != NULL)
+		return spec->matches;
 
 		// Init new Match
 	myMatches* newMatch = myMatchesInit();
@@ -29,6 +37,8 @@ myMatches* matchesAdd(matchesInfo* myInfo, mySpec* spec){
 		// Update Info Stats
 	myInfo->entries++;
 
+	spec->matches = newMatch;
+
 	return newMatch;
 }
 
@@ -36,6 +46,10 @@ myMatches* matchesAdd(matchesInfo* myInfo, mySpec* spec){
 myMatches* myMatchesInit(){
 		// Init new Match group
 	myMatches* newMatch = malloc(sizeof(myMatches));
+	if(newMatch == NULL){
+		printf("ERROR ~ Cant allocate MEM ( myMatchesInit() )\n");
+		return NULL;
+	}
 
 	newMatch->specsCount = 0;
 	newMatch->specsTable = NULL;
@@ -50,8 +64,12 @@ void pushMatch(myMatches* curMatch, mySpec* spec){
 		//Add new Spec to this-> match group
 	
 		// Alloc mem
-	if(curMatch-> specsCount == 0){
+	if(curMatch->specsCount == 0){
 		curMatch->specsTable = malloc(sizeof(mySpec*));
+		if(curMatch->specsTable == NULL){
+			printf("ERROR ~ Cant allocate MEM ( pushMatch() )\n");
+			return;
+		}
 	}
 	else{
 		mySpec** temp = realloc(curMatch->specsTable, sizeof(mySpec*)*(curMatch->specsCount+1));
@@ -67,21 +85,21 @@ void pushMatch(myMatches* curMatch, mySpec* spec){
 
 		// Add spec to match-table
 	curMatch->specsTable[curMatch->specsCount] = spec;
+	// memcpy(curMatch->specsTable[curMatch->specsCount], spec, 1*sizeof(mySpec*));
 		// Update matches Info
 	curMatch->specsCount++;
 
 }
 
 void deleteMatches(myMatches* match){
-	free(match->specsTable);
-
 		// Fix list pointers
-	myMatches* temp = match->prev;
 	if(match->prev != NULL)
 		match->prev->next = match->next;
 	if(match->next != NULL)
-		match->next->prev = temp;
+		match->next->prev = match->prev;
 
+	if(match->specsTable != NULL)
+		free(match->specsTable);
 	free(match);
 }
 
@@ -101,14 +119,17 @@ void deleteInfo(matchesInfo* myInfo){
 
 void mergeMatches(matchesInfo* myInfo, myMatches* match1, myMatches* match2){
 
+	// printf("\tMERGIND ... ");
 	// !! MERGE AT MATCH_1 !!
 
+	if(match1 == NULL || match2 == NULL)
+		return;
 	// Check if match 2 (to be deleteed after) is head
 	// if its is, swap
-	if(match2->prev == NULL){
-		mergeMatches(myInfo, match2, match1);
-		return;
-	}
+	// if(match2->prev == NULL){
+	// 	mergeMatches(myInfo, match2, match1);
+	// 	return;
+	// }
 
 
 	// Combine matches Tables
@@ -117,6 +138,7 @@ void mergeMatches(matchesInfo* myInfo, myMatches* match1, myMatches* match2){
 	int totalCounts = match1->specsCount + match2->specsCount;
 
 		// Realloc Mem at match1
+	// printf("\ttotalCounts (merge): %d, count1: %d, count2: %d", totalCounts, match1->specsCount, match2->specsCount);
 	mySpec** tempTable = realloc(match1->specsTable, totalCounts*sizeof(mySpec*));
 	if(tempTable == NULL){
 		printf("Error at realloc (merge) !!\n");
@@ -125,17 +147,23 @@ void mergeMatches(matchesInfo* myInfo, myMatches* match1, myMatches* match2){
 	match1->specsTable = tempTable;
 
 		// Copy Specs from match2 -> match1
+	
+	// memcpy(match1 + match1->specsCount*(sizeof(mySpec*)), match2, match2->specsCount*(sizeof(mySpec*)));
+	// match1->specsCount += match2->specsCount;
+	
 	int i = 0;
 	while(match1->specsCount < totalCounts){
 		match1->specsTable[match1->specsCount] = match2->specsTable[i];
 		match1->specsCount++;
 		i++;
 	}
+	// printf("   -> count after merge: %d\n", match1->specsCount);
 
 		// Delete match2
 	deleteMatches(match2);  //Note: deleteMatches() DOES fix the list pointers !!
-
 	myInfo->entries--;
+
+	// printf(" .. DONE !!\n");
 }
 
 

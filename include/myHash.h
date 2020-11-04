@@ -1,5 +1,5 @@
-// #include "myList.h"
-// #include "myPatient.h"
+#ifndef MYHASH_H
+#define MYHASH_H
 #include "mySpec.h"
 
 typedef struct hashTable hashTable;
@@ -39,6 +39,8 @@ void bucket_print(bucket* b);
 record* search_bucket(bucket*, char*);
 
 record* record_create(mySpec* spec);
-//void record_add(record* rec, mySpec* p);
 void record_destroy(record* rec);
 void record_print(record* rec);
+
+mySpec* findRecord_byKey(hashTable*, char*);
+#endif
