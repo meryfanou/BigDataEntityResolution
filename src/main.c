@@ -47,22 +47,24 @@ int main(int argc, char** argv){
 
     closedir(datasetX);
 
-    printf(" .. DONE !!\n");
+    printf("\t.. DONE !!\n");
 
 
     printf("Reading CSV ...");
     readCSV(PATH_W, hashT, allMatches);
-    printf(" .. DONE !!\n");
+    printf("  \t.. DONE !!\n");
 
     // EXTARCT PAIRS
     extractMatches(allMatches, outputFile);
 
     // FREE MEM
+    printf("Cleaning Memory ...");
     deleteInfo(allMatches);
     hash_destroy(hashT);
 
     if(outputFile != NULL)
         free(outputFile);
+    printf("\t.. DONE !!\n\n");
 
     return 0;
 }

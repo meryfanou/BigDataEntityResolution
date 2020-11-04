@@ -200,9 +200,12 @@ void printMatchesList(matchesInfo* myInfo){
 void extractMatches(matchesInfo* allMatches, char* fname){
 
 	int totalPairs = 0;		// count total pairs (just for fun)
+	int flag = 0;
 
 	FILE* fpout;
 	if(fname != NULL){
+		flag = 1;
+
 		int len = strlen(PATH) + 1 + strlen(fname) + 1;
 
 		if(chdir(PATH) == -1){
@@ -221,8 +224,9 @@ void extractMatches(matchesInfo* allMatches, char* fname){
 		strcat(target, "/");
 		strcat(target, fname);
 
-		printf("target: %s\n", target);
 		fpout = fopen(target, "w+");
+
+		free(target);
 	}	
 	else{
 		fpout = stdout;
@@ -230,9 +234,6 @@ void extractMatches(matchesInfo* allMatches, char* fname){
 		
 	myMatches* tempMatches = allMatches->head;
 
-printf("Info entries: %d\n", allMatches->entries);
-printf("Head entries: %d\n", tempMatches->specsCount);
-	
 	while(tempMatches != NULL){
 		if(tempMatches->specsCount > 1){
 			int printed = 0;
@@ -256,5 +257,8 @@ printf("Head entries: %d\n", tempMatches->specsCount);
 	fprintf(fpout, "\t~ ~ ~ ~ ~ ~ ~ ~ ~ ~ ~ ~ ~ ~ ~ ~\n");
 	fprintf(fpout, "Total Matches (Groups): %d\n", allMatches->entries);
 	fprintf(fpout, "Total Pairs: %d\n", totalPairs);
+
+	if(flag == 1)
+		fclose(fpout);
 
 }
