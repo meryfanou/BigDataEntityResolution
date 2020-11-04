@@ -4,18 +4,17 @@
 #include <stdlib.h>
 #include "../include/mySpec.h"
 
-mySpec* specInit(char* id, char**** properties, int propNum){
+mySpec* specInit(char* id, specInfo** properties, int propNum){
 	mySpec* newSpec = malloc(sizeof(mySpec));
 
 	newSpec->specID = strdup(id);
 	newSpec->matches = NULL;
 	newSpec->propNum = propNum;
+	newSpec->properties = malloc(propNum*sizeof(specInfo*));
 
-	newSpec->properties = (char***)malloc(propNum*sizeof(char**));
 	for(int i=0; i<propNum; i++){
-		newSpec->properties[i] = (char**)malloc(2*sizeof(char*));
-		newSpec->properties[i][0] = strdup((*properties)[i][0]);
-		newSpec->properties[i][1] = strdup((*properties)[i][1]);
+		(newSpec->properties)[i] = malloc(sizeof(specInfo));
+		specAddInfo((newSpec->properties)[i], properties[i]);
 	}
 
 	return newSpec;
@@ -74,9 +73,8 @@ void deleteSpec(mySpec* spec){
 	free(spec->specID);
 
 	for(int i=0; i<spec->propNum; i++){
-		free(spec->properties[i][0]);
-		free(spec->properties[i][1]);
-		free(spec->properties[i]);
+		specDelInfo((spec->properties)[i]);
+		free((spec->properties)[i]);
 	}
 	free(spec->properties);
 
@@ -88,7 +86,44 @@ void printSpec(mySpec* spec){
 
 	printf("Properties:\n");
 	for(int i=0; i<spec->propNum; i++){
-		printf("%s:\t%s\n", spec->properties[i][0], spec->properties[i][1]);
+		printf("%s:\t%s\n", (spec->properties)[i]->key, (spec->properties[i])->values->value);
+	}
+}
+
+void specAddInfo(specInfo *info, specInfo *newInfo){
+	specValue	*head = NULL, *current = NULL, *prev = NULL, *newValues = NULL;
+
+	info->key = strdup(newInfo->key);
+
+	newValues = newInfo->values;
+	while(newValues != NULL){
+		current = malloc(sizeof(specValue));
+		current->value = strdup(newValues->value);
+		current->next = newValues->next;
+
+		if(head == NULL)
+			head = current;
+		if(prev != NULL)
+			prev->next = current;
+
+		prev = current;
+		newValues = newValues->next;
+	}
+
+	info->values = head;
+}
+
+void specDelInfo(specInfo *info){
+	free(info->key);
+
+	specValue	*current = info->values;
+	specValue	*temp;
+	while(current != NULL){
+		temp = current->next;
+		free(current->value);
+		free(current);
+
+		current = temp;
 	}
 }
 
