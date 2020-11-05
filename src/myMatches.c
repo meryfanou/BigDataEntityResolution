@@ -25,6 +25,8 @@ matchesInfo* matchesInfoInit(){
 }
 
 myMatches* matchesAdd(matchesInfo* myInfo, mySpec* spec){
+	if(spec == NULL)
+		return NULL;
 		// CHECK IF SPEC ALREADY HAS MATCHES
 	if(spec->matches != NULL)
 		return spec->matches;
@@ -98,6 +100,9 @@ void pushMatch(myMatches* curMatch, mySpec* spec){
 }
 
 void deleteMatches(myMatches* match){
+	if(match == NULL)
+		return;
+
 		// Fix list pointers
 	if(match->prev != NULL)
 		match->prev->next = match->next;

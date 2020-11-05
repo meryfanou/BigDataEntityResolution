@@ -27,17 +27,18 @@ struct matchesInfo{
 
 
 matchesInfo* matchesInfoInit();
-myMatches* matchesAdd(matchesInfo*, mySpec*);
-
-myMatches* myMatchesInit();
-void pushMatch(myMatches*, mySpec*);
-
-void deleteMatches(myMatches*);
 void deleteInfo(matchesInfo*);
-
+myMatches* matchesAdd(matchesInfo*, mySpec*);
 void mergeMatches(matchesInfo*, myMatches*, myMatches*);
-
 void printMatchesList(matchesInfo*); 		// TESTING
 void extractMatches(matchesInfo*, char*);
+
+
+myMatches* myMatchesInit();
+void deleteMatches(myMatches*);
+void pushMatch(myMatches*, mySpec*);
+
+
+
 
 #endif 

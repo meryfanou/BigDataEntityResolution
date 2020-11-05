@@ -10,13 +10,20 @@ IDIR = include
 DEPS = $(wildcard $(IDIR)/*.h)
 ODIR = build
 
+TSTSDIR = tests
+TSTS = $(wildcard $(TSTSDIR)/*.c)
+
 # LES = $(SRC)/%.c
 
-$(ODIR)/%.o: $(SRCDIR)/%.c 
+$(ODIR)/%.o: $(SRCDIR)/%.c
 		@echo "Creating object " $@
 		$(CC) $(CCFLAGS) -c -o $@ $<
 
-all: clean main run
+$(TSTSDIR)/%.o: $(TSTSDIR)/%.c
+		@echo "Creating object " $@
+		$(CC) $(CCFLAGS) -c -o $@ $<
+
+all: clean tests_ main run
 
 main: $(ODIR)/main.o $(ODIR)/mySpec.o $(ODIR)/myHash.o $(ODIR)/myMatches.o $(ODIR)/functs.o
 		@echo "Creating main"
@@ -32,11 +39,18 @@ main: $(ODIR)/main.o $(ODIR)/mySpec.o $(ODIR)/myHash.o $(ODIR)/myMatches.o $(ODI
 # 		@echo "Creating myHash"
 # 		$(CC) $(CCFLAGS) -o $(BDIR)/$@ $^
 
+tests_:	
+		@echo "Creating tests_run .."
+# 		$(CC) $(CCFLAGS) -o run_tests $^
+
+# 		@echo "Running Unit Testing .."
+# 		../tests/run_tests
 
 clean:
 		@echo "Cleaning up..."
 		$(RM) $(ODIR)/*
 		$(RM) $(BDIR)/*
+		$(RM) $(TSTSDIR)/*.o
 		rm -r -f Outputs
 
 
