@@ -25,7 +25,6 @@ struct matchesInfo{
 
 // -------------------------
 
-
 matchesInfo* matchesInfoInit();
 void deleteInfo(matchesInfo*);
 myMatches* matchesAdd(matchesInfo*, mySpec*);
@@ -35,7 +34,7 @@ void extractMatches(matchesInfo*, char*);
 
 
 myMatches* myMatchesInit();
-void deleteMatches(myMatches*);
+void deleteMatches(matchesInfo*, myMatches*);
 void pushMatch(myMatches*, mySpec*);
 
 

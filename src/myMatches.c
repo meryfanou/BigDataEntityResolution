@@ -99,7 +99,7 @@ void pushMatch(myMatches* curMatch, mySpec* spec){
 
 }
 
-void deleteMatches(myMatches* match){
+void deleteMatches(matchesInfo* myInfo, myMatches* match){
 	if(match == NULL)
 		return;
 
@@ -112,6 +112,8 @@ void deleteMatches(myMatches* match){
 	if(match->specsTable != NULL)
 		free(match->specsTable);
 	free(match);
+
+	myInfo->entries--;
 }
 
 void deleteInfo(matchesInfo* myInfo){
@@ -121,7 +123,7 @@ void deleteInfo(matchesInfo* myInfo){
 		myMatches* temp = myInfo->head;
 		myInfo->head = myInfo->head->next;
 		
-		deleteMatches(temp);
+		deleteMatches(myInfo, temp);
 		
 		count--;
 	}
@@ -171,8 +173,7 @@ void mergeMatches(matchesInfo* myInfo, myMatches* match1, myMatches* match2){
 	// printf("   -> count after merge: %d\n", match1->specsCount);
 
 		// Delete match2
-	deleteMatches(match2);  //Note: deleteMatches() DOES fix the list pointers !!
-	myInfo->entries--;
+	deleteMatches(myInfo, match2);  //Note: deleteMatches() DOES fix the list pointers !!
 
 	// printf(" .. DONE !!\n");
 }

@@ -14,6 +14,7 @@ struct to_test{
 int myValidCheck(int res, char* name){
 	if(res != 1){
 		printf("\t%s ~ FAILED !!\n", name);
+		EXIT = 1;
 		return -1;
 	}
 	else{
