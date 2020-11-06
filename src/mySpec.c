@@ -44,8 +44,8 @@ void deleteSpec(mySpec* spec){
 	}
 	free(spec->properties);
 
-	if(spec->matches != NULL)
-		free(spec->matches);
+	//if(spec->matches != NULL)
+	//	free(spec->matches);
 
 	free(spec);
 	spec = NULL;
