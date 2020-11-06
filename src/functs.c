@@ -1,6 +1,6 @@
 #include <stdio.h>
 #include <stdlib.h>
-# include <string.h>
+#include <string.h>
 #include <dirent.h>
 #include "../include/functs.h"
 #include "../include/mySpec.h"
@@ -66,10 +66,12 @@ void readDataset(DIR *datasetX, char *path, hashTable **hashT, matchesInfo* allM
             propNum++;
 
             // Create spec node
-            mySpec *newSpec = specInit(specID, properties, propNum);
+            mySpec      *newSpec = specCreate(specID, properties, propNum);
+            myMatches   *newMatch = NULL;
             //printSpec(newSpec);
             hash_add(*hashT, newSpec, hash1(newSpec->specID));
-            matchesAdd(allMatches, newSpec);
+            newMatch = matchesAdd(allMatches, newSpec);
+            updateSpecMatches(newSpec, newMatch);
             //deleteSpec(newSpec);
 
             fclose(specFd);

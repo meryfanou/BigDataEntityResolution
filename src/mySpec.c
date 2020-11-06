@@ -4,11 +4,22 @@
 #include <stdlib.h>
 #include "../include/mySpec.h"
 
-mySpec* specInit(char* id, specInfo** properties, int propNum){
-	mySpec* newSpec = malloc(sizeof(mySpec));
+
+mySpec* specInit(){
+	mySpec	*spec = malloc(sizeof(mySpec));
+
+	spec->matches = NULL;
+	spec->specID = NULL;
+	spec->properties = NULL;
+	spec->propNum = 0;
+
+	return spec;
+}
+
+mySpec* specCreate(char* id, specInfo** properties, int propNum){
+	mySpec* newSpec = specInit();
 
 	newSpec->specID = strdup(id);
-	newSpec->matches = NULL;
 	newSpec->propNum = propNum;
 	newSpec->properties = malloc(propNum*sizeof(specInfo*));
 
@@ -24,52 +35,7 @@ void updateSpecMatches(mySpec* spec, myMatches* matches){
 	spec->matches = matches;
 }
 
-/*
-specList* specListInit(){
-	specList* newList = malloc(sizeof(specList));
-	
-	newList->count = 0;
-	newList->head = NULL;
-
-	return newList;
-}
-
-specNode* specNodeInit(){
-	specNode* newNode = malloc(sizeof(specNode));
-
-	newNode->next = NULL;
-	newNode->spec = NULL;
-}
-
-void specAdd(specList* myList, mySpec* spec){
-	specNode* myNode = specNodeInit();
-	
-	myNode->spec = spec;
-	myNode->next = myList->head;
-	myList->head = myNode;
-
-	myList->count++;
-}
-
-void deleteList(specList* myList){
-	deleteNodes(myList->head);
-	free(myList);
-}
-
-void deleteNodes(specNode* myNode){
-	if(myNode->next != NULL)
-		deleteNodes(myNode->next);
-
-	deleteSpec(myNode->spec);
-	free(myNode);
-}
-*/
-
 void deleteSpec(mySpec* spec){
-
-	//
-	//	ADD FREES FOR CHAR* / MALLOCS etc
-	//
 	free(spec->specID);
 
 	for(int i=0; i<spec->propNum; i++){
@@ -78,7 +44,11 @@ void deleteSpec(mySpec* spec){
 	}
 	free(spec->properties);
 
+	if(spec->matches != NULL)
+		free(spec->matches);
+
 	free(spec);
+	spec = NULL;
 }
 
 void printSpec(mySpec* spec){
@@ -126,34 +96,3 @@ void specDelInfo(specInfo *info){
 		current = temp;
 	}
 }
-
-
-/*
-void printList(specList* myList){
-	specNode* temp = NULL;
-
-	printf("~ Specs\n");
-	printf("--------------------------------\n");
-
-	temp = myList->head;
-	while(temp != NULL){
-		printf("|\tspecID: %s\n", temp->spec->specID);
-		temp = temp->next;
-	}
-
-	printf("--------------------------------\n");
-	printf("\n\n");
-}
-*/
-
-
-
-// void printSpecMatches(mySpec* spec){
-// 	int countSpecsMatches = spec->specsCount;
-// 	printf("Group %d specIDs:\n", countEntries);
-// 	printf("\t-> ");
-// 	while(countSpecsMatches > 0){
-// 		printf("%s, ", temp->specsTable[--countSpecsMatches]->specID);
-// 	}
-// 	printf("\n");
-// }

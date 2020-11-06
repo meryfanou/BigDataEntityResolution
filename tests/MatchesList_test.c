@@ -3,7 +3,7 @@
 #include "../include/myMatches.h"
 #include "../include/myuTesting.h"
 
-void test_create(void){
+void test_createMatches(void){
 
 	matchesInfo* list = matchesInfoInit();
 	matchesAdd(list, NULL);
@@ -20,8 +20,8 @@ void test_create(void){
 
 int main(void){
 	to_test myTests[] = {
-		{"test_create", test_create},
-		{"SKATA", test_create},
+		{"test_create", test_createMatches},
+		{"SKATA", test_createMatches},
 		{NULL, NULL}
 	};
 

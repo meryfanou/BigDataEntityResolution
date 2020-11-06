@@ -43,7 +43,7 @@ myMatches* matchesAdd(matchesInfo* myInfo, mySpec* spec){
 		// Update Info Stats
 	myInfo->entries++;
 
-	spec->matches = newMatch;
+	//spec->matches = newMatch;
 
 	return newMatch;
 }
@@ -106,6 +106,7 @@ void deleteMatches(myMatches* match){
 
 	if(match->specsTable != NULL)
 		free(match->specsTable);
+
 	free(match);
 }
 
@@ -115,7 +116,11 @@ void deleteInfo(matchesInfo* myInfo){
 		// printf("delete Info count: %d\n", count);
 		myMatches* temp = myInfo->head;
 		myInfo->head = myInfo->head->next;
-		
+
+		if(temp->specsTable != NULL){
+		for(int i=0; i<temp->specsCount; i++)
+			updateSpecMatches(temp->specsTable[i], NULL);
+		}
 		deleteMatches(temp);
 		
 		count--;
