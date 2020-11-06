@@ -38,17 +38,19 @@ tests: MatchesList_test mySpec_test
 run_tests: run_MatchesList_test run_mySpec_test
 
 MatchesList_test: $(ODIR)/MatchesList_test.o $(ODIR)/myMatches.o $(ODIR)/mySpec.o
-		@echo "Creating MatchesList_test"
-		$(CC) $(CCFLAGS) -o $(BDIR)/$@ $^
+					@echo "Creating MatchesList_test"
+					$(CC) $(CCFLAGS) -o $(BDIR)/$@ $^
 
 run_MatchesList_test:	bin/MatchesList_test
+						@echo "Running Unit Testing for myMatches"
 						time ./bin/MatchesList_test
 
 mySpec_test: $(ODIR)/mySpec_test.o $(ODIR)/mySpec.o $(ODIR)/myMatches.o
-		@echo "Creating mySpec_test"
-		$(CC) $(CCFLAGS) -o $(BDIR)/$@ $^
+			 @echo "Creating mySpec_test"
+			 $(CC) $(CCFLAGS) -o $(BDIR)/$@ $^
 
 run_mySpec_test:	bin/mySpec_test
+					@echo "Running Unit Testing for mySpec"
 					time ./bin/mySpec_test
 
 #-------------------------------------------------------------------------#
@@ -57,4 +59,5 @@ clean:
 		@echo "Cleaning up..."
 		$(RM) $(ODIR)/*
 		$(RM) $(BDIR)/*
+		$(RM) $(TSTSDIR)/*.o
 		rm -r -f Outputs

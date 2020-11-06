@@ -25,8 +25,10 @@ int main(int argc, char** argv){
                 outputFile = strdup(argv[i+1]);
             }
             i++;
+            // printf("i: %d, argc: %d\n", i, argc);
         }
     }
+    // printf("sliahcsdoh\n");
 
 
     DIR         *datasetX = NULL;
