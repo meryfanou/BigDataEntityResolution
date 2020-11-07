@@ -3,22 +3,45 @@
 #include <stdlib.h>
 #include "../include/myMatches.h"
 #include "../include/mySpec.h"
-#include "../include/myuTesting.h"
+#include "../include/acutest.h"
 
 void test_createMatches(void){
 
 	matchesInfo* list = matchesInfoInit();
-	matchesAdd(list, NULL);
+	myMatches* node = myMatchesInit();
+
 	deleteMatches(list, list->head);
 
 			// TEST CREATION
-	if(myValidCheck(list != NULL, "test_create_1") == -1)
-		return;
+	TEST_ASSERT(list != NULL);
+	TEST_ASSERT(node != NULL);
 			// TEST SIZE
-	if(myValidCheck(list->entries == 0, "test_create_2") == -1)
-		return;
+	TEST_ASSERT(list->entries == 0);
 
+	deleteMatches(list, node);
 	deleteInfo(list);
+
+}
+
+void test_pushMatches(void){
+
+	myMatches* node = myMatchesInit();
+	TEST_ASSERT(node->specsCount == 0);
+
+	int N = 5;
+	mySpec* array = malloc(N*sizeof(mySpec));
+
+	int i = 0;
+	while(i < N){
+		// printf("mpla\n");
+		pushMatch(node, &array[i]);
+		TEST_ASSERT(node->specsTable != NULL);
+		TEST_ASSERT(node->specsTable[i] == &array[i]);
+		TEST_ASSERT(node->specsCount == i+1);
+		i++;
+	}
+
+	deleteMatches(NULL, node);
 
 }
 
@@ -28,36 +51,28 @@ void test_insertMatches(void){
 
 	myMatches* testMatches;
 
-	int flag = 0;
-
 	int N = 100;
 	mySpec* array = malloc(N*sizeof(mySpec));
 
 	int i = 0;
 	while(i < N){
 		testMatches = matchesAdd(list, &array[i]);
+
 						// TEST SIZE
-		if(myValidCheck(list->entries == (i+1), "test_insert_1")){
-			flag = 1;
-			break;
-		}
+		TEST_ASSERT(list->entries == (i+1));
 						// TEST INSERTION
-		if(myValidCheck(list->head->specsTable[0] == &array[i], "test_insert_2")){
-			flag = 1;
-			break;
-		}
+		TEST_ASSERT(list->head->specsTable[0] == &array[i]);
 
 		i++;
 	}
 						// TEST LIFO
-	if(flag == 0){
-		i = N - 1;
-		while(i >= 0){
-			if(myValidCheck(testMatches->specsTable[0] == &array[i], "test_inser_3"))
-				break;
-			testMatches = testMatches->prev;
-			i--;
-		}
+	testMatches = list->head;
+	i = N-1;
+	while(i >= 0){
+		TEST_ASSERT(testMatches->specsTable[0] == &array[i]);
+
+		testMatches = testMatches->next;
+		i--;
 	}
 
 
@@ -83,15 +98,13 @@ void test_deleteMatches(void){
 	}
 
 			// TEST DELETION FROM START
-	i = N - 1;
+	i = N-1;
 	while(i >= 0){
-		if(myValidCheck(list->head->specsTable[0] == &array[i], "test_deleteMatches_1"))
-			break;
-
+		TEST_ASSERT(list->head->specsTable[0] == &array[i]);
 		deleteMatches(list, list->head);
 		
-		if(myValidCheck(list->entries == (i-1), "test_deleteMatches_2"))
-			break;
+		TEST_ASSERT(list->entries == i);
+
 		i--;
 	}
 
@@ -105,21 +118,67 @@ void test_deleteMatches(void){
 			// TEST DELETION FROM SECOND NODE
 	testMatches = list->head->next;
 	deleteMatches(list, testMatches);
-	myValidCheck(list->entries == (i-2), "test_deleteMatches_3");
+	TEST_ASSERT(list->entries == (i-1));
 
 	free(array);
 	deleteInfo(list);
 
 }
 
-int main(void){
-	to_test myTests[] = {
-		{"test_createMatches", test_createMatches},
-		{"test_insertMatches", test_insertMatches},
-		{"test_deleteMatches", test_deleteMatches},
-		{NULL, NULL}
-	};
+void test_mergeMatches(void){
+	// matchesInfo* list;
+	myMatches* to_merge1 = myMatchesInit();
+	myMatches* to_merge2 = myMatchesInit();
 
-	runTests(myTests);
-	return 0;
+	int N = 100;
+	mySpec* specArray = malloc(N*sizeof(mySpec));
+
+
+					// SPLIT SPECS ARRAY TO MATCHES_TO_MERGE
+	int i = 0;
+	while(i < 100){
+		if(i < 50)
+			pushMatch(to_merge1, &specArray[i]);
+		else
+			pushMatch(to_merge2, &specArray[i]);
+		i++;
+	}
+
+
+				// CHECK ENTRIES BEFORE
+	TEST_ASSERT(to_merge1->specsCount == 50);
+	TEST_ASSERT(to_merge2->specsCount == 50);
+	
+	mergeMatches(NULL, to_merge1, to_merge2);
+
+				// CHECK POINTERS
+	TEST_ASSERT(to_merge1 != NULL);
+	// TEST_ASSERT(to_merge2 == NULL);
+	
+	// printf("counts2: %d\n", to_merge2->specsCount);
+	// free(to_merge2);
+
+				// CHECK ENTRIES AFTER
+	TEST_ASSERT(to_merge1->specsCount == N);
+
+				// CHECK INPUT LINE
+	i = 0;
+	while(i < N){
+		TEST_ASSERT(to_merge1->specsTable[i] == &specArray[i]);
+		i++;
+	}
+
+
+	free(specArray);
+	deleteMatches(NULL, to_merge1);
+	// deleteMatches(NULL, to_merge2);
 }
+
+TEST_LIST = {
+	{"test_createMatches", test_createMatches},
+	{"test_pushMatches", test_pushMatches},
+	{"test_insertMatches", test_insertMatches},
+	{"test_deleteMatches", test_deleteMatches},
+	{"test_mergeMatches", test_mergeMatches},
+	{NULL, NULL}
+};

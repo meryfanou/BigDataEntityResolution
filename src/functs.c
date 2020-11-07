@@ -353,16 +353,10 @@ int readCSV(char* fName, hashTable* hashT, matchesInfo* allMatches){
                 count++;
                 continue;
             }
-            else if(spec2->matches->prev != NULL){
+            else{
                 swapSpecsMatches(spec1, spec2);
                 mergeMatches(allMatches, spec1->matches, spec2->matches);
                 spec2->matches = spec1->matches;
-            }
-            else{
-                // printf(" ------ SWAPED --------- \n");
-                swapSpecsMatches(spec2, spec1);
-                mergeMatches(allMatches, spec2->matches, spec1->matches);
-                spec1->matches = spec2->matches;
             }
         }
 

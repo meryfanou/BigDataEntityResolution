@@ -102,7 +102,6 @@ void pushMatch(myMatches* curMatch, mySpec* spec){
 void deleteMatches(matchesInfo* myInfo, myMatches* match){
 	if(match == NULL)
 		return;
-
 		// Fix list pointers
 	if(match->prev != NULL)
 		match->prev->next = match->next;
@@ -112,9 +111,16 @@ void deleteMatches(matchesInfo* myInfo, myMatches* match){
 	if(match->specsTable != NULL)
 		free(match->specsTable);
 
-	free(match);
 
-	myInfo->entries--;
+	if(myInfo != NULL){
+		if(myInfo->head == 	match)
+			myInfo->head = match->next;
+		free(match);
+
+		myInfo->entries--;
+	}
+	
+	match = NULL;
 }
 
 void deleteInfo(matchesInfo* myInfo){
@@ -143,13 +149,6 @@ void mergeMatches(matchesInfo* myInfo, myMatches* match1, myMatches* match2){
 
 	if(match1 == NULL || match2 == NULL)
 		return;
-	// Check if match 2 (to be deleteed after) is head
-	// if its is, swap
-	// if(match2->prev == NULL){
-	// 	mergeMatches(myInfo, match2, match1);
-	// 	return;
-	// }
-
 
 	// Combine matches Tables
 

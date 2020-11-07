@@ -8,8 +8,8 @@
 #include "../include/myMatches.h"
 #include "../include/functs.h"
 
-#define PATH_X "../camera_specs/2013_camera_specs/"
-#define PATH_W "../sigmod_large_labelled_dataset.csv"
+#define PATH_X "../testSpecs/camera_specs/2013_camera_specs/"
+#define PATH_W "../testSpecs/sigmod_large_labelled_dataset.csv"
 
 
 #define HASH_SIZE 10
@@ -28,7 +28,7 @@ int main(int argc, char** argv){
             // printf("i: %d, argc: %d\n", i, argc);
         }
     }
-    // printf("sliahcsdoh\n");
+    printf("sliahcsdoh\n");
 
 
     DIR         *datasetX = NULL;
