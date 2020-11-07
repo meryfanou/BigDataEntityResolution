@@ -29,7 +29,8 @@ struct specValue{
 
 // ------------------------------
 
-mySpec* specInit(char*, specInfo**, int);
+mySpec* specInit();
+mySpec* specCreate(char*, specInfo**, int);
 void deleteSpec(mySpec*);
 void updateSpecMatches(mySpec*, myMatches*);
 void printSpec(mySpec*);

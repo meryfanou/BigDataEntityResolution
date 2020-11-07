@@ -28,12 +28,12 @@ void runTests(to_test* myTests){
 	if(myTests == NULL)
 		return;
 
+	printf("\n");
 	int i = 0;
 	while(1){
 		to_test temp_test = myTests[i];
 		if(temp_test.name == NULL)
 			break;
-
 
 		printf("RUNNING: %s", temp_test.name);
 		temp_test.funct();

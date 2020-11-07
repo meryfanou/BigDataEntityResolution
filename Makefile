@@ -9,50 +9,53 @@ SRC = $(wildcard $(SRCDIR)/*.c)
 IDIR = include
 DEPS = $(wildcard $(IDIR)/*.h)
 ODIR = build
-
 TSTSDIR = tests
 TSTS = $(wildcard $(TSTSDIR)/*.c)
 
-# LES = $(SRC)/%.c
 
 $(ODIR)/%.o: $(SRCDIR)/%.c
-		@echo "Creating object " $@
+		@echo "\nCreating object " $@
 		$(CC) $(CCFLAGS) -c -o $@ $<
 
-$(TSTSDIR)/%.o: $(TSTSDIR)/%.c
-		@echo "Creating object " $@
+$(ODIR)/%.o: $(TSTSDIR)/%.c
+		@echo "\nCreating object " $@
 		$(CC) $(CCFLAGS) -c -o $@ $<
 
-all: clean tests_ main run
+#-------------------------------------------------------------------------#
+
+all: clean tests main run
 
 main: $(ODIR)/main.o $(ODIR)/mySpec.o $(ODIR)/myHash.o $(ODIR)/myMatches.o $(ODIR)/functs.o
-		@echo "Creating main"
+		@echo "\nCreating main"
 		$(CC) $(CCFLAGS) -o $(BDIR)/$@ $^
 
-# mySpec: $(ODIR)/mySpec.o $(ODIR)/main.o
-# 		@echo "Creating mySpec"
-# 		$(CC) $(CCFLAGS) -o $(BDIR)/$@ $^
-# myMatches: $(ODIR)/myMatches.o $(ODIR)/main.o $(ODIR)/mySpec.o
-# 		@echo "Creating myMatches"
-# 		$(CC) $(CCFLAGS) -o $(BDIR)/$@ $^
-# myHash: $(ODIR)/myHash.o $(ODIR)/main.o $(ODIR)/mySpec.o
-# 		@echo "Creating myHash"
-# 		$(CC) $(CCFLAGS) -o $(BDIR)/$@ $^
+run:	bin/main
+		./bin/main -o matches_log
 
-tests_:	
-		@echo "Creating tests_run .."
-# 		$(CC) $(CCFLAGS) -o run_tests $^
+valgrind: main
+		  valgrind ./bin/main -o matches_log
 
-# 		@echo "Running Unit Testing .."
-# 		../tests/run_tests
+#-------------------------------------------------------------------------#
+
+tests: MatchesList_test mySpec_test
+
+MatchesList_test: $(ODIR)/MatchesList_test.o $(ODIR)/myMatches.o $(ODIR)/mySpec.o
+					@echo "\nCreating MatchesList_test"
+					$(CC) $(CCFLAGS) -o $(BDIR)/$@ $^
+					@echo "\nRunning Unit Testing for myMatches"
+					./bin/MatchesList_test
+
+mySpec_test: $(ODIR)/mySpec_test.o $(ODIR)/mySpec.o $(ODIR)/myMatches.o
+			 @echo "\nCreating mySpec_test"
+			 $(CC) $(CCFLAGS) -o $(BDIR)/$@ $^
+			 @echo "\nRunning Unit Testing for mySpec"
+			 ./bin/mySpec_test
+
+#-------------------------------------------------------------------------#
 
 clean:
-		@echo "Cleaning up..."
+		@echo "\nCleaning up..."
 		$(RM) $(ODIR)/*
 		$(RM) $(BDIR)/*
-		$(RM) $(TSTSDIR)/*.o
+		#$(RM) $(TSTSDIR)/*.o
 		rm -r -f Outputs
-
-
-run:	bin/main
-		time ./bin/main -o matches_log
