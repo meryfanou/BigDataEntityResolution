@@ -49,7 +49,6 @@ void test_insertMatches(void){
 
 		i++;
 	}
-
 						// TEST LIFO
 	if(flag == 0){
 		i = N - 1;
@@ -102,7 +101,6 @@ void test_deleteMatches(void){
 		testMatches = matchesAdd(list, &array[i]);
 		i++;
 	}
-
 
 			// TEST DELETION FROM SECOND NODE
 	testMatches = list->head->next;
