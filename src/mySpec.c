@@ -36,13 +36,15 @@ void updateSpecMatches(mySpec* spec, myMatches* matches){
 }
 
 void deleteSpec(mySpec* spec){
-	free(spec->specID);
+	if(spec->specID != NULL)
+		free(spec->specID);
 
 	for(int i=0; i<spec->propNum; i++){
 		specDelInfo((spec->properties)[i]);
 		free((spec->properties)[i]);
 	}
-	free(spec->properties);
+	if(spec->properties != NULL)
+		free(spec->properties);
 
 	//if(spec->matches != NULL)
 	//	free(spec->matches);

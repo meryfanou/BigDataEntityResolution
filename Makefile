@@ -37,19 +37,25 @@ valgrind: main
 
 #-------------------------------------------------------------------------#
 
-tests: MatchesList_test mySpec_test
+tests: myMatchesList_test mySpec_test myHash_test
 
-MatchesList_test: $(ODIR)/MatchesList_test.o $(ODIR)/myMatches.o $(ODIR)/mySpec.o
-					@echo "\nCreating MatchesList_test"
+myMatchesList_test: $(ODIR)/MatchesList_test.o $(ODIR)/myMatches.o $(ODIR)/mySpec.o
+					@echo "\nCreating myMatchesList_test"
 					$(CC) $(CCFLAGS) -o $(BDIR)/$@ $^
 					@echo "\nRunning Unit Testing for myMatches"
-					./bin/MatchesList_test
+					./bin/myMatchesList_test
 
 mySpec_test: $(ODIR)/mySpec_test.o $(ODIR)/mySpec.o $(ODIR)/myMatches.o
 			 @echo "\nCreating mySpec_test"
 			 $(CC) $(CCFLAGS) -o $(BDIR)/$@ $^
 			 @echo "\nRunning Unit Testing for mySpec"
 			 ./bin/mySpec_test
+
+myHash_test: $(ODIR)/myHash_test.o $(ODIR)/myHash.o $(ODIR)/mySpec.o
+			 @echo "\nCreating myHash_test"
+			 $(CC) $(CCFLAGS) -o $(BDIR)/$@ $^
+			 @echo "\nRunning Unit Testing for myhash"
+			 ./bin/myHash_test
 
 #-------------------------------------------------------------------------#
 

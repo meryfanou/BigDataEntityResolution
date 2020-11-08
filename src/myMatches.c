@@ -120,7 +120,7 @@ void deleteMatches(matchesInfo* myInfo, myMatches* match){
 		myInfo->entries--;
 	}
 	
-	match = NULL;
+	// match = NULL;
 }
 
 void deleteInfo(matchesInfo* myInfo){
@@ -179,7 +179,6 @@ void mergeMatches(matchesInfo* myInfo, myMatches* match1, myMatches* match2){
 
 		// Delete match2
 	deleteMatches(myInfo, match2);  //Note: deleteMatches() DOES fix the list pointers !!
-
 	// printf(" .. DONE !!\n");
 }
 

@@ -19,7 +19,7 @@ hashTable* hash_create(int HashSize, int BucSize){
 	newTable->tableSize = HashSize;
 
 	newTable->maxRecs = (BucSize - sizeof(bucket*)) / sizeof(record);
-	
+	newTable->entries = 0;
 	// printf("MaxRecs: %d\n", newTable->maxRecs);
 	// printf("BucSize: %d\n", BucSize);
 	// printf("tableSize: %d\n", HashSize);
@@ -33,7 +33,7 @@ void hash_destroy(hashTable* table){
 	int i = 0;
 	while(i < table->tableSize){
 		if(table->myTable[i] != NULL){
-			bucket_destroy(table->myTable[i]);
+			bucket_destroy(table, table->myTable[i]);
 		}
 		i++;
 	}
@@ -63,6 +63,9 @@ int hash1(char* key){
 
 void hash_add(hashTable* table, mySpec* newSpec, int hash){
 
+	if(newSpec == NULL)
+		return;
+
 	int cell = hash % (table->tableSize);		/// FIND HASH TABLE CELL
 	if(cell < 0)
 		cell = 0;
@@ -88,6 +91,8 @@ void hash_add(hashTable* table, mySpec* newSpec, int hash){
 
 	if(flag == 1){
 		// specID duplicates should not exist!
+		printf("Error - Duplicate key found -> Table not updated !!\n");
+		return;
 	}
 	else{
 		if(tempBuc->cur >= table->maxRecs){			/// CHECK IF ITS FULL
@@ -96,6 +101,7 @@ void hash_add(hashTable* table, mySpec* newSpec, int hash){
 		}
 
 		bucket_add(tempBuc, newSpec);					/// ADD AT BUCKET
+		table->entries++;
 	}
 
 }
@@ -166,13 +172,17 @@ void bucket_print(bucket* b){
 	}
 }
 
-void bucket_destroy(bucket* buc){				/// FREE BUC
-	if(buc->next != NULL)
-		bucket_destroy(buc->next);
+void bucket_destroy(hashTable* hash, bucket* buc){		/// FREE BUC
+	if(buc->next != NULL){
+		bucket_destroy(hash, buc->next);
+		buc->next = NULL;
+	}
 
-	record_destroy(buc->rec);
+	if(buc->rec != NULL)
+		record_destroy(hash, buc->rec);
+
 	free(buc);
-
+	buc = NULL;
 }
 
 
@@ -191,13 +201,19 @@ void record_print(record* rec){
 	// printSpec(rec->spec);
 }
 
-void record_destroy(record* rec){				/// FREE REC
+void record_destroy(hashTable* hash, record* rec){				/// FREE REC
 	if(rec->next != NULL){
-		record_destroy(rec->next);
+		record_destroy(hash, rec->next);
+		rec->next = NULL;
 	}
 
-	deleteSpec(rec->spec);
+	if(rec->spec != NULL){
+		deleteSpec(rec->spec);
+		if(hash != NULL)
+			hash->entries--;
+	}
 	free(rec);
+	rec = NULL;
 }
 
 mySpec* findRecord_byKey(hashTable* table, char* key){
@@ -207,12 +223,12 @@ mySpec* findRecord_byKey(hashTable* table, char* key){
 	// printf("cell: %d, tSize: %d, maxRecs/buc: %d\n", cell, table->tableSize, table->maxRecs);
 
 	if(table == NULL){
-		printf("edw\n");
+		// printf("edw\n");
 		return NULL;
 	}
 
 	if(table->myTable[cell] == NULL){
-		printf("edw edw\n");
+		// printf("edw edw\n");
 		return NULL;
 	}
 

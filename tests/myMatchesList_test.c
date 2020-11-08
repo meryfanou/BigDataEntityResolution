@@ -153,7 +153,6 @@ void test_mergeMatches(void){
 
 				// CHECK POINTERS
 	TEST_ASSERT(to_merge1 != NULL);
-	// TEST_ASSERT(to_merge2 == NULL);
 	
 	// printf("counts2: %d\n", to_merge2->specsCount);
 	// free(to_merge2);

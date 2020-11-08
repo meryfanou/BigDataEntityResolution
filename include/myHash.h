@@ -9,6 +9,7 @@ typedef struct record record;
 
 struct hashTable{
 	bucket** myTable;
+	int entries;
 	int maxRecs;
 	int bucSize;
 	int tableSize;
@@ -34,12 +35,12 @@ int hash1(char* key);
 
 bucket* bucket_create(int size);
 void bucket_add(bucket* buc, mySpec* newSpec);
-void bucket_destroy(bucket* buc);
+void bucket_destroy(hashTable*, bucket* buc);
 void bucket_print(bucket* b);
 record* search_bucket(bucket*, char*);
 
 record* record_create(mySpec* spec);
-void record_destroy(record* rec);
+void record_destroy(hashTable*, record* rec);
 void record_print(record* rec);
 
 mySpec* findRecord_byKey(hashTable*, char*);
