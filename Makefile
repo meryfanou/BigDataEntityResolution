@@ -63,5 +63,4 @@ clean:
 		@echo "\nCleaning up..."
 		$(RM) $(ODIR)/*
 		$(RM) $(BDIR)/*
-		#$(RM) $(TSTSDIR)/*.o
 		rm -r -f Outputs

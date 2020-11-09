@@ -1,7 +1,5 @@
 /* Hash_test.c */
 
-/*MatchesList_test.c*/
-
 #include <stdlib.h>
 #include "../include/myMatches.h"
 #include "../include/mySpec.h"
