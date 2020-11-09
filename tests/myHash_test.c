@@ -142,55 +142,82 @@ void test_searchHash(void){
 
 }
 
-// void test_deleteHash(void){
+void test_deleteHash(void){
 
-// 	int hashSize = 2;
-// 	int bucSize = 100;
+	int hashSize = 2;
+	int bucSize = 100;
 
-// 	hashTable* hash = hash_create(hashSize, bucSize);
+	hashTable* hash = hash_create(hashSize, bucSize);
 
-// 	// ~~~~~~ CHECK SEARCHING HASH FOR KEY, by key
+	int N = 100;
+	mySpec** array = malloc(N*sizeof(mySpec*));
 
-// 	mySpec* spec1 = specCreate("mple", NULL, 0);
-// 	mySpec* spec2 = specCreate("mple1", NULL, 0);
+		// Create specs using distinct keys
+	int i = 0;
+	while(i < N){
+		char to_add[100];
+		sprintf(to_add, "%d", i);
+		
+		char* mpla = malloc(4+strlen(to_add)+1);
+		memset(mpla, 0, 4+strlen(to_add)+1);
+		
+		strcat(mpla, "mpla");
+		strcat(mpla, to_add);
 
-// 	hash_add(hash, spec1);
-// 	hash_add(hash, spec1);
+		array[i] = specCreate(mpla, NULL, 0);
+		
+		hash_add(hash, array[i], hash1(array[i]->specID));
 
-// 	bucket* buc = NULL;
-// 	record* rec = NULL;
+		i++;
+		free(mpla);
+	}
 
-// 	// ~~~~~~ TEST DESTROYING LAST RECORD FROM BUCK 0
-
-// 	buc = hash->myTable[0];
-// 	while(buc->next != NULL){
-// 		buc = buc->next;
-// 	}
-// 	rec = buc->rec;
-// 	while(rec->next != NULL){
-// 		rec = rec->next;
-// 	}
-// 	record_destroy(hash, rec);
-// 	TEST_ASSERT(hash->entries == N-1);
-
-// 	// ~~~~~~ TEST DESTROYING A FULL BUCKET
-// 	int keep = buc->cur-1;
-// 	bucket_destroy(hash, buc);
-// 	TEST_ASSERT(hash->entries == N-keep);
-
+	bucket* buc = NULL;
+	record* rec = NULL;
+	bucket* temp_buc = NULL;
+	record* temp_rec = NULL;
 
 
-// 	hash_destroy(hash);
-// 	free(array);
 
-// }
+	buc = hash->myTable[0];
+	while(buc->next != NULL){
+		if(buc->next->next == NULL)
+			temp_buc = buc;
+		buc = buc->next;
+	}
+	rec = buc->rec;
+	while(rec->next != NULL){
+		if(rec->next->next == NULL)
+			temp_rec = rec;
+		rec = rec->next;
+	}
+
+	// ~~~~~~ TEST DESTROYING LAST RECORD FROM BUCK 0
+	record_destroy(hash, rec);
+	temp_rec->next = NULL;
+	TEST_ASSERT(hash->entries == N-1);
+
+	// ~~~~~~ TEST DESTROYING A FULL BUCKET
+	int keep = buc->cur;
+	bucket_destroy(hash, buc);
+	temp_buc->next = NULL;
+	TEST_ASSERT(hash->entries == N-keep);
+
+
+	// ~~~~~~ TEST DESTROYING FULL BUCKET CHAIN at buc[1]
+	bucket_destroy(hash, hash->myTable[1]);
+	hash->myTable[1] = NULL;
+	TEST_ASSERT(hash->entries < N-keep);
+
+	hash_destroy(hash);
+	free(array);
+}
 
 
 TEST_LIST = {
 	{"test_createHash", test_createHash},
 	{"test_addHash", test_addHash},
-	// {"test_deleteHash", test_deleteHash},
+	{"test_deleteHash", test_deleteHash},
 	{"test_searchHash", test_searchHash},
-	// {"test_mergeMatches", test_mergeMatches},
 	{NULL, NULL}
 };

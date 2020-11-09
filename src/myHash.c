@@ -34,6 +34,7 @@ void hash_destroy(hashTable* table){
 	while(i < table->tableSize){
 		if(table->myTable[i] != NULL){
 			bucket_destroy(table, table->myTable[i]);
+			table->myTable[i] = NULL;
 		}
 		i++;
 	}
@@ -178,8 +179,10 @@ void bucket_destroy(hashTable* hash, bucket* buc){		/// FREE BUC
 		buc->next = NULL;
 	}
 
-	if(buc->rec != NULL)
+	if(buc->rec != NULL){
 		record_destroy(hash, buc->rec);
+		buc->rec = NULL;
+	}
 
 	free(buc);
 	buc = NULL;

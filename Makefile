@@ -39,7 +39,7 @@ valgrind: main
 
 tests: myMatchesList_test mySpec_test myHash_test
 
-myMatchesList_test: $(ODIR)/MatchesList_test.o $(ODIR)/myMatches.o $(ODIR)/mySpec.o
+myMatchesList_test: $(ODIR)/myMatchesList_test.o $(ODIR)/myMatches.o $(ODIR)/mySpec.o
 					@echo "\nCreating myMatchesList_test"
 					$(CC) $(CCFLAGS) -o $(BDIR)/$@ $^
 					@echo "\nRunning Unit Testing for myMatches"
