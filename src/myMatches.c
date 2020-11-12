@@ -118,6 +118,8 @@ void deleteMatches(matchesInfo* myInfo, myMatches* match){
 		free(match);
 
 		myInfo->entries--;
+	}else{
+		free(match);
 	}
 	
 	// match = NULL;

@@ -5,6 +5,7 @@
 #include "../include/mySpec.h"
 #include "../include/myHash.h"
 #include "../include/acutest.h"
+#include "../include/tests.h"
 
 void test_createHash(void){
 
@@ -217,5 +218,13 @@ TEST_LIST = {
 	{"test_addHash", test_addHash},
 	{"test_deleteHash", test_deleteHash},
 	{"test_searchHash", test_searchHash},
+	{"test_createMatches", test_createMatches},
+	{"test_pushMatches", test_pushMatches},
+	{"test_insertMatches", test_insertMatches},
+	{"test_deleteMatches", test_deleteMatches},
+	{"test_mergeMatches", test_mergeMatches},
+	{"test_specInit", test_specInit},
+	{"test_specCreate", test_specCreate},
+    {"test_updateSpecMatches", test_updateSpecMatches},
 	{NULL, NULL}
 };

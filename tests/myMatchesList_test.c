@@ -1,5 +1,7 @@
 /*MatchesList_test.c*/
 
+#define TEST_NO_MAIN
+
 #include <stdlib.h>
 #include "../include/myMatches.h"
 #include "../include/mySpec.h"
@@ -42,7 +44,7 @@ void test_pushMatches(void){
 	}
 
 	deleteMatches(NULL, node);
-
+	free(array);
 }
 
 void test_insertMatches(void){
@@ -56,6 +58,7 @@ void test_insertMatches(void){
 
 	int i = 0;
 	while(i < N){
+		array[i].matches = NULL;
 		testMatches = matchesAdd(list, &array[i]);
 
 						// TEST SIZE
@@ -93,6 +96,7 @@ void test_deleteMatches(void){
 			// FILL STRUCT (ALREADY CHECKED INSERT WORKS)
 	int i = 0;
 	while(i < N){
+		array[i].matches = NULL;
 		testMatches = matchesAdd(list, &array[i]);
 		i++;
 	}
@@ -172,7 +176,7 @@ void test_mergeMatches(void){
 	deleteMatches(NULL, to_merge1);
 	// deleteMatches(NULL, to_merge2);
 }
-
+/*
 TEST_LIST = {
 	{"test_createMatches", test_createMatches},
 	{"test_pushMatches", test_pushMatches},
@@ -181,3 +185,4 @@ TEST_LIST = {
 	{"test_mergeMatches", test_mergeMatches},
 	{NULL, NULL}
 };
+*/

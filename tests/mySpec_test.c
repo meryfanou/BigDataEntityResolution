@@ -1,10 +1,10 @@
 /*mySpec_test.c*/
 
+#define TEST_NO_MAIN
+
 #include <stdlib.h>
 #include "../include/mySpec.h"
-#include "../include/myuTesting.h"
 #include "../include/acutest.h"
-
 
 void test_specInit(void){
 
@@ -35,11 +35,11 @@ void test_specInit(void){
     spec = NULL;
 }
 
-void test_specCreate(){
+void test_specCreate(void){
 
     int     n = 100;
     char    **array = malloc(n*sizeof(char*));
-    mySpec  *spec = specInit();
+    mySpec  *spec;
 
     for(int i=0; i<n; i++){
         array[i] = strdup("");
@@ -59,7 +59,7 @@ void test_specCreate(){
     free(array);
 }
 
-void test_updateSpecMatches(){
+void test_updateSpecMatches(void){
 
     int         n = 100;
     char        **array = malloc(n*sizeof(char*));
@@ -102,10 +102,11 @@ void test_updateSpecMatches(){
     free(array);
 }
 
-
+/*
 TEST_LIST = {
     {"test_specInit", test_specInit},
 	{"test_specCreate", test_specCreate},
     {"test_updateSpecMatches", test_updateSpecMatches},
 	{NULL, NULL}
 };
+*/
