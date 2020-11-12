@@ -14,4 +14,4 @@ specInfo** readFile(FILE*, int*, specInfo**);
 
 int readCSV(char* , hashTable* , matchesInfo*); //reads csv, creates matches at hash values
 
-void swapSpecsMatches(mySpec*, mySpec*);
+int swapSpecsMatches(mySpec*, mySpec*);

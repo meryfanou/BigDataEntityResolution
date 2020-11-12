@@ -327,7 +327,11 @@ int readCSV(char* fName, hashTable* hashT, matchesInfo* allMatches){
     memset(line, 0, 100);
 
     int count = 0;
+    int failed = 0;
+    int passed = 0;
+    int skipped = 0;
     while(fgets(line, 100, fpin) != NULL){
+        
         // printf("count: %d\n", count);
                         // GET SPEC'S KEYS
         char* key1 = strtok(line, ",\n");
@@ -354,11 +358,21 @@ int readCSV(char* fName, hashTable* hashT, matchesInfo* allMatches){
                 continue;
             }
             else{
-                swapSpecsMatches(spec1, spec2);
-                mergeMatches(allMatches, spec1->matches, spec2->matches);
-                spec2->matches = spec1->matches;
+                if(swapSpecsMatches(spec1, spec2)){
+                    mergeMatches(allMatches, spec1->matches, spec2->matches);
+                    spec2->matches = spec1->matches;
+                    passed++;
+                }
+                else
+                    failed++;
+                
             }
         }
+        else
+        {
+            skipped++;
+        }
+        
 
         memset(line, 0, 100);
 
@@ -367,10 +381,16 @@ int readCSV(char* fName, hashTable* hashT, matchesInfo* allMatches){
     
     fclose(fpin);
 
+    // Uncomment to print stats
+    // printf ("\n\t(total: %d, skipped: %d, failed: %d, passed: %d)\n\t", count, skipped, failed, passed);
+
     return 1;
 }
 
-void swapSpecsMatches(mySpec* dest, mySpec* source){
+int swapSpecsMatches(mySpec* dest, mySpec* source){
+
+    if(dest == NULL || source == NULL)
+        return -1;
 
     // printf("\tSWAPING VALUES ... \n");
 
@@ -383,6 +403,7 @@ void swapSpecsMatches(mySpec* dest, mySpec* source){
         i++;
     }
 
+    return 1;
     // printf("\t\t .. DONE !!\n");
 
 }
