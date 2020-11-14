@@ -23,7 +23,7 @@ $(ODIR)/%.o: $(TSTSDIR)/%.c
 
 #-------------------------------------------------------------------------#
 
-all: clean tests main run
+all: dirs clean tests main run
 
 main: $(ODIR)/main.o $(ODIR)/mySpec.o $(ODIR)/myHash.o $(ODIR)/myMatches.o $(ODIR)/functs.o
 		@echo "\nCreating main"
@@ -41,9 +41,16 @@ all_tests:  $(ODIR)/myHash_test.o $(ODIR)/myMatchesList_test.o $(ODIR)/mySpec_te
 			@echo "\nCreating Unit Testing Files"
 			$(CC) $(CCFLAGS) -o $(BDIR)/$@ $^
 
-tests:	all_tests
+tests:	dirs	all_tests
 		@echo "\nRunning Unit Testing.."
 		./bin/all_tests
+
+#-------------------------------------------------------------------------#
+
+dirs:
+		@echo "\nCreating Dirs.."
+		mkdir -p $(BDIR)
+		mkdir -p $(ODIR)
 
 #-------------------------------------------------------------------------#
 
