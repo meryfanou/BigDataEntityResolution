@@ -2,14 +2,15 @@
 #include <stdlib.h>
 #include <string.h>
 #include <dirent.h>
+#include <signal.h>
 #include "../include/mySpec.h"
 #include "../include/myMatches.h"
 #include "../include/myHash.h"
 #include "../include/myMatches.h"
 #include "../include/functs.h"
 
-#define PATH_X "../testSpecs/camera_specs/2013_camera_specs/"
-#define PATH_W "../testSpecs/sigmod_large_labelled_dataset.csv"
+#define PATH_X "../camera_specs/2013_camera_specs/"
+#define PATH_W "../sigmod_large_labelled_dataset.csv"
 
 
 #define HASH_SIZE 10
@@ -25,40 +26,101 @@ int main(int argc, char** argv){
                 outputFile = strdup(argv[i+1]);
             }
             i++;
-            // printf("i: %d, argc: %d\n", i, argc);
         }
     }
 
-    DIR         *datasetX = NULL;
+    DIR                 *datasetX = NULL;
+    struct sigaction    act;
+    sigset_t            block_mask;
 
-    printf("\nBuilding Hash ...");
+    received_signal = 0;
+
+    sigemptyset(&(act.sa_mask));
+	act.sa_flags = 0;
+    act.sa_handler = sig_int_quit_handler;
+	if(sigaction(SIGINT,&act,NULL) < 0 || sigaction(SIGQUIT,&act,NULL) < 0)
+	{
+		perror("sigaction");
+		exit(-1);
+	}
+    sigemptyset(&block_mask);
+	sigaddset(&block_mask,SIGINT);
+	sigaddset(&block_mask,SIGQUIT);
+
+    printf("\nBuilding Hash ...\n");
     hashTable* hashT = hash_create(HASH_SIZE, BUC_SIZE);
     matchesInfo* allMatches = matchesInfoInit();
 
+    if(received_signal == 1){
+        printf("\nCleaning Memory ...\n");
+        deleteInfo(allMatches);
+        hash_destroy(hashT);
+        if(outputFile != NULL)
+            free(outputFile);
+
+        printf("Exiting after receiving termination signal..\n");
+        exit(-2);
+    }
 
     // Open datasetX
     if((datasetX = opendir(PATH_X)) == NULL){
         perror("opendir");
-        exit(-1);
+        printf("\nCleaning Memory ...\n");
+        deleteInfo(allMatches);
+        hash_destroy(hashT);
+        if(outputFile != NULL)
+            free(outputFile);
+        exit(-3);
     }
 
     // Read specs from dataset X and store them using hashT
-    readDataset(datasetX, PATH_X, &hashT, allMatches);
+    // If a termination signal was received, return 1. If an error occured, return negative value. Otherwise return 0
+    int check = readDataset(datasetX, PATH_X, &hashT, allMatches);
+
+    if(received_signal == 1 || check != 0){
+        printf("\nCleaning Memory ...\n");
+        deleteInfo(allMatches);
+        hash_destroy(hashT);
+        if(outputFile != NULL)
+            free(outputFile);
+
+        closedir(datasetX);
+
+        if(check == 1)
+            printf("Exiting after receiving termination signal..\n");
+
+        exit(-4);
+    }
 
     closedir(datasetX);
 
-    printf("\t.. DONE !!\n");
+    printf("  \t\t.. DONE !!\n");
 
 
-    printf("Reading CSV ...");
-    readCSV(PATH_W, hashT, allMatches);
-    printf("  \t.. DONE !!\n");
+    printf("Reading CSV ...\n");
+    // If a termination signal was received, return 1. If an error occured, return negative value. Otherwise return 0
+    check = readCSV(PATH_W, hashT, allMatches);
+
+    if(received_signal == 1 || check != 0){
+        printf("\nCleaning Memory ...\n");
+        deleteInfo(allMatches);
+        hash_destroy(hashT);
+        if(outputFile != NULL)
+            free(outputFile);
+
+        if(check == 1)
+            printf("Exiting after receiving termination signal..\n");
+
+        exit(-5);
+    }
+
+    printf("  \t\t.. DONE !!\n");
 
     // EXTARCT PAIRS
     extractMatches(allMatches, outputFile);
 
     // FREE MEM
-    printf("Cleaning Memory ...");
+    printf("\nCleaning Memory ...\n");
     deleteInfo(allMatches);
     hash_destroy(hashT);
 

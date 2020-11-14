@@ -8,10 +8,14 @@
 #include "myMatches.h"
 #include "mySpec.h"
 
-void readDataset(DIR*, char*, hashTable**, matchesInfo*);
+int received_signal;
+
+int readDataset(DIR*, char*, hashTable**, matchesInfo*);
 
 specInfo** readFile(FILE*, int*, specInfo**);
 
 int readCSV(char* , hashTable* , matchesInfo*); //reads csv, creates matches at hash values
 
 int swapSpecsMatches(mySpec*, mySpec*);
+
+void sig_int_quit_handler(int);

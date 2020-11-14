@@ -2,12 +2,13 @@
 #include <stdlib.h>
 #include <string.h>
 #include <dirent.h>
+#include <signal.h>
 #include "../include/functs.h"
 #include "../include/mySpec.h"
 #include "../include/myHash.h"
 
 
-void readDataset(DIR *datasetX, char *path, hashTable **hashT, matchesInfo* allMatches){
+int readDataset(DIR *datasetX, char *path, hashTable **hashT, matchesInfo* allMatches){
     int             propNum = -1;
     char            *dirpath = NULL, *filepath = NULL;
     specInfo        **properties = NULL;
@@ -15,8 +16,29 @@ void readDataset(DIR *datasetX, char *path, hashTable **hashT, matchesInfo* allM
     FILE            *specFd = NULL;
     struct dirent   *siteDir = NULL, *specFile = NULL;
 
+    struct sigaction    act;
+    sigset_t            block_mask;
+
+    received_signal = 0;
+
+    sigemptyset(&(act.sa_mask));
+	act.sa_flags = 0;
+    act.sa_handler = sig_int_quit_handler;
+	if(sigaction(SIGINT,&act,NULL) < 0 || sigaction(SIGQUIT,&act,NULL) < 0)
+	{
+		perror("sigaction");
+		return -1;
+	}
+    sigemptyset(&block_mask);
+	sigaddset(&block_mask,SIGINT);
+	sigaddset(&block_mask,SIGQUIT);
+
     // Read from datasetX
     while((siteDir = readdir(datasetX)) != NULL){
+        // Check for signal termination
+        if(received_signal == 1)
+            return 1;
+
         // Ignore . and ..
         if(!strcmp(siteDir->d_name, ".") || !strcmp(siteDir->d_name, ".."))
             continue;
@@ -29,11 +51,19 @@ void readDataset(DIR *datasetX, char *path, hashTable **hashT, matchesInfo* allM
         // Open current directory (website)
         if((sitePtr = opendir(dirpath)) == NULL){
             perror("opendir");
-            exit(-1);
+            free(dirpath);
+            return -2;
         }
 
         // Read the files in the directory
         while((specFile = readdir(sitePtr)) != NULL){
+            // Check for signal termination
+            if(received_signal == 1){
+                free(dirpath);
+                closedir(sitePtr);
+                return 1;
+            }
+
             // Ignore . and ..
             if(!strcmp(specFile->d_name, ".") || !strcmp(specFile->d_name, ".."))
                 continue;
@@ -47,7 +77,10 @@ void readDataset(DIR *datasetX, char *path, hashTable **hashT, matchesInfo* allM
             // Open current file (spec)
             if((specFd = fopen(filepath, "r")) == NULL){
                 perror("fopen");
-                exit(-2);
+                free(filepath);
+                free(dirpath);
+                closedir(sitePtr);
+                return -3;
             }
 
             char    *filename = strdup(specFile->d_name);
@@ -64,15 +97,23 @@ void readDataset(DIR *datasetX, char *path, hashTable **hashT, matchesInfo* allM
             // Get array with the properties of current spec
             properties = readFile(specFd, &propNum, properties);
             propNum++;
+            // Check for signal termination
+            if(properties == NULL){
+                free(specID);
+                free(filepath);
+                fclose(specFd);
+                free(dirpath);
+                closedir(sitePtr);
+                return 1;
+            }
 
             // Create spec node
             mySpec      *newSpec = specCreate(specID, properties, propNum);
             myMatches   *newMatch = NULL;
-            //printSpec(newSpec);
+
             hash_add(*hashT, newSpec, hash1(newSpec->specID));
             newMatch = matchesAdd(allMatches, newSpec);
             updateSpecMatches(newSpec, newMatch);
-            //deleteSpec(newSpec);
 
             fclose(specFd);
             free(filepath);
@@ -92,15 +133,41 @@ void readDataset(DIR *datasetX, char *path, hashTable **hashT, matchesInfo* allM
         free(dirpath);
         dirpath = NULL;
     }
+
+    return 0;
 }
 
 
 specInfo** readFile(FILE *specFd, int *propNum, specInfo **properties){
     char    line[512];
 
+    struct sigaction    act;
+    sigset_t            block_mask;
+
+    received_signal = 0;
+
+    sigemptyset(&(act.sa_mask));
+	act.sa_flags = 0;
+    act.sa_handler = sig_int_quit_handler;
+
+    sigemptyset(&block_mask);
+	sigaddset(&block_mask,SIGINT);
+	sigaddset(&block_mask,SIGQUIT);
+
     // Read spec's properties
     fgets(line, sizeof(line), specFd);
     while(line != NULL){
+        // Check for signal termination
+        if(received_signal == 1){
+            for(int i=0; i<=(*propNum); i++){
+                specDelInfo(properties[i]);
+                free(properties[i]);
+            }
+            free(properties);
+
+            return NULL;
+        }
+
         // Ignore '{' and '}' lines in json file
         if(line[0] == '{'){
             fgets(line, sizeof(line), specFd);
@@ -115,10 +182,34 @@ specInfo** readFile(FILE *specFd, int *propNum, specInfo **properties){
 
         // Seperate the key from the value in the ("key" : "value") pair
         while(index < 2){
+            // Check for signal termination
+            if(received_signal == 1){
+                for(int i=0; i<=(*propNum); i++){
+                    specDelInfo(properties[i]);
+                    free(properties[i]);
+                }
+                free(properties);
+
+                return NULL;
+            }
+
             need_extra = 0;
 
             // Remove extra \" and , from the string
             while((token = strtok_r(rest, "\"", &rest)) != NULL){
+                // Check for signal termination
+                if(received_signal == 1){
+                    if(str != NULL)
+                        free(str);
+                    for(int i=0; i<=(*propNum); i++){
+                        specDelInfo(properties[i]);
+                        free(properties[i]);
+                    }
+                    free(properties);
+
+                    return NULL;
+                }
+
                 // If it is the end of the key string or the value string
                 if(!strcmp(token,": ") || !strcmp(token,": [\n") || !strcmp(token,",\n") || !strcmp(token,"\n")){
                     if(!strcmp(token, ": [\n"))
@@ -172,11 +263,37 @@ specInfo** readFile(FILE *specFd, int *propNum, specInfo **properties){
                     prev = NULL;
 
                     while(need_extra){
+                        // Check for signal termination
+                        if(received_signal == 1){
+                            if(str != NULL)
+                                free(str);
+                            for(int i=0; i<=(*propNum); i++){
+                                specDelInfo(properties[i]);
+                                free(properties[i]);
+                            }
+                            free(properties);
+
+                            return NULL;
+                        }
+
                         fgets(line, sizeof(line), specFd);
                         rest = line;
 
                         // Remove extra \" and , from the string
                         while((token = strtok_r(rest, "\"", &rest)) != NULL){
+                            // Check for signal termination
+                            if(received_signal == 1){
+                                if(str != NULL)
+                                    free(str);
+                                for(int i=0; i<=(*propNum); i++){
+                                    specDelInfo(properties[i]);
+                                    free(properties[i]);
+                                }
+                                free(properties);
+
+                                return NULL;
+                            }
+
                             // Read from the file until ']' is found
                             if(!strcmp(token,"],\n") || !strcmp(token,"    ],\n") || !strcmp(token,"]\n") || !strcmp(token,"    ]\n")){
                                 if(str != NULL)
@@ -219,11 +336,37 @@ specInfo** readFile(FILE *specFd, int *propNum, specInfo **properties){
 
                 // If the value is a string
                 while(need_extra){
+                    // Check for signal termination
+                    if(received_signal == 1){
+                        if(str != NULL)
+                            free(str);
+                        for(int i=0; i<=(*propNum); i++){
+                            specDelInfo(properties[i]);
+                            free(properties[i]);
+                        }
+                        free(properties);
+
+                        return NULL;
+                    }
+
                     fgets(line, sizeof(line), specFd);
                     rest = line;
 
                     // Remove extra \" and , from the string
                     while((token = strtok_r(rest, "\"", &rest)) != NULL){
+                        // Check for signal termination
+                        if(received_signal == 1){
+                            if(str != NULL)
+                                free(str);
+                            for(int i=0; i<=(*propNum); i++){
+                                specDelInfo(properties[i]);
+                                free(properties[i]);
+                            }
+                            free(properties);
+
+                            return NULL;
+                        }
+
                         // Read until the end of the string (and the line) is reached
                         if(!strcmp(token,",\n") || !strcmp(token,"\n")){
                             need_extra = 0;
@@ -259,6 +402,7 @@ specInfo** readFile(FILE *specFd, int *propNum, specInfo **properties){
             // Store the key
             if(index == 0){
                 (properties[*propNum])->key = strdup(str);
+                (properties[*propNum])->values = NULL;
             }
             else{
                 // If the value string is an 'array' of strings, will keep a list of the values
@@ -267,6 +411,19 @@ specInfo** readFile(FILE *specFd, int *propNum, specInfo **properties){
 
                     specValue   *head = NULL, *current = NULL, *prev = NULL;
                     while((token = strtok_r(temp, "\n", &temp)) != NULL){
+                        // Check for signal termination
+                        if(received_signal == 1){
+                            if(str != NULL)
+                                free(str);
+                            for(int i=0; i<=(*propNum); i++){
+                                specDelInfo(properties[i]);
+                                free(properties[i]);
+                            }
+                            free(properties);
+
+                            return NULL;
+                        }
+
                         if(!strcmp(token, "[") || !strcmp(token, "    ]") || !strcmp(token, "    ],"))
                             continue;
 
@@ -310,6 +467,23 @@ specInfo** readFile(FILE *specFd, int *propNum, specInfo **properties){
 }
 
 int readCSV(char* fName, hashTable* hashT, matchesInfo* allMatches){
+
+    struct sigaction    act;
+    sigset_t            block_mask;
+
+    received_signal = 0;
+
+    sigemptyset(&(act.sa_mask));
+	act.sa_flags = 0;
+    act.sa_handler = sig_int_quit_handler;
+	if(sigaction(SIGINT,&act,NULL) < 0 || sigaction(SIGQUIT,&act,NULL) < 0)
+	{
+		perror("sigaction");
+		return -1;
+	}
+    sigemptyset(&block_mask);
+	sigaddset(&block_mask,SIGINT);
+	sigaddset(&block_mask,SIGQUIT);
     
             // READ FILE
     FILE* fpin = NULL;
@@ -317,7 +491,8 @@ int readCSV(char* fName, hashTable* hashT, matchesInfo* allMatches){
 
     if(fpin == NULL){
         printf("Can't Open CSV File !\n");
-        return -1;
+        fclose(fpin);
+        return -2;
     }
 
 
@@ -331,6 +506,10 @@ int readCSV(char* fName, hashTable* hashT, matchesInfo* allMatches){
     int passed = 0;
     int skipped = 0;
     while(fgets(line, 100, fpin) != NULL){
+        if(received_signal == 1){
+            fclose(fpin);
+            return 1;
+        }
         
         // printf("count: %d\n", count);
                         // GET SPEC'S KEYS
@@ -384,7 +563,7 @@ int readCSV(char* fName, hashTable* hashT, matchesInfo* allMatches){
     // Uncomment to print stats
     // printf ("\n\t(total: %d, skipped: %d, failed: %d, passed: %d)\n\t", count, skipped, failed, passed);
 
-    return 1;
+    return 0;
 }
 
 int swapSpecsMatches(mySpec* dest, mySpec* source){
@@ -406,4 +585,11 @@ int swapSpecsMatches(mySpec* dest, mySpec* source){
     return 1;
     // printf("\t\t .. DONE !!\n");
 
+}
+
+
+void sig_int_quit_handler(int signo)
+{
+	if(signo == SIGINT || signo == SIGQUIT)
+		received_signal = 1;
 }
