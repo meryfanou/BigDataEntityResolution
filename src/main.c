@@ -51,6 +51,7 @@ int main(int argc, char** argv){
     hashTable* hashT = hash_create(HASH_SIZE, BUC_SIZE);
     matchesInfo* allMatches = matchesInfoInit();
 
+    // Check for termination signal
     if(received_signal == 1){
         printf("\nCleaning Memory ...\n");
         deleteInfo(allMatches);

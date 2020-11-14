@@ -35,7 +35,7 @@ int readDataset(DIR *datasetX, char *path, hashTable **hashT, matchesInfo* allMa
 
     // Read from datasetX
     while((siteDir = readdir(datasetX)) != NULL){
-        // Check for signal termination
+        // Check for termination signal
         if(received_signal == 1)
             return 1;
 
@@ -57,7 +57,7 @@ int readDataset(DIR *datasetX, char *path, hashTable **hashT, matchesInfo* allMa
 
         // Read the files in the directory
         while((specFile = readdir(sitePtr)) != NULL){
-            // Check for signal termination
+            // Check for termination signal
             if(received_signal == 1){
                 free(dirpath);
                 closedir(sitePtr);
@@ -97,7 +97,7 @@ int readDataset(DIR *datasetX, char *path, hashTable **hashT, matchesInfo* allMa
             // Get array with the properties of current spec
             properties = readFile(specFd, &propNum, properties);
             propNum++;
-            // Check for signal termination
+            // Check for termination signal
             if(properties == NULL){
                 free(specID);
                 free(filepath);
@@ -157,7 +157,7 @@ specInfo** readFile(FILE *specFd, int *propNum, specInfo **properties){
     // Read spec's properties
     fgets(line, sizeof(line), specFd);
     while(line != NULL){
-        // Check for signal termination
+        // Check for termination signal
         if(received_signal == 1){
             for(int i=0; i<=(*propNum); i++){
                 specDelInfo(properties[i]);
@@ -182,7 +182,7 @@ specInfo** readFile(FILE *specFd, int *propNum, specInfo **properties){
 
         // Seperate the key from the value in the ("key" : "value") pair
         while(index < 2){
-            // Check for signal termination
+            // Check for termination signal
             if(received_signal == 1){
                 for(int i=0; i<=(*propNum); i++){
                     specDelInfo(properties[i]);
@@ -197,7 +197,7 @@ specInfo** readFile(FILE *specFd, int *propNum, specInfo **properties){
 
             // Remove extra \" and , from the string
             while((token = strtok_r(rest, "\"", &rest)) != NULL){
-                // Check for signal termination
+                // Check for termination signal
                 if(received_signal == 1){
                     if(str != NULL)
                         free(str);
@@ -263,7 +263,7 @@ specInfo** readFile(FILE *specFd, int *propNum, specInfo **properties){
                     prev = NULL;
 
                     while(need_extra){
-                        // Check for signal termination
+                        // Check for termination signal
                         if(received_signal == 1){
                             if(str != NULL)
                                 free(str);
@@ -281,7 +281,7 @@ specInfo** readFile(FILE *specFd, int *propNum, specInfo **properties){
 
                         // Remove extra \" and , from the string
                         while((token = strtok_r(rest, "\"", &rest)) != NULL){
-                            // Check for signal termination
+                            // Check for termination signal
                             if(received_signal == 1){
                                 if(str != NULL)
                                     free(str);
@@ -336,7 +336,7 @@ specInfo** readFile(FILE *specFd, int *propNum, specInfo **properties){
 
                 // If the value is a string
                 while(need_extra){
-                    // Check for signal termination
+                    // Check for termination signal
                     if(received_signal == 1){
                         if(str != NULL)
                             free(str);
@@ -354,7 +354,7 @@ specInfo** readFile(FILE *specFd, int *propNum, specInfo **properties){
 
                     // Remove extra \" and , from the string
                     while((token = strtok_r(rest, "\"", &rest)) != NULL){
-                        // Check for signal termination
+                        // Check for termination signal
                         if(received_signal == 1){
                             if(str != NULL)
                                 free(str);
@@ -411,7 +411,7 @@ specInfo** readFile(FILE *specFd, int *propNum, specInfo **properties){
 
                     specValue   *head = NULL, *current = NULL, *prev = NULL;
                     while((token = strtok_r(temp, "\n", &temp)) != NULL){
-                        // Check for signal termination
+                        // Check for termination signal
                         if(received_signal == 1){
                             if(str != NULL)
                                 free(str);
