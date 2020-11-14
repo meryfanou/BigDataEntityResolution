@@ -30,7 +30,7 @@ main: $(ODIR)/main.o $(ODIR)/mySpec.o $(ODIR)/myHash.o $(ODIR)/myMatches.o $(ODI
 		$(CC) $(CCFLAGS) -o $(BDIR)/$@ $^
 
 run:	bin/main
-		./bin/main -o matches_log
+		./bin/main -o matches_log_DEF
 
 valgrind: main
 		  valgrind ./bin/main -o matches_log
@@ -51,6 +51,14 @@ dirs:
 		@echo "\nCreating Dirs.."
 		mkdir -p $(BDIR)
 		mkdir -p $(ODIR)
+
+#-------------------------------------------------------------------------#
+
+small_specs: main
+		./bin/main -o matches_log_SmSpcs -s s
+
+medium_labels: main
+		./bin/main -o matches_log_MeLbls -l m
 
 #-------------------------------------------------------------------------#
 

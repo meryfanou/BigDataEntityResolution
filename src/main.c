@@ -9,8 +9,8 @@
 #include "../include/myMatches.h"
 #include "../include/functs.h"
 
-#define PATH_X "../camera_specs/2013_camera_specs/"
-#define PATH_W "../sigmod_large_labelled_dataset.csv"
+char* PATH_X = "../testSpecs/camera_specs/2013_camera_specs/";
+char* PATH_W = "../testSpecs/sigmod_large_labelled_dataset.csv";
 
 
 #define HASH_SIZE 10
@@ -23,8 +23,22 @@ int main(int argc, char** argv){
         int i = 0;
         while(i < argc){
             if(strcmp(argv[i], "-o") == 0){
-                outputFile = strdup(argv[i+1]);
+                if(argv[i+1] != NULL)
+                    outputFile = strdup(argv[i+1]);
             }
+
+            if(strcmp(argv[i], "-specs") == 0 || strcmp(argv[i], "-s") == 0){
+                if(strcmp(argv[i+1], "small") == 0 || strcmp(argv[i+1], "s")){
+                    PATH_X = "../testSpecs/camera_specs_small/2013_camera_specs";
+                }
+            }
+            
+            if(strcmp(argv[i], "-labels") == 0 || strcmp(argv[i], "-l") == 0){
+                if(strcmp(argv[i+1], "medium") == 0 || strcmp(argv[i+1], "m") == 0){
+                    PATH_W = "../testSpecs/sigmod_medium_labelled_dataset.csv";
+                }
+            }
+            
             i++;
         }
     }
@@ -127,7 +141,7 @@ int main(int argc, char** argv){
 
     if(outputFile != NULL)
         free(outputFile);
-    printf("\t.. DONE !!\n\n");
+    printf("\t\t.. DONE !!\n\n");
 
     return 0;
 }
