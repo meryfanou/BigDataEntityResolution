@@ -9,8 +9,8 @@
 #include "../include/myMatches.h"
 #include "../include/functs.h"
 
-char* PATH_X = "../testSpecs/camera_specs/2013_camera_specs/";
-char* PATH_W = "../testSpecs/sigmod_large_labelled_dataset.csv";
+char* PATH_X = "../camera_specs/2013_camera_specs/";
+char* PATH_W = "../sigmod_large_labelled_dataset.csv";
 
 
 #define HASH_SIZE 10
@@ -31,15 +31,17 @@ int main(int argc, char** argv){
                     outputFile = strdup(argv[i+1]);
             }
 
+            // Will use the small dataset
             if(strcmp(argv[i], "-specs") == 0 || strcmp(argv[i], "-s") == 0){
                 if(strcmp(argv[i+1], "small") == 0 || strcmp(argv[i+1], "s")){
-                    PATH_X = "../testSpecs/camera_specs_small/2013_camera_specs";
+                    PATH_X = "../camera_specs_small/2013_camera_specs";
                 }
             }
-            
+
+            // Will use the small csv            
             if(strcmp(argv[i], "-labels") == 0 || strcmp(argv[i], "-l") == 0){
                 if(strcmp(argv[i+1], "medium") == 0 || strcmp(argv[i+1], "m") == 0){
-                    PATH_W = "../testSpecs/sigmod_medium_labelled_dataset.csv";
+                    PATH_W = "../sigmod_medium_labelled_dataset.csv";
                 }
             }
             
@@ -113,7 +115,7 @@ int main(int argc, char** argv){
 
     closedir(datasetX);
 
-    printf("  \t\t.. DONE !!\n");
+    printf("       \t\t.. DONE !!\n");
 
 
     printf("Reading CSV ...\n");
@@ -133,19 +135,19 @@ int main(int argc, char** argv){
         exit(-5);
     }
 
-    printf("  \t\t.. DONE !!\n");
+    printf("       \t\t.. DONE !!\n");
 
     //~~~~~~~~~~~~~~~~~~~~~~ EXTARCT PAIRS
     extractMatches(allMatches, outputFile);
 
     //~~~~~~~~~~~~~~~~~~~~~~ FREE MEM
-    printf("\nCleaning Memory ...\n");
+    printf("\nCleaning Memory...\n");
     deleteInfo(allMatches);
     hash_destroy(hashT);
 
     if(outputFile != NULL)
         free(outputFile);
-    printf("\t\t.. DONE !!\n\n");
+    printf("       \t\t.. DONE !!\n\n");
 
     return 0;
 }

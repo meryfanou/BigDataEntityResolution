@@ -41,7 +41,7 @@ all_tests:  $(ODIR)/myHash_test.o $(ODIR)/myMatchesList_test.o $(ODIR)/mySpec_te
 			@echo "\nCreating Unit Testing Files"
 			$(CC) $(CCFLAGS) -o $(BDIR)/$@ $^
 
-tests:	dirs	all_tests
+tests:	dirs all_tests
 		@echo "\nRunning Unit Testing.."
 		./bin/all_tests
 

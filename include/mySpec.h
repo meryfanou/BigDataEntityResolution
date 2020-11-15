@@ -33,12 +33,11 @@ mySpec* specInit();
 mySpec* specCreate(char*, specInfo**, int);
 void deleteSpec(mySpec*);
 void updateSpecMatches(mySpec*, myMatches*);
+int swapSpecsMatches(mySpec*, mySpec*);
 void printSpec(mySpec*);
 
 void specAddInfo(specInfo*, specInfo*);
 void specDelInfo(specInfo*);
 
-//void printList(specList*); // FOR TESTING
-//void printSpecMatches(mySpec*); 		// TESTING
 
 #endif

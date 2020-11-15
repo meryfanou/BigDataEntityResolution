@@ -130,7 +130,7 @@ void test_deleteMatches(void){
 }
 
 void test_mergeMatches(void){
-	// matchesInfo* list;
+
 	myMatches* to_merge1 = myMatchesInit();
 	myMatches* to_merge2 = myMatchesInit();
 
@@ -159,7 +159,6 @@ void test_mergeMatches(void){
 	TEST_ASSERT(to_merge1 != NULL);
 	
 	// printf("counts2: %d\n", to_merge2->specsCount);
-	// free(to_merge2);
 
 				// CHECK ENTRIES AFTER
 	TEST_ASSERT(to_merge1->specsCount == N);
@@ -174,15 +173,4 @@ void test_mergeMatches(void){
 
 	free(specArray);
 	deleteMatches(NULL, to_merge1);
-	// deleteMatches(NULL, to_merge2);
 }
-/*
-TEST_LIST = {
-	{"test_createMatches", test_createMatches},
-	{"test_pushMatches", test_pushMatches},
-	{"test_insertMatches", test_insertMatches},
-	{"test_deleteMatches", test_deleteMatches},
-	{"test_mergeMatches", test_mergeMatches},
-	{NULL, NULL}
-};
-*/
