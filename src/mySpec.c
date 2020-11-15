@@ -5,7 +5,7 @@
 #include "../include/mySpec.h"
 
 
-mySpec* specInit(){
+mySpec* specInit(){			// MALLOC AND RETURN NEW SPEC NODE
 	mySpec	*spec = malloc(sizeof(mySpec));
 
 	spec->matches = NULL;
@@ -16,7 +16,7 @@ mySpec* specInit(){
 	return spec;
 }
 
-mySpec* specCreate(char* id, specInfo** properties, int propNum){
+mySpec* specCreate(char* id, specInfo** properties, int propNum){	//SET NEW SPEC NODE
 	mySpec* newSpec = specInit();
 
 	newSpec->specID = strdup(id);
@@ -35,7 +35,7 @@ void updateSpecMatches(mySpec* spec, myMatches* matches){
 	spec->matches = matches;
 }
 
-void deleteSpec(mySpec* spec){
+void deleteSpec(mySpec* spec){		// free mem
 	if(spec->specID != NULL)
 		free(spec->specID);
 
@@ -53,7 +53,7 @@ void deleteSpec(mySpec* spec){
 	spec = NULL;
 }
 
-void printSpec(mySpec* spec){
+void printSpec(mySpec* spec){	// printing specs info / testing funct
 	printf("specID: %s\n", spec->specID);
 
 	printf("Properties:\n");
@@ -62,7 +62,7 @@ void printSpec(mySpec* spec){
 	}
 }
 
-void specAddInfo(specInfo *info, specInfo *newInfo){
+void specAddInfo(specInfo *info, specInfo *newInfo){	// add info to spec
 	specValue	*head = NULL, *current = NULL, *prev = NULL, *newValues = NULL;
 
 	info->key = strdup(newInfo->key);
@@ -85,7 +85,7 @@ void specAddInfo(specInfo *info, specInfo *newInfo){
 	info->values = head;
 }
 
-void specDelInfo(specInfo *info){
+void specDelInfo(specInfo *info){	 // ~~~ FREE MEM
 	free(info->key);
 
 	specValue	*current = info->values;

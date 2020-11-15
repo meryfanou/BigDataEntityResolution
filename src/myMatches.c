@@ -93,13 +93,12 @@ void pushMatch(myMatches* curMatch, mySpec* spec){
 
 		// Add spec to match-table
 	curMatch->specsTable[curMatch->specsCount] = spec;
-	// memcpy(curMatch->specsTable[curMatch->specsCount], spec, 1*sizeof(mySpec*));
 		// Update matches Info
 	curMatch->specsCount++;
 
 }
 
-void deleteMatches(matchesInfo* myInfo, myMatches* match){
+void deleteMatches(matchesInfo* myInfo, myMatches* match){	// free mem
 	if(match == NULL)
 		return;
 		// Fix list pointers
@@ -125,7 +124,7 @@ void deleteMatches(matchesInfo* myInfo, myMatches* match){
 	// match = NULL;
 }
 
-void deleteInfo(matchesInfo* myInfo){
+void deleteInfo(matchesInfo* myInfo){ 	// free mem
 	int count = myInfo->entries;
 	while(count > 0){
 		// printf("delete Info count: %d\n", count);
@@ -146,7 +145,6 @@ void deleteInfo(matchesInfo* myInfo){
 
 void mergeMatches(matchesInfo* myInfo, myMatches* match1, myMatches* match2){
 
-	// printf("\tMERGIND ... ");
 	// !! MERGE AT MATCH_1 !!
 
 	if(match1 == NULL || match2 == NULL)
@@ -158,7 +156,6 @@ void mergeMatches(matchesInfo* myInfo, myMatches* match1, myMatches* match2){
 	int totalCounts = match1->specsCount + match2->specsCount;
 
 		// Realloc Mem at match1
-	// printf("\ttotalCounts (merge): %d, count1: %d, count2: %d", totalCounts, match1->specsCount, match2->specsCount);
 	mySpec** tempTable = realloc(match1->specsTable, totalCounts*sizeof(mySpec*));
 	if(tempTable == NULL){
 		printf("Error at realloc (merge) !!\n");
@@ -167,25 +164,19 @@ void mergeMatches(matchesInfo* myInfo, myMatches* match1, myMatches* match2){
 	match1->specsTable = tempTable;
 
 		// Copy Specs from match2 -> match1
-	
-	// memcpy(match1 + match1->specsCount*(sizeof(mySpec*)), match2, match2->specsCount*(sizeof(mySpec*)));
-	// match1->specsCount += match2->specsCount;
-	
 	int i = 0;
 	while(match1->specsCount < totalCounts){
 		match1->specsTable[match1->specsCount] = match2->specsTable[i];
 		match1->specsCount++;
 		i++;
 	}
-	// printf("   -> count after merge: %d\n", match1->specsCount);
 
 		// Delete match2
 	deleteMatches(myInfo, match2);  //Note: deleteMatches() DOES fix the list pointers !!
-	// printf(" .. DONE !!\n");
 }
 
 
-void printMatchesList(matchesInfo* myInfo){
+void printMatchesList(matchesInfo* myInfo){		// testing funct - prints matches list
 	printf("~ Matches\n");
 	printf("--------------------------------\n");
 
@@ -214,11 +205,19 @@ void extractMatches(matchesInfo* allMatches, char* fname){
 	int totalPairs = 0;		// count total pairs (just for fun)
 	int flag = 0;
 
+	// CHECK IF FNAME == NULL
+	// CASE 1: CREATE DIR AND FILE -> PRINT TO FILE
+	// CASE 2: PRINT TO STDOUT
+
+
 	FILE* fpout;
 	if(fname != NULL){
 		flag = 1;
 
 		int len = strlen(PATH) + 1 + strlen(fname) + 1;
+
+			// CHECK IF DIR ALREADY EXISTS - CREATE IT IF IT DOESNT
+			// !!!!! DIRS NAME IS DEFINED AT PATH !!
 
 		if(chdir(PATH) == -1){
 			if(mkdir(PATH, S_IRWXU|S_IRWXG|S_IROTH)){ 
@@ -236,6 +235,7 @@ void extractMatches(matchesInfo* allMatches, char* fname){
 		strcat(target, "/");
 		strcat(target, fname);
 
+			// CREATE FILE WITH NAME: FNAME INT TARGET DIR
 		fpout = fopen(target, "w+");
 
 		free(target);
@@ -244,6 +244,8 @@ void extractMatches(matchesInfo* allMatches, char* fname){
 		fpout = stdout;
 	}
 		
+		// start printing
+
 	myMatches* tempMatches = allMatches->head;
 
 	while(tempMatches != NULL){

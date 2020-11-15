@@ -468,6 +468,7 @@ specInfo** readFile(FILE *specFd, int *propNum, specInfo **properties){
 
 int readCSV(char* fName, hashTable* hashT, matchesInfo* allMatches){
 
+    // ~~~~~~~~~~~~~~~~~~ READ CSV FILE + FILL MATCHES STRUCT
     struct sigaction    act;
     sigset_t            block_mask;
 
@@ -485,7 +486,7 @@ int readCSV(char* fName, hashTable* hashT, matchesInfo* allMatches){
 	sigaddset(&block_mask,SIGINT);
 	sigaddset(&block_mask,SIGQUIT);
     
-            // READ FILE
+        //~~~~~~~~~~~~~~~~~~ OPEN FILE
     FILE* fpin = NULL;
     fpin = fopen(fName, "r+");
 
@@ -496,6 +497,7 @@ int readCSV(char* fName, hashTable* hashT, matchesInfo* allMatches){
     }
 
 
+        // ~~~~~~~~~~~~~~~~~ READ FILE
     char line[100];
     memset(line, 0, 100);
     fgets(line, 100, fpin);
@@ -511,21 +513,18 @@ int readCSV(char* fName, hashTable* hashT, matchesInfo* allMatches){
             return 1;
         }
         
-        // printf("count: %d\n", count);
-                        // GET SPEC'S KEYS
+                    //~~~~~~~~~ GET CSV INFO-KEYS
         char* key1 = strtok(line, ",\n");
         char* key2 = strtok(NULL, ",\n");
         char* isMatch = strtok(NULL, ",\n");
 
-                        // CHECK KEYS - UNCOMMENT FOR TESTING
+                    //~~~~~~~~~ CHECK KEYS - UNCOMMENT FOR TESTING
         // printf("\tkey1: %s, key2: %s, isMatch: %s\n", key1, key2, isMatch);
 
         // printf("\tspec1: %s counts: %d, spec2: %s counts: %d\n", spec1->specID, spec1->matches->specsCount, spec2->specID, spec2->matches->specsCount);
 
-                          // MERGE MATCHES + FIX POINTERS
-                                // !! Check if match2 (to be deleted by merge)
-                                // is head then swap them 
-        if(strcmp(isMatch, "1") == 0){
+                    //~~~~~~~~~ MERGE MATCHES + FIX POINTERS
+        if(strcmp(isMatch, "1") == 0){  //case keys r match
                 // SCAN HASH FOR ENTRIES
             mySpec *spec1 = findRecord_byKey(hashT, key1);
             mySpec *spec2 = findRecord_byKey(hashT, key2);
@@ -536,8 +535,8 @@ int readCSV(char* fName, hashTable* hashT, matchesInfo* allMatches){
                 count++;
                 continue;
             }
-            else{
-                if(swapSpecsMatches(spec1, spec2)){
+            else{       //~~~~~~~~ !!! FIX POINTERS SPECS -> MATCHES
+                if(swapSpecsMatches(spec1, spec2)){ // ~~~~ MERGE MATCHES ARRAYS
                     mergeMatches(allMatches, spec1->matches, spec2->matches);
                     spec2->matches = spec1->matches;
                     passed++;
@@ -568,23 +567,20 @@ int readCSV(char* fName, hashTable* hashT, matchesInfo* allMatches){
 
 int swapSpecsMatches(mySpec* dest, mySpec* source){
 
+    // SETTING EACH SPEC->MATCHES POINTER TO NEW MATCH GROUP
+
     if(dest == NULL || source == NULL)
         return -1;
-
-    // printf("\tSWAPING VALUES ... \n");
 
     int i = 0;
 
     while(i < source->matches->specsCount){
-        // printf("\t\t\t i: %d\n", i);
         if(source->matches->specsTable[i] != source)
             source->matches->specsTable[i]->matches = dest->matches;
         i++;
     }
 
     return 1;
-    // printf("\t\t .. DONE !!\n");
-
 }
 
 

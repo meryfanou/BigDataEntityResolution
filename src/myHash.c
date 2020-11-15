@@ -5,6 +5,8 @@
 
 
 hashTable* hash_create(int HashSize, int BucSize){
+	// ALLOCARE AND RETURN NEW HASH_TABLE
+
 	hashTable* newTable = malloc(sizeof(hashTable));
 
 	newTable->myTable = malloc(HashSize*sizeof(bucket*));
@@ -14,22 +16,16 @@ hashTable* hash_create(int HashSize, int BucSize){
 		i++;		
 	}
 
-
 	newTable->bucSize = BucSize;
 	newTable->tableSize = HashSize;
 
 	newTable->maxRecs = (BucSize - sizeof(bucket*)) / sizeof(record);
 	newTable->entries = 0;
-	// printf("MaxRecs: %d\n", newTable->maxRecs);
-	// printf("BucSize: %d\n", BucSize);
-	// printf("tableSize: %d\n", HashSize);
-	// printf("SizeOf bucket*: %lu\n", sizeof(bucket*));
-	// printf("SizeOf record: %lu\n", sizeof(record));
 	
 	return newTable;
 }
 
-void hash_destroy(hashTable* table){
+void hash_destroy(hashTable* table){	// DESTROY HASH / FREE MEM
 	int i = 0;
 	while(i < table->tableSize){
 		if(table->myTable[i] != NULL){
@@ -45,7 +41,7 @@ void hash_destroy(hashTable* table){
 }
 
 
-int hash1(char* key){
+int hash1(char* key){			// HASH FUNCTION
 	int max = strlen(key);
 	int temp = 0;
 	int sum = 1;
@@ -70,7 +66,6 @@ void hash_add(hashTable* table, mySpec* newSpec, int hash){
 	int cell = hash % (table->tableSize);		/// FIND HASH TABLE CELL
 	if(cell < 0)
 		cell = 0;
-	// printf("cell: %d, tSize: %d, maxRecs/buc: %d\n", cell, table->tableSize, table->maxRecs);
 
 	if(table->myTable[cell] == NULL){			/// CASE OF FIRST BUCKET
 		table->myTable[cell] = bucket_create(table->bucSize);
@@ -107,7 +102,7 @@ void hash_add(hashTable* table, mySpec* newSpec, int hash){
 
 }
 
-void hash_print(hashTable* t){
+void hash_print(hashTable* t){			// testing funct - prints hash
 	printf("HASH_SIZE: %d\n", t->tableSize);
 	int i = 0;
 	while(i < t->tableSize){
@@ -147,7 +142,7 @@ void bucket_add(bucket* buc, mySpec* newSpec){
 
 }
 
-record* search_bucket(bucket* b, char* key){
+record* search_bucket(bucket* b, char* key){	// search bucket for target key
 	if(b == NULL)
 		return NULL;
 	record* temp = b->rec;
@@ -161,7 +156,7 @@ record* search_bucket(bucket* b, char* key){
 	return NULL;
 }
 
-void bucket_print(bucket* b){
+void bucket_print(bucket* b){					// testing funct - prints bucket
 	printf("\t>buc: (%d)\n", b->cur);
 	record* temp = b->rec;
 	while(temp != NULL){

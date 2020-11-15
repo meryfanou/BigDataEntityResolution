@@ -18,6 +18,10 @@ char* PATH_W = "../testSpecs/sigmod_large_labelled_dataset.csv";
 
 int main(int argc, char** argv){
 
+    // ./main (-o (file_name)) (-specs small) (-labels medium)
+
+
+    // ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~ READ ARGUMENTS
     char* outputFile = NULL;
     if(argc != 0){
         int i = 0;
@@ -131,10 +135,10 @@ int main(int argc, char** argv){
 
     printf("  \t\t.. DONE !!\n");
 
-    // EXTARCT PAIRS
+    //~~~~~~~~~~~~~~~~~~~~~~ EXTARCT PAIRS
     extractMatches(allMatches, outputFile);
 
-    // FREE MEM
+    //~~~~~~~~~~~~~~~~~~~~~~ FREE MEM
     printf("\nCleaning Memory ...\n");
     deleteInfo(allMatches);
     hash_destroy(hashT);
