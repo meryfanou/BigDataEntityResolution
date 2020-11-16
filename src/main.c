@@ -30,12 +30,6 @@ int main(int argc, char** argv){
                 if(argv[i+1] != NULL)
                     outputFile = strdup(argv[i+1]);
             }
-
-            if(strcmp(argv[i], "-specs") == 0 || strcmp(argv[i], "-s") == 0){
-                if(strcmp(argv[i+1], "small") == 0 || strcmp(argv[i+1], "s")){
-                    PATH_X = "../testSpecs/camera_specs_small/2013_camera_specs";
-                }
-            }
             
             if(strcmp(argv[i], "-labels") == 0 || strcmp(argv[i], "-l") == 0){
                 if(strcmp(argv[i+1], "medium") == 0 || strcmp(argv[i+1], "m") == 0){

@@ -54,9 +54,6 @@ dirs:
 
 #-------------------------------------------------------------------------#
 
-small_specs: main
-		./bin/main -o matches_log_SmSpcs -s s
-
 medium_labels: main
 		./bin/main -o matches_log_MeLbls -l m
 
