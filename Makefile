@@ -25,6 +25,8 @@ $(ODIR)/%.o: $(TSTSDIR)/%.c
 
 all: dirs clean tests main run
 
+#-------------------------------------------------------------------------#
+
 main: $(ODIR)/main.o $(ODIR)/mySpec.o $(ODIR)/myHash.o $(ODIR)/myMatches.o $(ODIR)/functs.o
 		@echo "\nCreating main"
 		$(CC) $(CCFLAGS) -o $(BDIR)/$@ $^
