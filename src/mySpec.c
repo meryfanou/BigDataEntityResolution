@@ -35,6 +35,24 @@ void updateSpecMatches(mySpec* spec, myMatches* matches){
 	spec->matches = matches;
 }
 
+int swapSpecsMatches(mySpec* dest, mySpec* source){
+
+    // SETTING EACH SPEC->MATCHES POINTER TO NEW MATCH GROUP
+
+    if(dest == NULL || source == NULL)
+        return -1;
+
+    int i = 0;
+
+    while(i < source->matches->specsCount){
+        if(source->matches->specsTable[i] != source)
+            source->matches->specsTable[i]->matches = dest->matches;
+        i++;
+    }
+
+    return 1;
+}
+
 void deleteSpec(mySpec* spec){		// free mem
 	if(spec->specID != NULL)
 		free(spec->specID);
@@ -45,9 +63,6 @@ void deleteSpec(mySpec* spec){		// free mem
 	}
 	if(spec->properties != NULL)
 		free(spec->properties);
-
-	//if(spec->matches != NULL)
-	//	free(spec->matches);
 
 	free(spec);
 	spec = NULL;

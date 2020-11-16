@@ -131,11 +131,6 @@ void deleteInfo(matchesInfo* myInfo){ 	// free mem
 		myMatches* temp = myInfo->head;
 		myInfo->head = myInfo->head->next;
 
-		//if(temp->specsTable != NULL){
-		//for(int i=0; i<temp->specsCount; i++)
-		//	updateSpecMatches(temp->specsTable[i], NULL);
-		//}
-
 		deleteMatches(myInfo, temp);
 		
 		count--;
@@ -262,7 +257,7 @@ void extractMatches(matchesInfo* allMatches, char* fname){
 				}
 				printed++;
 			}
-			fprintf(fpout, "\t~ ~ ~ ~ ~ ~ ~ ~ ~ ~ ~ ~ ~ ~ ~ ~\n");
+			fprintf(fpout, "\n\t~ ~ ~ ~ ~ ~ ~ ~ ~ ~ ~ ~ ~ ~ ~ ~\n\n");
 		}
 		tempMatches = tempMatches->next;
 	}

@@ -10,10 +10,14 @@ void test_specInit(void){
 
 	mySpec  *spec = specInit();
 
+    // Test malloc
 	if(TEST_CHECK_(spec != NULL, "init spec") == 0){
         deleteSpec(spec);
         test_abort_();
     }
+
+    // Test initialization of mySpec's fields
+
 	if(TEST_CHECK_(spec->matches == NULL, "init spec info 1") == 0){
         deleteSpec(spec);
 		test_abort_();
@@ -45,6 +49,7 @@ void test_specCreate(void){
         array[i] = strdup("");
         spec = specCreate(array[i],NULL,0);
 
+        // Test creation of specID field
         if(TEST_CHECK_(!strcmp(spec->specID, array[i]), "create spec info") == 0){
             deleteSpec(spec);
             free(array[i]);
@@ -73,6 +78,7 @@ void test_updateSpecMatches(void){
         newMatch = matchesAdd(matches, specs[i]);
         updateSpecMatches(specs[i], newMatch);
 
+        // Test if mySpec's 'matches' field points to the right match
         if(TEST_CHECK_(specs[i]->matches == newMatch, "update spec matches 1") == 0){
             deleteInfo(matches);
             for(int j=0; j<i; j++)
@@ -82,6 +88,7 @@ void test_updateSpecMatches(void){
             free(array);
             test_abort_();
         }
+        // Test if the first item in mySpec's matches is the right one
         if(TEST_CHECK_(!strcmp(specs[i]->matches->specsTable[0]->specID, array[i]), "update spec matches 2") == 0){
             deleteInfo(matches);
             for(int j=0; j<i; j++)
@@ -101,12 +108,3 @@ void test_updateSpecMatches(void){
     free(specs);
     free(array);
 }
-
-/*
-TEST_LIST = {
-    {"test_specInit", test_specInit},
-	{"test_specCreate", test_specCreate},
-    {"test_updateSpecMatches", test_updateSpecMatches},
-	{NULL, NULL}
-};
-*/
