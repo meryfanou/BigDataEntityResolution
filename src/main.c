@@ -18,7 +18,7 @@ char* PATH_W = "../sigmod_large_labelled_dataset.csv";
 
 int main(int argc, char** argv){
 
-    // ./main (-o (file_name)) (-specs small) (-labels medium)
+    // ./main (-o (file_name)) (-labels medium)
 
 
     // ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~ READ ARGUMENTS
