@@ -3,7 +3,7 @@ on: [push, pull_request]
 
 jobs:
   build-deploy:
-    runs-on: Fedora
+    runs-on: fedora-latest 
     steps:
     - uses: actions/checkout@v1
 
