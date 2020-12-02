@@ -9,10 +9,12 @@
 Η εργασία διαθέτει Makefile κάνοντας εύκολη την εκτέλεση της.
 Επιλογές make:
 
-    - make all : Διαγράφει προηγούμενες εκδόσεις των αρχείων (clean) δημιουργεί τους απαραίτητους φακέλους (dirs) και εκτελέσιμα. Στη συνέχεια τρέχει τα tests (tests) και αν επιτύχουν τρέχει τη main (run), με τα αποτελέσματα της να αποθηκεύονται στο αρχείο matches_logDEF μέσα στο φάκελο Outputs.
+    - make all : Διαγράφει προηγούμενες εκδόσεις των αρχείων (clean) δημιουργεί τους απαραίτητους φακέλους (dirs) και εκτελέσιμα. Στη συνέχεια τρέχει τα tests (tests) και αν επιτύχουν τρέχει τη main με τα default ορίσματα (run), με τα αποτελέσματα της να αποθηκεύονται στο αρχείο matches_logDEF μέσα στο φάκελο Outputs.
+    - make all ARGS="<arguments>": Κάνει ό,τι και η make all με τη διαφορά ότι τρέχει τη main με ορίσματα τα <arguments> που δίνει ο χρήστης
     - make valgrind: Τρέχει την main κάνοντας χρήση του valgrind.
     - make all_tests: Κάνει complie όλα τα tests σε ένα εκτελέσιμο.
     - make medium_labels: Τρέχει τη main κάνοντας χρήση του medium_labelled_dataset.
+    - make run ARGS="<arguments>": Τρέχει τη main με ορίσματα τα <arguments> που δίνει ο χρήστης
     
 
 myHash.c: 
@@ -54,8 +56,10 @@ main.c:
           -ο filename, όπου filename το όνομα του αρχείου στο οποίο θα εκτυπωθούν τα αποτελέσματα. By default το filname που χρησιμοποιείται, σε περίπτωση που 
           εκτός απο το ορισμο -ο δεν δοθούν περαιτέρω ορίσματα, είναι το matches_log_DEF. Σε κάθε περίπτωση το αρχείο που δημιουργείται αποθυκεύεται στον φάκελο
           Outputs.
-          -labels medium, για την επιλογή του sigmod_medium_laballed_dataset.csv για το διάβασμα των ζευγαριών των specs. Αν δε δοθεί κάποιο όρισμα, by default
+          -labels medium ή -l m, για την επιλογή του sigmod_medium_laballed_dataset.csv για το διάβασμα των ζευγαριών των specs. Αν δε δοθεί κάποιο όρισμα, by default
           χρησιμοποείται το αρχείο sigmod_large_laballed_dataset.csv.
+          -labels <path_to_W> ή -l <path_to_W>, για την επιλογή δυναμικού μονοπατιού για το dataset W.
+          -path <path_to_X> ή -p <path_to_X>, για την εισαγωγή του μονοπατιού για το dataset X με δυναμικό τρόπο.
 
           Αφού διαβαστούν όσα ορίσματα υπάρχουν, δημιουργούνται και αρχικοποιούνται το hashTable και η λίστα με όλα τα matches (allMatches).
           Στη συνέχεια γίνεται η ανάγνωση των specs από το datasetX. Για κάθε spec-αρχείο ενός φακέλου του dataset, διαβάζονται και γίνονται parsed οι αντίστοιχες
