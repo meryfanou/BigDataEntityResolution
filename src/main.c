@@ -3,6 +3,7 @@
 #include <string.h>
 #include <dirent.h>
 #include <signal.h>
+#include <math.h>
 #include "../include/mySpec.h"
 #include "../include/myMatches.h"
 #include "../include/myHash.h"
@@ -12,6 +13,7 @@
 #define DATASET_X "../camera_specs/2013_camera_specs/"
 #define DATASET_W "../sigmod_large_labelled_dataset.csv"
 
+#define TRAIN_PERC 0.6
 
 #define HASH_SIZE 10
 #define BUC_SIZE 100
@@ -155,10 +157,23 @@ int main(int argc, char** argv){
     //~~~~~~~~~~~~~~~~~~~~~~ EXTARCT PAIRS
     extractMatches(allMatches, outputFile);
 
+
+    //~~~~~~~~~~~~~~~~~~~~~~ SEPERATE SPECS TO TRAINING AND TESTING SETS
+    mySpec*** trainSet = malloc(sizeof(mySpec**));
+	mySpec*** testSet = malloc(sizeof(mySpec**));
+
+    split_train_n_test(allMatches, trainSet, testSet, TRAIN_PERC);
+
+
     //~~~~~~~~~~~~~~~~~~~~~~ FREE MEM
     printf("\nCleaning Memory...\n");
     deleteInfo(allMatches);
     hash_destroy(hashT);
+
+    free(*trainSet);
+    free(trainSet);
+    free(*testSet);
+    free(testSet);
 
     free(path_X);
     free(path_W);

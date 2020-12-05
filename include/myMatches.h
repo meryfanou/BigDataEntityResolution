@@ -37,7 +37,7 @@ myMatches* myMatchesInit();
 void deleteMatches(matchesInfo*, myMatches*);
 void pushMatch(myMatches*, mySpec*);
 
-
+void split_train_n_test(matchesInfo*, mySpec***, mySpec***, float);
 
 
 #endif 
