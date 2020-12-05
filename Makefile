@@ -11,6 +11,7 @@ DEPS = $(wildcard $(IDIR)/*.h)
 ODIR = build
 TSTSDIR = tests
 TSTS = $(wildcard $(TSTSDIR)/*.c)
+ARGS = ""
 
 
 $(ODIR)/%.o: $(SRCDIR)/%.c
@@ -32,10 +33,14 @@ main: $(ODIR)/main.o $(ODIR)/mySpec.o $(ODIR)/myHash.o $(ODIR)/myMatches.o $(ODI
 		$(CC) $(CCFLAGS) -o $(BDIR)/$@ $^
 
 run:	bin/main
+        ifeq ($(ARGS),"")
 		./bin/main -o matches_log_DEF
+        else
+		./bin/main $(ARGS)
+        endif
 
 valgrind: main
-		  valgrind ./bin/main -o matches_log
+		  valgrind ./bin/main -o matches_log_DEF
 
 #-------------------------------------------------------------------------#
 

@@ -3,7 +3,8 @@
 
 /* functs.h
 	Functs for main*/
-
+#ifndef FUNCTS_H
+#define FUNCTS_H
 #include "myHash.h"
 #include "myMatches.h"
 #include "mySpec.h"
@@ -17,3 +18,5 @@ specInfo** readFile(FILE*, int*, specInfo**);	// called by readDataset on each i
 int readCSV(char* , hashTable* , matchesInfo*);	//reads csv, creates matches at hash values
 
 void sig_int_quit_handler(int);
+
+#endif

@@ -9,8 +9,8 @@
 #include "../include/myMatches.h"
 #include "../include/functs.h"
 
-char* PATH_X = "../camera_specs/2013_camera_specs/";
-char* PATH_W = "../sigmod_large_labelled_dataset.csv";
+#define DATASET_X "../camera_specs/2013_camera_specs/"
+#define DATASET_W "../sigmod_large_labelled_dataset.csv"
 
 
 #define HASH_SIZE 500
@@ -20,8 +20,10 @@ int received_signal = 0;
 
 int main(int argc, char** argv){
 
-    // ./main (-o (file_name)) (-labels medium)
+    // ./main (-o (file_name)) (-l medium or -l <path_to_W>) (-p <path_to_X>)
 
+    char*   path_X = strdup(DATASET_X);
+    char*   path_W = strdup(DATASET_W);
 
     // ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~ READ ARGUMENTS
     char* outputFile = NULL;
@@ -32,11 +34,20 @@ int main(int argc, char** argv){
                 if(argv[i+1] != NULL)
                     outputFile = strdup(argv[i+1]);
             }
-
-            if(strcmp(argv[i], "-labels") == 0 || strcmp(argv[i], "-l") == 0){
+            else if(strcmp(argv[i], "-labels") == 0 || strcmp(argv[i], "-l") == 0){
                 if(strcmp(argv[i+1], "medium") == 0 || strcmp(argv[i+1], "m") == 0){
-                    PATH_W = "../sigmod_medium_labelled_dataset.csv";
+                    char* temp = "../sigmod_medium_labelled_dataset.csv";
+                    free(path_W);
+                    path_W = strdup(temp);
                 }
+                else{
+                    free(path_W);
+                    path_W = strdup(argv[i+1]);
+                }
+            }
+            else if(!strcmp(argv[i], "-path") || !strcmp(argv[i], "-p")){
+                free(path_X);
+                path_X = strdup(argv[i+1]);
             }
             
             i++;
@@ -47,7 +58,6 @@ int main(int argc, char** argv){
     struct sigaction    act;
     sigset_t            block_mask;
 
-    int received_signal = 0;
 
     sigemptyset(&(act.sa_mask));
 	act.sa_flags = 0;
@@ -55,6 +65,8 @@ int main(int argc, char** argv){
 	if(sigaction(SIGINT,&act,NULL) < 0 || sigaction(SIGQUIT,&act,NULL) < 0)
 	{
 		perror("sigaction");
+        free(path_X);
+        free(path_W);
 		exit(-1);
 	}
     sigemptyset(&block_mask);
@@ -70,6 +82,8 @@ int main(int argc, char** argv){
         printf("\nCleaning Memory ...\n");
         deleteInfo(allMatches);
         hash_destroy(hashT);
+        free(path_X);
+        free(path_W);
         if(outputFile != NULL)
             free(outputFile);
 
@@ -78,11 +92,13 @@ int main(int argc, char** argv){
     }
 
     // Open datasetX
-    if((datasetX = opendir(PATH_X)) == NULL){
+    if((datasetX = opendir(path_X)) == NULL){
         perror("opendir");
         printf("\nCleaning Memory ...\n");
         deleteInfo(allMatches);
         hash_destroy(hashT);
+        free(path_X);
+        free(path_W);
         if(outputFile != NULL)
             free(outputFile);
         exit(-3);
@@ -90,12 +106,14 @@ int main(int argc, char** argv){
 
     // Read specs from dataset X and store them using hashT
     // If a termination signal was received, return 1. If an error occured, return negative value. Otherwise return 0
-    int check = readDataset(datasetX, PATH_X, &hashT, allMatches);
+    int check = readDataset(datasetX, path_X, &hashT, allMatches);
 
     if(received_signal == 1 || check != 0){
         printf("\nCleaning Memory ...\n");
         deleteInfo(allMatches);
         hash_destroy(hashT);
+        free(path_X);
+        free(path_W);
         if(outputFile != NULL)
             free(outputFile);
 
@@ -114,12 +132,14 @@ int main(int argc, char** argv){
 
     printf("Reading CSV ...\n");
     // If a termination signal was received, return 1. If an error occured, return negative value. Otherwise return 0
-    check = readCSV(PATH_W, hashT, allMatches);
+    check = readCSV(path_W, hashT, allMatches);
 
     if(received_signal == 1 || check != 0){
         printf("\nCleaning Memory ...\n");
         deleteInfo(allMatches);
         hash_destroy(hashT);
+        free(path_X);
+        free(path_W);
         if(outputFile != NULL)
             free(outputFile);
 
@@ -138,6 +158,9 @@ int main(int argc, char** argv){
     printf("\nCleaning Memory...\n");
     deleteInfo(allMatches);
     hash_destroy(hashT);
+
+    free(path_X);
+    free(path_W);
 
     if(outputFile != NULL)
         free(outputFile);
