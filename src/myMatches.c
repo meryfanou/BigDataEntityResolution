@@ -409,7 +409,7 @@ void split_train_n_test(matchesInfo* allMatches, mySpec*** trainSet, mySpec*** t
 			if(currTest > 0){
 				*testSet = realloc(*testSet, ((*testSize)+currTest)*sizeof(mySpec*));
 				// 'Copy' the chosen specs to the testing set
-				for(int i=currTrain; i<(match->specsCount); i++){
+				for(int i=currTrain; i<(currTrain+currTest); i++){
 					(*testSet)[i-currTrain+(*testSize)] = match->specsTable[i];
 				}
 				testingNum -= currTest;
