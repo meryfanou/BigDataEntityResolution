@@ -508,6 +508,7 @@ int readCSV(char* fName, hashTable* hashT, matchesInfo* allMatches){
     int passed = 0;
     int skipped = 0;
     while(fgets(line, 100, fpin) != NULL){
+        // printf("count: %d\n", count);
         if(received_signal == 1){
             fclose(fpin);
             return 1;
@@ -546,8 +547,17 @@ int readCSV(char* fName, hashTable* hashT, matchesInfo* allMatches){
                 
             }
         }
-        else
-        {
+        else if(strcmp(isMatch, "0") == 0){
+            // SCAN HASH FOR ENTRIES
+            mySpec *spec1 = findRecord_byKey(hashT, key1);
+            mySpec *spec2 = findRecord_byKey(hashT, key2);
+
+            // if(spec1->matches == NULL || spec2->matches == NULL)
+                // printf("EROROROROR\n");
+            updateNegativeMatches(spec1->matches, spec2->matches);
+        }
+
+        else{
             skipped++;
         }
         

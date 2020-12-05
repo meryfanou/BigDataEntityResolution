@@ -8,11 +8,12 @@
 typedef struct myMatches myMatches;
 typedef struct matchesInfo matchesInfo;
 typedef struct mySpec mySpec;
-
-
 struct myMatches{
 	int specsCount;
 	mySpec** specsTable;
+
+	myMatches** negativeMatches;
+	int negative_count;
 
 	myMatches* next;
 	myMatches* prev;
@@ -21,6 +22,8 @@ struct myMatches{
 struct matchesInfo{
 	int entries;
 	myMatches* head;
+
+
 };
 
 // -------------------------
@@ -29,6 +32,12 @@ matchesInfo* matchesInfoInit();
 void deleteInfo(matchesInfo*);
 myMatches* matchesAdd(matchesInfo*, mySpec*);
 void mergeMatches(matchesInfo*, myMatches*, myMatches*);
+
+void combineMatchesTables(myMatches*, myMatches*);
+
+void updateNegativeMatches(myMatches*, myMatches*);
+void combineNegativeTables(myMatches*, myMatches*);
+
 void printMatchesList(matchesInfo*); 		// TESTING
 void extractMatches(matchesInfo*, char*);
 
@@ -37,7 +46,10 @@ myMatches* myMatchesInit();
 void deleteMatches(matchesInfo*, myMatches*);
 void pushMatch(myMatches*, mySpec*);
 
-void split_train_n_test(matchesInfo*, mySpec***, mySpec***, float, int*, int*);
+int findMatchinNegatives(myMatches**, int, myMatches*);
 
+myMatches** removeCell(myMatches**, int, myMatches*);
+
+void split_train_n_test(matchesInfo*, mySpec***, mySpec***, float, int*, int*);
 
 #endif 

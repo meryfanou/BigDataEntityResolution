@@ -15,7 +15,7 @@
 
 #define TRAIN_PERC 0.6
 
-#define HASH_SIZE 10
+#define HASH_SIZE 500
 #define BUC_SIZE 100
 
 int received_signal = 0;
@@ -60,7 +60,6 @@ int main(int argc, char** argv){
     struct sigaction    act;
     sigset_t            block_mask;
 
-    //received_signal = 0;
 
     sigemptyset(&(act.sa_mask));
 	act.sa_flags = 0;
