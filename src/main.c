@@ -167,6 +167,9 @@ int main(int argc, char** argv){
     split_train_n_test(allMatches, trainSet, testSet, TRAIN_PERC, &trainSize, &testSize);
 
 
+    //~~~~~~~~~~~~~~~~~~~~~~ PREPARE THE INPUT FOR THE MODEL
+
+
     //~~~~~~~~~~~~~~~~~~~~~~ FREE MEM
     printf("\nCleaning Memory...\n");
     deleteInfo(allMatches);

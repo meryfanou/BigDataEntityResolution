@@ -6,6 +6,7 @@
 typedef struct BoWords BoWords;
 typedef struct Bucket Bucket;
 typedef struct Record Record;
+typedef struct TextInfo TextInfo;
 
 
 struct BoWords{
@@ -33,23 +34,23 @@ struct TextInfo{
     int   numofInstances;
 };
 
-BoWords* hash_create(int ,int);
-void hash_destroy(BoWords*);
-void hash_add(BoWords*, mySpec*, int, int);
-void hash_print(BoWords*);
+BoWords* bow_create(int ,int);
+void bow_destroy(BoWords*);
+void bow_add(BoWords*, mySpec*, int, int);
+void bow_print(BoWords*);
 
-int hash1(char*);
+int hash_function(char*);
 
-Bucket* bucket_create(int);
-void bucket_add(Bucket*, mySpec*, int);
-void bucket_destroy(BoWords*, Bucket*);
-void bucket_print(Bucket*);
-Record* search_bucket(Bucket*, char*);
+Bucket* bow_bucket_create(int);
+void bow_bucket_add(Bucket*, mySpec*, int);
+void bow_bucket_destroy(BoWords*, Bucket*);
+void bow_bucket_print(Bucket*);
+Record* bow_search_bucket(Bucket*, char*);
 
-Record* record_create(mySpec*);
-void record_destroy(BoWords*, Record*);
-void record_print(Record*);
+Record* bow_record_create(mySpec*);
+void bow_record_destroy(BoWords*, Record*);
+void bow_record_print(Record*);
 
-mySpec* findRecord_byKey(BoWords*, char*);
+//mySpec* findRecord_byKey(BoWords*, char*);
 
 #endif
