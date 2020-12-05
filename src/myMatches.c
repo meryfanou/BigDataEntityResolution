@@ -21,6 +21,7 @@ matchesInfo* matchesInfoInit(){
 	newInfo->entries = 0;
 	newInfo->head = NULL;
 
+
 	return newInfo;
 }
 
@@ -61,6 +62,9 @@ myMatches* myMatchesInit(){
 
 	newMatch->specsCount = 0;
 	newMatch->specsTable = NULL;
+
+	newMatch->negativeMatches = NULL;
+	newMatch->negative_count = 0;
 	
 	newMatch->next = NULL;
 	newMatch->prev = NULL;
@@ -111,6 +115,10 @@ void deleteMatches(matchesInfo* myInfo, myMatches* match){	// free mem
 		free(match->specsTable);
 
 
+	if(match->negativeMatches != NULL){
+		free(match->negativeMatches);
+	}
+
 	if(myInfo != NULL){
 		if(myInfo->head == 	match)
 			myInfo->head = match->next;
@@ -120,7 +128,7 @@ void deleteMatches(matchesInfo* myInfo, myMatches* match){	// free mem
 	}else{
 		free(match);
 	}
-	
+
 	// match = NULL;
 }
 
@@ -135,6 +143,7 @@ void deleteInfo(matchesInfo* myInfo){ 	// free mem
 		
 		count--;
 	}
+
 	free(myInfo);
 }
 
@@ -146,7 +155,20 @@ void mergeMatches(matchesInfo* myInfo, myMatches* match1, myMatches* match2){
 		return;
 
 	// Combine matches Tables
+	combineMatchesTables(match1, match2);
 
+
+	// ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~ //
+
+	// Combine Negatives tables
+	combineNegativeTables(match1, match2);
+
+
+		// Delete match2
+	// deleteMatches(myInfo, match2);  //Note: deleteMatches() DOES fix the list pointers !!
+}
+
+void combineMatchesTables(myMatches* match1, myMatches* match2){
 		// Count total specs
 	int totalCounts = match1->specsCount + match2->specsCount;
 
@@ -165,11 +187,46 @@ void mergeMatches(matchesInfo* myInfo, myMatches* match1, myMatches* match2){
 		match1->specsCount++;
 		i++;
 	}
-
-		// Delete match2
-	deleteMatches(myInfo, match2);  //Note: deleteMatches() DOES fix the list pointers !!
 }
 
+void combineNegativeTables(myMatches* match1, myMatches* match2){
+
+		// change match2 negatives matches to point at match1 &&  add match2 negatives to match1
+	int neg1count = 0;
+	myMatches* temp = NULL;
+	while(neg1count < match2->negative_count){
+		temp = match2->negativeMatches[neg1count++];
+		
+		if(temp == match1){
+			// printf("GAMW TA DATA MOU GAMW AAAAAAAAAAAAAAAAAAAAAAA\n");
+			continue;
+		}
+			// modify temps pointers
+
+				// add match1 at temp negatives table ( !!!! 2 SIDE OPERATION !!!! )
+		updateNegativeMatches(temp, match1);
+		
+				// remove match2 pointer from temp negatives table
+		temp->negativeMatches = removeCell(temp->negativeMatches, temp->negative_count, match2);
+		temp->negative_count -= 1;
+	}
+}
+
+void updateNegativeMatches(myMatches* match1, myMatches* match2){
+	int exist = findMatchinNegatives(match1->negativeMatches, match1->negative_count, match2);
+	if( exist == -1){
+		return;
+	}
+
+	match1->negativeMatches = realloc(match1->negativeMatches, (match1->negative_count+1)*sizeof(myMatches*));
+	match1->negativeMatches[match1->negative_count] = match2;
+	match1->negative_count++;
+
+	match2->negativeMatches = realloc(match2->negativeMatches, (match2->negative_count+1)*sizeof(myMatches*));
+	match2->negativeMatches[match2->negative_count] = match1;
+	match2->negative_count++;
+
+}
 
 void printMatchesList(matchesInfo* myInfo){		// testing funct - prints matches list
 	printf("~ Matches\n");
@@ -270,4 +327,40 @@ void extractMatches(matchesInfo* allMatches, char* fname){
 	if(flag == 1)
 		fclose(fpout);
 
+}
+
+int findMatchinNegatives(myMatches** arr, int counts, myMatches* target){
+	if(arr == NULL || target == NULL || counts == 0){
+		return -1;
+	}
+
+	int i = 0;
+	// printf("counts: %d\n", counts);
+	while(i < counts){
+		// printf("i: %d\n", i);
+		if(arr[i] == target){
+			return i;
+		}
+
+		i++;
+	}
+
+	return -1;
+}
+
+myMatches** removeCell(myMatches** array, int entries, myMatches* target){
+	myMatches** newArray = malloc((entries-1)*sizeof(myMatches*));
+
+	int i = 0;
+	while(i < entries-1){
+		if(newArray[i] != target){
+			newArray[i] = array[i];
+		}
+		i++;
+	}
+
+	printf("Array Got Smaller !!\n");
+
+	free(array);
+	return newArray;
 }

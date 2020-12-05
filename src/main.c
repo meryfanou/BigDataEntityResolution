@@ -13,8 +13,10 @@ char* PATH_X = "../camera_specs/2013_camera_specs/";
 char* PATH_W = "../sigmod_large_labelled_dataset.csv";
 
 
-#define HASH_SIZE 10
+#define HASH_SIZE 500
 #define BUC_SIZE 100
+
+int received_signal = 0;
 
 int main(int argc, char** argv){
 
@@ -45,7 +47,7 @@ int main(int argc, char** argv){
     struct sigaction    act;
     sigset_t            block_mask;
 
-    received_signal = 0;
+    int received_signal = 0;
 
     sigemptyset(&(act.sa_mask));
 	act.sa_flags = 0;

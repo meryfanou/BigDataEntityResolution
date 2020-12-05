@@ -8,7 +8,7 @@
 #include "myMatches.h"
 #include "mySpec.h"
 
-int received_signal;
+extern int received_signal;
 
 int readDataset(DIR*, char*, hashTable**, matchesInfo*);	// reads from dataset and parse json form properly
 
