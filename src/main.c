@@ -162,7 +162,9 @@ int main(int argc, char** argv){
     mySpec*** trainSet = malloc(sizeof(mySpec**));
 	mySpec*** testSet = malloc(sizeof(mySpec**));
 
-    split_train_n_test(allMatches, trainSet, testSet, TRAIN_PERC);
+    int       trainSize, testSize;
+
+    split_train_n_test(allMatches, trainSet, testSet, TRAIN_PERC, &trainSize, &testSize);
 
 
     //~~~~~~~~~~~~~~~~~~~~~~ FREE MEM

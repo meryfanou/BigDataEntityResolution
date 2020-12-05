@@ -274,7 +274,7 @@ void extractMatches(matchesInfo* allMatches, char* fname){
 }
 
 
-void split_train_n_test(matchesInfo* allMatches, mySpec*** trainSet, mySpec*** testSet, float percentage){
+void split_train_n_test(matchesInfo* allMatches, mySpec*** trainSet, mySpec*** testSet, float percentage, int* trainSize, int* testSize){
 
 	myMatches	*match = allMatches->head;
 
@@ -286,8 +286,8 @@ void split_train_n_test(matchesInfo* allMatches, mySpec*** trainSet, mySpec*** t
 	*trainSet = NULL;
 	*testSet = NULL;
 
-	int trainSize = 0;
-	int testSize = 0;
+	*trainSize = 0;
+	*testSize = 0;
 
 	int	currTrain, currTest;
 	// For each set of specs, where all specs match with each other
@@ -297,14 +297,14 @@ void split_train_n_test(matchesInfo* allMatches, mySpec*** trainSet, mySpec*** t
 		currTrain = (currTrain >= trainingNum) ? (trainingNum) : (currTrain);
 
 		if(currTrain > 0){
-			*trainSet = realloc(*trainSet, (trainSize+currTrain)*sizeof(mySpec*));
+			*trainSet = realloc(*trainSet, ((*trainSize)+currTrain)*sizeof(mySpec*));
 		}
 		// 'Copy' the chosen specs to the training set
 		for(int i=0; i<currTrain; i++){
-			(*trainSet)[i+(trainSize)] = match->specsTable[i];
+			(*trainSet)[i+(*trainSize)] = match->specsTable[i];
 		}
 		trainingNum -= currTrain;
-		(trainSize) += currTrain;
+		(*trainSize) += currTrain;
 
 		// If there are specs left for the testing set
 		if(match->specsCount > 1 || trainingNum == 0){
@@ -313,13 +313,13 @@ void split_train_n_test(matchesInfo* allMatches, mySpec*** trainSet, mySpec*** t
 			currTest = (currTest >= testingNum) ? (testingNum) : (currTest);
 
 			if(currTest > 0){
-				*testSet = realloc(*testSet, (testSize+currTest)*sizeof(mySpec*));
+				*testSet = realloc(*testSet, ((*testSize)+currTest)*sizeof(mySpec*));
 				// 'Copy' the chosen specs to the testing set
 				for(int i=currTrain; i<(match->specsCount); i++){
-					(*testSet)[i-currTrain+(testSize)] = match->specsTable[i];
+					(*testSet)[i-currTrain+(*testSize)] = match->specsTable[i];
 				}
 				testingNum -= currTest;
-				(testSize) += currTest;
+				(*testSize) += currTest;
 			}
 		}
 

@@ -1,6 +1,7 @@
 .PHONY: clean
 CC = gcc
 CCFLAGS = -Wall -g3
+LIBS = -lm
 RM = rm -f
 
 BDIR = bin
@@ -30,7 +31,7 @@ all: dirs clean tests main run
 
 main: $(ODIR)/main.o $(ODIR)/mySpec.o $(ODIR)/myHash.o $(ODIR)/myMatches.o $(ODIR)/functs.o
 		@echo "\nCreating main"
-		$(CC) $(CCFLAGS) -o $(BDIR)/$@ $^ -lm
+		$(CC) $(CCFLAGS) -o $(BDIR)/$@ $^ $(LIBS)
 
 run:	bin/main
         ifeq ($(ARGS),"")
