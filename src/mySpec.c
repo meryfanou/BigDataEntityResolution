@@ -12,6 +12,7 @@ mySpec* specInit(){			// MALLOC AND RETURN NEW SPEC NODE
 	spec->specID = NULL;
 	spec->properties = NULL;
 	spec->propNum = 0;
+	spec->numofWords = 0;
 
 	return spec;
 }

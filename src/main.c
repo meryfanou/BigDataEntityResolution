@@ -3,12 +3,12 @@
 #include <string.h>
 #include <dirent.h>
 #include <signal.h>
-#include <math.h>
 #include "../include/mySpec.h"
 #include "../include/myMatches.h"
 #include "../include/myHash.h"
 #include "../include/myMatches.h"
 #include "../include/functs.h"
+#include "../include/boWords.h"
 
 #define DATASET_X "../camera_specs/2013_camera_specs/"
 #define DATASET_W "../sigmod_large_labelled_dataset.csv"
@@ -167,7 +167,10 @@ int main(int argc, char** argv){
 
 
     //~~~~~~~~~~~~~~~~~~~~~~ PREPARE THE INPUT FOR THE MODEL
+    BoWords*    bow = bow_create(HASH_SIZE, BUC_SIZE);
 
+    text_to_bow(*trainSet, trainSize, &bow);
+    //bow_print(bow);
 
     //~~~~~~~~~~~~~~~~~~~~~~ FREE MEM
     printf("\nCleaning Memory...\n");
@@ -178,6 +181,8 @@ int main(int argc, char** argv){
     free(trainSet);
     free(*testSet);
     free(testSet);
+
+    bow_destroy(bow);
 
     free(path_X);
     free(path_W);

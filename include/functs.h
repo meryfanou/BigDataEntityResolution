@@ -8,6 +8,7 @@
 #include "myHash.h"
 #include "myMatches.h"
 #include "mySpec.h"
+#include "boWords.h"
 
 extern int received_signal;
 
@@ -16,6 +17,11 @@ int readDataset(DIR*, char*, hashTable**, matchesInfo*);	// reads from dataset a
 specInfo** readFile(FILE*, int*, specInfo**);	// called by readDataset on each inner file
 
 int readCSV(char* , hashTable* , matchesInfo*);	//reads csv, creates matches at hash values
+
+void text_to_bow(mySpec**, int, BoWords**);
+void spec_to_bow(mySpec*, BoWords*);
+char* checkWord(char*);
+void sentence_to_bow(char*, mySpec*, BoWords*);
 
 void sig_int_quit_handler(int);
 
