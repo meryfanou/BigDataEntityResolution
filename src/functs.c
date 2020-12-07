@@ -583,8 +583,6 @@ int readCSV(char* fName, hashTable* hashT, matchesInfo* allMatches){
     return 0;
 }
 
-<<<<<<< HEAD
-=======
 
 void text_to_bow(mySpec** set, int setSize, BoWords** boWords){
 
@@ -660,7 +658,6 @@ char* checkWord(char* word){
 }
 
 
->>>>>>> b03747ec5fce43ef388b28489dce01da23ffa095
 void sig_int_quit_handler(int signo)
 {
 	if(signo == SIGINT || signo == SIGQUIT)
