@@ -3,9 +3,11 @@
 #include <string.h>
 #include <dirent.h>
 #include <signal.h>
+#include <ctype.h>
 #include "../include/functs.h"
 #include "../include/mySpec.h"
 #include "../include/myHash.h"
+#include "../include/boWords.h"
 
 
 int readDataset(DIR *datasetX, char *path, hashTable **hashT, matchesInfo* allMatches){
@@ -581,6 +583,84 @@ int readCSV(char* fName, hashTable* hashT, matchesInfo* allMatches){
     return 0;
 }
 
+<<<<<<< HEAD
+=======
+
+void text_to_bow(mySpec** set, int setSize, BoWords** boWords){
+
+    for(int i=0; i<setSize; i++){
+        spec_to_bow(set[i], *boWords);
+    }
+}
+
+void spec_to_bow(mySpec* spec, BoWords* boWords){
+    char*   sentence = NULL;
+
+    for(int i=0; i<(spec->propNum); i++){
+        sentence = strdup(spec->properties[i]->key);
+        sentence_to_bow(sentence, spec, boWords);
+
+        free(sentence);
+        sentence = NULL;
+
+        specValue*   currVal = spec->properties[i]->values;
+        while(currVal != NULL){
+            sentence = strdup(currVal->value);
+            sentence_to_bow(sentence, spec, boWords);
+
+            free(sentence);
+            sentence = NULL;
+
+            currVal = currVal->next;
+        }
+    }
+}
+
+void sentence_to_bow(char* sentence, mySpec* spec, BoWords* boWords){
+    int     hash = 0;
+    char*   word = NULL;
+
+    while((word = strtok_r(sentence," ",&sentence)) != NULL){
+        word = checkWord(word);
+        if(word != NULL){
+            hash = hash1(word);
+            bow_add(boWords, word, spec, hash);
+            (spec->numofWords)++;
+
+            free(word);
+            word = NULL;
+        }
+    }
+}
+
+char* checkWord(char* word){
+
+    char*   result = strdup(word);
+
+    for(int i=0; i<strlen(word); i++){
+        // If it is not a digit or a letter
+        if(isalnum(word[i]) == 0){
+            free(result);
+            return NULL;
+        }
+
+        // Turn to lower case
+        result[i] = (char)tolower(word[i]);
+    }
+
+    char stopwords[] = "a able about across after all almost also am among an and any are as at be because been but by can cannot could dear did do does either else ever every for from get got had has have he her hers him his how however i if in into is it its just least let like likely may me might most must my neither no nor not of off often on only or other our own rather said say says she should since so some than that the their them then there these they this tis to too twas us wants was we were what when where which while who whom why will with would yet you your";
+
+    // If it is a stopword
+    if(strstr(stopwords, result) != NULL){
+        free(result);
+        return NULL;
+    }
+
+    return result;
+}
+
+
+>>>>>>> b03747ec5fce43ef388b28489dce01da23ffa095
 void sig_int_quit_handler(int signo)
 {
 	if(signo == SIGINT || signo == SIGQUIT)

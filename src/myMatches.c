@@ -6,6 +6,7 @@
 #include <errno.h>
 #include <error.h>
 #include <unistd.h>
+#include <math.h>
 #include "../include/myMatches.h"
 
 #define PATH "./Outputs"
@@ -437,3 +438,57 @@ nNode* create_nNode(myMatches* match){
 void destroy_nNode(nNode* myNode){
 	free(myNode);
 }
+
+void split_train_n_test(matchesInfo* allMatches, mySpec*** trainSet, mySpec*** testSet, float percentage, int* trainSize, int* testSize){
+
+	myMatches	*match = allMatches->head;
+
+	// A percentage of all the specs will be used for the training set
+	int			trainingNum = (int)ceil((allMatches->entries)*percentage);
+	// The rest will be used for the testing set
+	int			testingNum = allMatches->entries - trainingNum;
+
+	*trainSet = NULL;
+	*testSet = NULL;
+
+	*trainSize = 0;
+	*testSize = 0;
+
+	int	currTrain, currTest;
+	// For each set of specs, where all specs match with each other
+	while(match != NULL){
+		// A percentage of the specs will be used for the training set
+		currTrain = (int)ceil((match->specsCount)*percentage);
+		currTrain = (currTrain >= trainingNum) ? (trainingNum) : (currTrain);
+
+		if(currTrain > 0){
+			*trainSet = realloc(*trainSet, ((*trainSize)+currTrain)*sizeof(mySpec*));
+		}
+		// 'Copy' the chosen specs to the training set
+		for(int i=0; i<currTrain; i++){
+			(*trainSet)[i+(*trainSize)] = match->specsTable[i];
+		}
+		trainingNum -= currTrain;
+		(*trainSize) += currTrain;
+
+		// If there are specs left for the testing set
+		if(match->specsCount > 1 || trainingNum == 0){
+			// The rest of the specs will be used for the testing set
+			currTest = match->specsCount - currTrain;
+			currTest = (currTest >= testingNum) ? (testingNum) : (currTest);
+
+			if(currTest > 0){
+				*testSet = realloc(*testSet, ((*testSize)+currTest)*sizeof(mySpec*));
+				// 'Copy' the chosen specs to the testing set
+				for(int i=currTrain; i<(currTrain+currTest); i++){
+					(*testSet)[i-currTrain+(*testSize)] = match->specsTable[i];
+				}
+				testingNum -= currTest;
+				(*testSize) += currTest;
+			}
+		}
+
+		match = match->next;
+	}
+}
+

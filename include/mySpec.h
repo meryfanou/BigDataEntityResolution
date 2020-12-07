@@ -15,6 +15,7 @@ struct mySpec{
 	char* specID;
 	specInfo** properties;
 	int propNum;
+	int numofWords;
 };
 
 struct specInfo{

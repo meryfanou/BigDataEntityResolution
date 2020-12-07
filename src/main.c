@@ -8,10 +8,12 @@
 #include "../include/myHash.h"
 #include "../include/myMatches.h"
 #include "../include/functs.h"
+#include "../include/boWords.h"
 
 #define DATASET_X "../camera_specs/2013_camera_specs/"
 #define DATASET_W "../sigmod_large_labelled_dataset.csv"
 
+#define TRAIN_PERC 0.6
 
 #define HASH_SIZE 200
 #define BUC_SIZE 100
@@ -156,10 +158,33 @@ int main(int argc, char** argv){
     //~~~~~~~~~~~~~~~~~~~~~~ EXTARCT PAIRS
     extractMatches(allMatches, outputFile);
 
+
+    //~~~~~~~~~~~~~~~~~~~~~~ SEPERATE SPECS TO TRAINING AND TESTING SETS
+    mySpec*** trainSet = malloc(sizeof(mySpec**));
+	mySpec*** testSet = malloc(sizeof(mySpec**));
+
+    int       trainSize, testSize;
+
+    split_train_n_test(allMatches, trainSet, testSet, TRAIN_PERC, &trainSize, &testSize);
+
+
+    //~~~~~~~~~~~~~~~~~~~~~~ PREPARE THE INPUT FOR THE MODEL
+    BoWords*    bow = bow_create(HASH_SIZE, BUC_SIZE);
+
+    text_to_bow(*trainSet, trainSize, &bow);
+    //bow_print(bow);
+
     //~~~~~~~~~~~~~~~~~~~~~~ FREE MEM
     printf("\nCleaning Memory...\n");
     deleteInfo(allMatches);
     hash_destroy(hashT);
+
+    free(*trainSet);
+    free(trainSet);
+    free(*testSet);
+    free(testSet);
+
+    bow_destroy(bow);
 
     free(path_X);
     free(path_W);
