@@ -165,7 +165,7 @@ int main(int argc, char** argv){
 
     int       trainSize, testSize, validSize;
 
-    printf("\nCreating training, testing and validation sets..\n");
+    printf("\nCreating Training, Testing and Validation Sets..\n");
     split_train_test_valid(allMatches, trainSet, testSet, validSet, &trainSize, &testSize, &validSize, TRAIN_PERC, TEST_PERC);
     printf("       \t\t.. DONE !!\n\n");
 
@@ -174,6 +174,14 @@ int main(int argc, char** argv){
 
     text_to_bow(*trainSet, trainSize, &bow);
     //bow_print(bow);
+
+    // int vectorSize = 0;
+    // float* vector = vectorization(trainSet[0],bow,&vectorSize);
+    // for(int i=0; i<vectorSize; i++){
+    //     if(vector[i] > 0)
+    //         printf("%.1f\n",vector[i]);
+    // }
+    // free(vector);
 
     //~~~~~~~~~~~~~~~~~~~~~~ FREE MEM
     printf("\nCleaning Memory...\n");

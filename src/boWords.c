@@ -97,6 +97,18 @@ void bow_print(BoWords* t){			// testing funct - prints hash
 	printf("\n");
 }
 
+void bow_vectorize(BoWords* bow, float** vector, int* vectorSize, mySpec* spec){
+	Bucket*	bucket = NULL;
+
+	for(int i=0; i<(bow->tableSize); i++){
+		bucket = bow->myTable[i];
+		while(bucket != NULL){
+			bow_bucket_vectorize(bucket, vector, vectorSize, spec);
+			bucket = bucket->next;
+		}
+	}
+}
+
 
 Bucket* bow_bucket_create(int size){				/// INIT BUCKET
 	Bucket* newBucket = malloc(sizeof(bucket));
@@ -165,6 +177,16 @@ void bow_bucket_destroy(BoWords* hash, Bucket* buc){		/// FREE BUC
 	buc = NULL;
 }
 
+void bow_bucket_vectorize(Bucket* bucket, float** vector, int* vectorSize, mySpec* spec){
+	Record*	record = NULL;
+
+	record = bucket->rec;
+	while(record != NULL){
+		bow_record_vectorize(record, vector, vectorSize, spec);
+		record = record->next;
+	}
+}
+
 
 Record* bow_record_create(char* word, mySpec* text){
 	Record* newRec = malloc(sizeof(Record));
@@ -173,7 +195,7 @@ Record* bow_record_create(char* word, mySpec* text){
 	newRec->word = strdup(word);
 	newRec->texts = malloc(sizeof(TextInfo));
 	newRec->texts[0].text = text;
-	newRec->texts[0].numofInstances = 1;
+	newRec->texts[0].numofInstances = 1.0;
 	newRec->numofTexts = 1;
 
 	return newRec;
@@ -183,7 +205,7 @@ void bow_record_print(Record* rec){
 	printf("\t\t>word: %s\n", rec->word);
 
 	for(int i=0; i<(rec->numofTexts); i++){
-		printf("\t\t\t>appears %d times in %s\n",rec->texts[i].numofInstances,rec->texts[i].text->specID);
+		printf("\t\t\t>appears %.4f times in %s\n",rec->texts[i].numofInstances,rec->texts[i].text->specID);
 	}
 }
 
@@ -208,7 +230,7 @@ void bow_record_update(Record* rec, mySpec* text){
 	for(; i<(rec->numofTexts); i++){
 		// If the word has already appeared in current text
 		if(rec->texts[i].text == text){
-			(rec->texts[i].numofInstances)++;
+			rec->texts[i].numofInstances += 1.0;
 			break;
 		}
 	}
@@ -220,6 +242,23 @@ void bow_record_update(Record* rec, mySpec* text){
 		(rec->numofTexts)++;
 		rec->texts = realloc(rec->texts, (rec->numofTexts)*sizeof(TextInfo));
 		rec->texts[i].text = text;
-		rec->texts[i].numofInstances = 1;
+		rec->texts[i].numofInstances = 1.0;
+	}
+}
+
+void bow_record_vectorize(Record* record, float** vector, int* vectorSize, mySpec* spec){
+	int i = 0;
+
+	for(; i<(record->numofTexts); i++){
+		if(record->texts[i].text == spec){
+			(*vector)[*vectorSize] = record->texts[i].numofInstances;
+			(*vectorSize)++;
+			break;
+		}
+	}
+
+	if(i == record->numofTexts){
+		(*vector)[*vectorSize] = 0;
+		(*vectorSize)++;
 	}
 }

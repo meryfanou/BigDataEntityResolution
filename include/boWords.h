@@ -32,24 +32,27 @@ struct Record{
 
 struct TextInfo{
     mySpec* text;
-    int   numofInstances;
+    float numofInstances;
 };
 
 BoWords* bow_create(int ,int);
 void bow_destroy(BoWords*);
 void bow_add(BoWords*, char*, mySpec*, int);
 void bow_print(BoWords*);
+void bow_vectorize(BoWords*, float**, int*, mySpec*);
 
 Bucket* bow_bucket_create(int);
 void bow_bucket_add(Bucket*, char*, mySpec*);
 void bow_bucket_destroy(BoWords*, Bucket*);
 void bow_bucket_print(Bucket*);
 Record* bow_search_bucket(Bucket*, char*);
+void bow_bucket_vectorize(Bucket*, float**, int*, mySpec*);
 
 Record* bow_record_create(char*, mySpec*);
 void bow_record_destroy(BoWords*, Record*);
 void bow_record_print(Record*);
 void bow_record_update(Record*, mySpec*);
+void bow_record_vectorize(Record*, float**, int*, mySpec*);
 
 
 #endif

@@ -22,6 +22,7 @@ void text_to_bow(mySpec**, int, BoWords**);
 void spec_to_bow(mySpec*, BoWords*);
 char* checkWord(char*);
 void sentence_to_bow(char*, mySpec*, BoWords*);
+float* vectorization(mySpec*, BoWords*, int*);
 
 void sig_int_quit_handler(int);
 

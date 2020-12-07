@@ -658,6 +658,15 @@ char* checkWord(char* word){
     return result;
 }
 
+float* vectorization(mySpec* spec, BoWords* bow, int* vectorSize){
+    *vectorSize = 0;
+    float*  vector = malloc((bow->entries)*sizeof(float));
+
+    bow_vectorize(bow,&vector,vectorSize,spec);
+
+    return vector;
+}
+
 
 void sig_int_quit_handler(int signo)
 {
