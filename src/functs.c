@@ -498,6 +498,8 @@ int readCSV(char* fName, hashTable* hashT, matchesInfo* allMatches){
         return -2;
     }
 
+        // ~~~~~~~~~~~~~~~~~ SET MRU LIST
+    // MRU_info* mruL = create_MRU(MRU_SIZE);
 
         // ~~~~~~~~~~~~~~~~~ READ FILE
     char line[100];
@@ -521,6 +523,17 @@ int readCSV(char* fName, hashTable* hashT, matchesInfo* allMatches){
         char* key2 = strtok(NULL, ",\n");
         char* isMatch = strtok(NULL, ",\n");
 
+                    // SCAN HASH FOR ENTRIES
+        mySpec *spec1 = findRecord_byKey(hashT, key1);
+        mySpec *spec2 = findRecord_byKey(hashT, key2);
+
+        if(spec1 == NULL || spec2 == NULL){
+            failed++;
+            count++;
+            memset(line, 0, 100);
+            continue;
+        }
+
                     //~~~~~~~~~ CHECK KEYS - UNCOMMENT FOR TESTING
         // printf("\tkey1: %s, key2: %s, isMatch: %s\n", key1, key2, isMatch);
 
@@ -528,9 +541,6 @@ int readCSV(char* fName, hashTable* hashT, matchesInfo* allMatches){
 
                     //~~~~~~~~~ MERGE MATCHES + FIX POINTERS
         if(strcmp(isMatch, "1") == 0){  //case keys r match
-                // SCAN HASH FOR ENTRIES
-            mySpec *spec1 = findRecord_byKey(hashT, key1);
-            mySpec *spec2 = findRecord_byKey(hashT, key2);
 
             if(spec2->matches == spec1->matches){
                 // MATCHES ALREADY TOGETHER -> NO NEED TO MERGE
@@ -550,29 +560,25 @@ int readCSV(char* fName, hashTable* hashT, matchesInfo* allMatches){
             }
         }
         else if(strcmp(isMatch, "0") == 0){
-            // SCAN HASH FOR ENTRIES
-            mySpec *spec1 = findRecord_byKey(hashT, key1);
-            mySpec *spec2 = findRecord_byKey(hashT, key2);
-
-            // if(spec1->matches == NULL || spec2->matches == NULL)
-                // printf("EROROROROR\n");
+            // printf("~~~ spec_1: %s, spec_2: %s ~~~\n", spec1->specID, spec2->specID);
             updateNegativeMatches(spec1->matches, spec2->matches);
         }
 
         else{
             skipped++;
         }
-        
 
         memset(line, 0, 100);
 
         count++;
     }
-    
+
     fclose(fpin);
 
     // Uncomment to print stats
     // printf ("\n\t(total: %d, skipped: %d, failed: %d, passed: %d)\n\t", count, skipped, failed, passed);
+
+    // printMatchNeg(allMatches);
 
     return 0;
 }

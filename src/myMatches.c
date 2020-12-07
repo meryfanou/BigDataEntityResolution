@@ -66,6 +66,8 @@ myMatches* myMatchesInit(){
 
 	newMatch->negativeMatches = NULL;
 	newMatch->negative_count = 0;
+
+	newMatch->negs = create_nlist();
 	
 	newMatch->next = NULL;
 	newMatch->prev = NULL;
@@ -120,6 +122,8 @@ void deleteMatches(matchesInfo* myInfo, myMatches* match){	// free mem
 		free(match->negativeMatches);
 	}
 
+	destroy_nlist(match->negs);
+
 	if(myInfo != NULL){
 		if(myInfo->head == 	match)
 			myInfo->head = match->next;
@@ -166,7 +170,7 @@ void mergeMatches(matchesInfo* myInfo, myMatches* match1, myMatches* match2){
 
 
 		// Delete match2
-	// deleteMatches(myInfo, match2);  //Note: deleteMatches() DOES fix the list pointers !!
+	deleteMatches(myInfo, match2);  //Note: deleteMatches() DOES fix the list pointers !!
 }
 
 void combineMatchesTables(myMatches* match1, myMatches* match2){
@@ -191,43 +195,33 @@ void combineMatchesTables(myMatches* match1, myMatches* match2){
 }
 
 void combineNegativeTables(myMatches* match1, myMatches* match2){
+	// COMBINE AT MATCH_1 !!!!!!!!
 
 		// change match2 negatives matches to point at match1 &&  add match2 negatives to match1
-	int neg1count = 0;
-	myMatches* temp = NULL;
-	while(neg1count < match2->negative_count){
-		temp = match2->negativeMatches[neg1count++];
-		
-		if(temp == match1){
-			// printf("GAMW TA DATA MOU GAMW AAAAAAAAAAAAAAAAAAAAAAA\n");
-			continue;
-		}
-			// modify temps pointers
 
-				// add match1 at temp negatives table ( !!!! 2 SIDE OPERATION !!!! )
-		updateNegativeMatches(temp, match1);
+	nNode* temp = match2->negs->head;
+
+	while(temp != NULL){
+
+		// List Way
+		updateNegativeMatches(temp->matchptr, match1);
+		remove_nlist(temp->matchptr->negs, match2);
 		
-				// remove match2 pointer from temp negatives table
-		temp->negativeMatches = removeCell(temp->negativeMatches, temp->negative_count, match2);
-		temp->negative_count -= 1;
+		temp = temp->next;
 	}
 }
 
 void updateNegativeMatches(myMatches* match1, myMatches* match2){
-	int exist = findMatchinNegatives(match1->negativeMatches, match1->negative_count, match2);
-	if( exist == -1){
+	/// ~~~~ LIST WAY
+	nNode* exists = seek_nlist(match1->negs, match2);
+	if(exists != NULL){ 	// matches already linked !!
 		return;
 	}
 
-	match1->negativeMatches = realloc(match1->negativeMatches, (match1->negative_count+1)*sizeof(myMatches*));
-	match1->negativeMatches[match1->negative_count] = match2;
-	match1->negative_count++;
-
-	match2->negativeMatches = realloc(match2->negativeMatches, (match2->negative_count+1)*sizeof(myMatches*));
-	match2->negativeMatches[match2->negative_count] = match1;
-	match2->negative_count++;
-
+	add_nlist(match1->negs, match2);
+	add_nlist(match2->negs, match1);
 }
+
 
 void printMatchesList(matchesInfo* myInfo){		// testing funct - prints matches list
 	printf("~ Matches\n");
@@ -330,43 +324,119 @@ void extractMatches(matchesInfo* allMatches, char* fname){
 
 }
 
+void printMatchNeg(matchesInfo* info){
+	myMatches* temp = info->head;
+	int count = 0;
+	while(temp != NULL){
+		if(temp->negs->entries > 2)
+			printf("%d > %d\n", count, temp->negs->entries);
 
-int findMatchinNegatives(myMatches** arr, int counts, myMatches* target){
-	if(arr == NULL || target == NULL || counts == 0){
-		return -1;
+		count++;
+		temp = temp->next;
 	}
-
-	int i = 0;
-	// printf("counts: %d\n", counts);
-	while(i < counts){
-		// printf("i: %d\n", i);
-		if(arr[i] == target){
-			return i;
-		}
-
-		i++;
-	}
-
-	return -1;
 }
 
-myMatches** removeCell(myMatches** array, int entries, myMatches* target){
-	myMatches** newArray = malloc((entries-1)*sizeof(myMatches*));
+nlist* create_nlist(){
+	nlist* newlist = malloc(sizeof(nlist));
 
-	int i = 0;
-	while(i < entries-1){
-		if(newArray[i] != target){
-			newArray[i] = array[i];
-		}
-		i++;
-	}
+	newlist->head = NULL;
+	newlist->tail = NULL;
+	newlist->entries = 0;
 
-	printf("Array Got Smaller !!\n");
-
-	free(array);
-	return newArray;
+	return newlist;
 }
 
+void add_nlist(nlist* mylist, myMatches* match1){
+	// printf("Apo add, entries: %d\n", mylist->entries);
+	nNode* temp = seek_nlist(mylist, match1);
+
+	if(temp != NULL){
+		return;
+	}
+
+	if(mylist->entries == 0){
+		// printf("\n\n!!!! EKANA GAMIDI ADD STO HEAD !!!!\n\n");
+		mylist->head = create_nNode(match1);
+		mylist->tail = mylist->head;
+	}
+	else{
+		mylist->tail->next = create_nNode(match1);
+		mylist->tail->next->prev = mylist->tail;
+		mylist->tail = mylist->tail->next;
+	}
+
+	mylist->entries++;
+	// printf("\t vghke apo add, entries: %d\n", mylist->entries);
+}
+
+void remove_nlist(nlist* mylist, myMatches* match1){
+	nNode* temp = seek_nlist(mylist, match1);
+
+	if(temp == NULL){
+		return;
+	}
+
+		// Change ptrs
+	if(mylist->head != temp){
+		temp->prev->next = temp->next;
+	}
+	else{
+		mylist->head = NULL;
+	}
+	temp->next->prev = temp->prev;
+
+	mylist->entries--;
+
+	destroy_nNode(temp);
+
+	// printf("ekana gamhmeno remove\n");
+}
+
+nNode* seek_nlist(nlist* mylist, myMatches* match1){
+	if(mylist == NULL)
+		return NULL;
+
+	if(mylist->entries == 0){
+		return NULL;
+	}
+
+	// printf("seek > enrtires: %d\n", mylist->entries);
+	
+	nNode* seek = mylist->head;
+	while(seek != NULL){
+		// printf("mple\n");
+		if(seek->matchptr == match1)
+			return seek;
+		seek = seek->next;
+	}
+
+	return NULL;
+}
+
+void destroy_nlist(nlist* mylist){
+	nNode* temp = mylist->tail;
+	while(temp != NULL){
+		mylist->tail = temp->prev;
+		destroy_nNode(temp);
+		temp = mylist->tail;
+	}
+
+	free(mylist);
+}
+
+nNode* create_nNode(myMatches* match){
+	nNode* newNode = malloc(sizeof(nNode));
+
+	newNode->matchptr = match;
+	newNode->prev = NULL;
+	newNode->next = NULL;
+
+	return newNode;
+}
+
+void destroy_nNode(nNode* myNode){
+	free(myNode);
+}
 
 void split_train_test_valid(matchesInfo* allMatches, mySpec*** trainSet, mySpec*** testSet, mySpec*** validSet, int* trainSize, int* testSize, int* validSize, float trainPerc, float testPerc){
 

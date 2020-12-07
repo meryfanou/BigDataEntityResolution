@@ -8,12 +8,17 @@
 typedef struct myMatches myMatches;
 typedef struct matchesInfo matchesInfo;
 typedef struct mySpec mySpec;
+typedef struct neg_list nlist;
+typedef struct neg_node nNode;
+
 struct myMatches{
 	int specsCount;
 	mySpec** specsTable;
 
 	myMatches** negativeMatches;
 	int negative_count;
+
+	nlist* negs;
 
 	myMatches* next;
 	myMatches* prev;
@@ -22,9 +27,20 @@ struct myMatches{
 struct matchesInfo{
 	int entries;
 	myMatches* head;
-
-
 };
+
+struct neg_list{
+	nNode* head;
+	nNode* tail;
+	int entries;
+};
+
+struct neg_node{
+	myMatches* matchptr;
+	nNode* next;
+	nNode* prev;
+};
+
 
 // -------------------------
 
@@ -46,10 +62,18 @@ myMatches* myMatchesInit();
 void deleteMatches(matchesInfo*, myMatches*);
 void pushMatch(myMatches*, mySpec*);
 
-int findMatchinNegatives(myMatches**, int, myMatches*);
 
-myMatches** removeCell(myMatches**, int, myMatches*);
+void printMatchNeg(matchesInfo*);
+
+nlist* create_nlist();
+void add_nlist(nlist*, myMatches*);
+void remove_nlist(nlist*, myMatches*);
+nNode* seek_nlist(nlist*, myMatches*);
+void destroy_nlist(nlist*);
+
+nNode* create_nNode(myMatches*);
+void destroy_nNode(nNode*);
 
 void split_train_test_valid(matchesInfo*, mySpec***, mySpec***, mySpec***, int*, int*, int*, float, float);
 
-#endif 
+#endif
