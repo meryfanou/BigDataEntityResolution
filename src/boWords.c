@@ -140,7 +140,7 @@ Record* bow_search_bucket(Bucket* b, char* key){	// search bucket for target key
 
 void bow_bucket_print(Bucket* b){					// testing funct - prints bucket
 	printf("\t>buc: (%d)\n", b->cur);
-	record* temp = b->rec;
+	Record* temp = b->rec;
 	while(temp != NULL){
 		bow_record_print(temp);
 		temp = temp->next;

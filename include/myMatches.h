@@ -50,6 +50,6 @@ int findMatchinNegatives(myMatches**, int, myMatches*);
 
 myMatches** removeCell(myMatches**, int, myMatches*);
 
-void split_train_n_test(matchesInfo*, mySpec***, mySpec***, float, int*, int*);
+void split_train_test_valid(matchesInfo*, mySpec***, mySpec***, mySpec***, int*, int*, int*, float, float);
 
 #endif 

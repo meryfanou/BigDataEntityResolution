@@ -368,26 +368,29 @@ myMatches** removeCell(myMatches** array, int entries, myMatches* target){
 }
 
 
-void split_train_n_test(matchesInfo* allMatches, mySpec*** trainSet, mySpec*** testSet, float percentage, int* trainSize, int* testSize){
+void split_train_test_valid(matchesInfo* allMatches, mySpec*** trainSet, mySpec*** testSet, mySpec*** validSet, int* trainSize, int* testSize, int* validSize, float trainPerc, float testPerc){
 
 	myMatches	*match = allMatches->head;
 
 	// A percentage of all the specs will be used for the training set
-	int			trainingNum = (int)ceil((allMatches->entries)*percentage);
-	// The rest will be used for the testing set
-	int			testingNum = allMatches->entries - trainingNum;
+	int		trainingNum = (int)ceil((allMatches->entries)*trainPerc);
+	// Another percentage will be used for the testing set
+	int		testingNum = (int)ceil((allMatches->entries)*testPerc);
+	// The rest will be used for the validation set
+	int		validationNum = allMatches->entries - trainingNum - testingNum;
 
 	*trainSet = NULL;
 	*testSet = NULL;
+	*validSet = NULL;
 
 	*trainSize = 0;
 	*testSize = 0;
-
-	int	currTrain, currTest;
+	*validSize = 0;
+	int	currTrain, currTest, currValid;
 	// For each set of specs, where all specs match with each other
 	while(match != NULL){
 		// A percentage of the specs will be used for the training set
-		currTrain = (int)ceil((match->specsCount)*percentage);
+		currTrain = (int)ceil((match->specsCount)*trainPerc);
 		currTrain = (currTrain >= trainingNum) ? (trainingNum) : (currTrain);
 
 		if(currTrain > 0){
@@ -402,8 +405,9 @@ void split_train_n_test(matchesInfo* allMatches, mySpec*** trainSet, mySpec*** t
 
 		// If there are specs left for the testing set
 		if(match->specsCount > 1 || trainingNum == 0){
-			// The rest of the specs will be used for the testing set
-			currTest = match->specsCount - currTrain;
+			// Another percentage of the specs will be used for the testing set
+			currTest = (int)ceil((match->specsCount)*testPerc);
+			currTest = (currTest > (match->specsCount - currTrain)) ? (match->specsCount - currTrain) : (currTest);
 			currTest = (currTest >= testingNum) ? (testingNum) : (currTest);
 
 			if(currTest > 0){
@@ -414,6 +418,20 @@ void split_train_n_test(matchesInfo* allMatches, mySpec*** trainSet, mySpec*** t
 				}
 				testingNum -= currTest;
 				(*testSize) += currTest;
+			}
+
+			// The rest of the specs will be used for the validation set
+			currValid = match->specsCount - currTrain - currTest;
+			currValid = (currValid >= validationNum) ? (validationNum) : (currValid);
+
+			if(currValid > 0){
+				*validSet = realloc(*validSet, ((*validSize)+currValid)*sizeof(mySpec*));
+				// 'Copy' the chosen specs to the validation set
+				for(int i=(currTrain+currTest); i<(currTrain+currTest+currValid); i++){
+					(*validSet)[i-(currTrain+currTest)+(*validSize)] = match->specsTable[i];
+				}
+				validationNum -= currValid;
+				(*validSize) += currValid;
 			}
 		}
 

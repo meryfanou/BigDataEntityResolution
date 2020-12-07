@@ -579,7 +579,7 @@ int readCSV(char* fName, hashTable* hashT, matchesInfo* allMatches){
 
 
 void text_to_bow(mySpec** set, int setSize, BoWords** boWords){
-
+    // For each spec of the set (either training or testing)
     for(int i=0; i<setSize; i++){
         spec_to_bow(set[i], *boWords);
     }
@@ -588,7 +588,9 @@ void text_to_bow(mySpec** set, int setSize, BoWords** boWords){
 void spec_to_bow(mySpec* spec, BoWords* boWords){
     char*   sentence = NULL;
 
+    // For each property of the spec
     for(int i=0; i<(spec->propNum); i++){
+        // Add key's words to bow hashtable
         sentence = strdup(spec->properties[i]->key);
         sentence_to_bow(sentence, spec, boWords);
 
@@ -597,6 +599,7 @@ void spec_to_bow(mySpec* spec, BoWords* boWords){
 
         specValue*   currVal = spec->properties[i]->values;
         while(currVal != NULL){
+            // Add each value's words to bow hashtable
             sentence = strdup(currVal->value);
             sentence_to_bow(sentence, spec, boWords);
 
@@ -612,11 +615,15 @@ void sentence_to_bow(char* sentence, mySpec* spec, BoWords* boWords){
     int     hash = 0;
     char*   word = NULL;
 
+    // For each word in the sentence
     while((word = strtok_r(sentence," ",&sentence)) != NULL){
+        // Check if the word should be used for the matching
         word = checkWord(word);
+        // If it should, add it to bow hashtable
         if(word != NULL){
             hash = hash1(word);
             bow_add(boWords, word, spec, hash);
+            // Increase the number of words found in current spec
             (spec->numofWords)++;
 
             free(word);

@@ -14,6 +14,7 @@
 #define DATASET_W "../sigmod_large_labelled_dataset.csv"
 
 #define TRAIN_PERC 0.6
+#define TEST_PERC 0.2
 
 #define HASH_SIZE 500
 #define BUC_SIZE 100
@@ -160,11 +161,13 @@ int main(int argc, char** argv){
     //~~~~~~~~~~~~~~~~~~~~~~ SEPERATE SPECS TO TRAINING AND TESTING SETS
     mySpec*** trainSet = malloc(sizeof(mySpec**));
 	mySpec*** testSet = malloc(sizeof(mySpec**));
+	mySpec*** validSet = malloc(sizeof(mySpec**));
 
-    int       trainSize, testSize;
+    int       trainSize, testSize, validSize;
 
-    split_train_n_test(allMatches, trainSet, testSet, TRAIN_PERC, &trainSize, &testSize);
-
+    printf("\nCreating training, testing and validation sets..\n");
+    split_train_test_valid(allMatches, trainSet, testSet, validSet, &trainSize, &testSize, &validSize, TRAIN_PERC, TEST_PERC);
+    printf("       \t\t.. DONE !!\n\n");
 
     //~~~~~~~~~~~~~~~~~~~~~~ PREPARE THE INPUT FOR THE MODEL
     BoWords*    bow = bow_create(HASH_SIZE, BUC_SIZE);
@@ -181,6 +184,8 @@ int main(int argc, char** argv){
     free(trainSet);
     free(*testSet);
     free(testSet);
+    free(*validSet);
+    free(validSet);
 
     bow_destroy(bow);
 
