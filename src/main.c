@@ -13,7 +13,7 @@
 #define DATASET_W "../sigmod_large_labelled_dataset.csv"
 
 
-#define HASH_SIZE 500
+#define HASH_SIZE 200
 #define BUC_SIZE 100
 
 int received_signal = 0;
@@ -53,6 +53,8 @@ int main(int argc, char** argv){
             i++;
         }
     }
+
+    printf("path: %s\n", path_X);
 
     DIR                 *datasetX = NULL;
     struct sigaction    act;
