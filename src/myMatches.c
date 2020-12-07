@@ -165,7 +165,7 @@ void mergeMatches(matchesInfo* myInfo, myMatches* match1, myMatches* match2){
 
 	// ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~ //
 
-	// Combine Negatives tables
+	// Combine Negatives Lists
 	combineNegativeTables(match1, match2);
 
 
@@ -200,15 +200,24 @@ void combineNegativeTables(myMatches* match1, myMatches* match2){
 		// change match2 negatives matches to point at match1 &&  add match2 negatives to match1
 
 	nNode* temp = match2->negs->head;
+	if(temp == NULL && match2->negs->entries != 0){
+		printf("??? TI SKATA ???\n");
+	}
 
+	// printf("Entries > %d ... ", match2->negs->entries);
+	int count = 0;
 	while(temp != NULL){
 
 		// List Way
-		updateNegativeMatches(temp->matchptr, match1);
+			// add match1 at temp->match list AND reverse
+		updateNegativeMatches(match1, temp->matchptr);
+			// remove match2 from temp->match list
 		remove_nlist(temp->matchptr->negs, match2);
 		
 		temp = temp->next;
+		count++;
 	}
+	// printf("\t\t Checked > %d\n", count);
 }
 
 void updateNegativeMatches(myMatches* match1, myMatches* match2){
@@ -347,26 +356,21 @@ nlist* create_nlist(){
 }
 
 void add_nlist(nlist* mylist, myMatches* match1){
-	// printf("Apo add, entries: %d\n", mylist->entries);
-	nNode* temp = seek_nlist(mylist, match1);
-
-	if(temp != NULL){
-		return;
-	}
+	nNode* to_add = create_nNode(match1);
 
 	if(mylist->entries == 0){
 		// printf("\n\n!!!! EKANA GAMIDI ADD STO HEAD !!!!\n\n");
-		mylist->head = create_nNode(match1);
+		mylist->head = to_add;
 		mylist->tail = mylist->head;
 	}
 	else{
-		mylist->tail->next = create_nNode(match1);
+		// printf("entries: %d\n", mylist->entries);
+		mylist->tail->next = to_add;
 		mylist->tail->next->prev = mylist->tail;
 		mylist->tail = mylist->tail->next;
 	}
 
 	mylist->entries++;
-	// printf("\t vghke apo add, entries: %d\n", mylist->entries);
 }
 
 void remove_nlist(nlist* mylist, myMatches* match1){
@@ -376,14 +380,22 @@ void remove_nlist(nlist* mylist, myMatches* match1){
 		return;
 	}
 
-		// Change ptrs
-	if(mylist->head != temp){
+			// FIX LIST PREV && NEXT PTR'S
+	if(temp->next != NULL){
+		temp->next->prev = temp->prev;
+	}
+	if(temp->prev != NULL){
 		temp->prev->next = temp->next;
 	}
-	else{
-		mylist->head = NULL;
+
+			// CHECK HEAD
+	if(mylist->head == temp){
+		mylist->head = temp->next;
 	}
-	temp->next->prev = temp->prev;
+			// CHECK TAIL
+	if(mylist->tail == temp){
+		mylist->tail = temp->prev;
+	}
 
 	mylist->entries--;
 
