@@ -62,10 +62,6 @@ myMatches* myMatchesInit();
 void deleteMatches(matchesInfo*, myMatches*);
 void pushMatch(myMatches*, mySpec*);
 
-int findMatchinNegatives(myMatches**, int, myMatches*);
-
-myMatches** removeCell(myMatches**, int, myMatches*);
-myMatches** addCell(myMatches**, int, myMatches*);
 
 void printMatchNeg(matchesInfo*);
 
@@ -79,10 +75,4 @@ nNode* create_nNode(myMatches*);
 void destroy_nNode(nNode*);
 
 
-<<<<<<< HEAD
 #endif
-=======
-void split_train_n_test(matchesInfo*, mySpec***, mySpec***, float, int*, int*);
-
-#endif 
->>>>>>> b03747ec5fce43ef388b28489dce01da23ffa095
