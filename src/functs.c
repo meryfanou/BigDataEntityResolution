@@ -578,7 +578,7 @@ int readCSV(char* fName, hashTable* hashT, matchesInfo* allMatches){
     // Uncomment to print stats
     // printf ("\n\t(total: %d, skipped: %d, failed: %d, passed: %d)\n\t", count, skipped, failed, passed);
 
-    printMatchNeg(allMatches);
+    // printMatchNeg(allMatches);
 
     return 0;
 }
