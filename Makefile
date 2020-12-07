@@ -47,7 +47,7 @@ valgrind: main
 
 all_tests:  $(ODIR)/myHash_test.o $(ODIR)/myMatchesList_test.o $(ODIR)/mySpec_test.o $(ODIR)/myMatches.o $(ODIR)/mySpec.o  $(ODIR)/myHash.o
 			@echo "\nCreating Unit Testing Files"
-			$(CC) $(CCFLAGS) -o $(BDIR)/$@ $^
+			$(CC) $(CCFLAGS) -o $(BDIR)/$@ $^ $(LIBS)
 
 tests:	dirs all_tests
 		@echo "\nRunning Unit Testing.."
