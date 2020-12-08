@@ -9,6 +9,7 @@
 #include "myMatches.h"
 #include "mySpec.h"
 #include "boWords.h"
+#include "math.h"
 
 extern int received_signal;
 

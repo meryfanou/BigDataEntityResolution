@@ -2,12 +2,13 @@
 #define BOWORDS_H
 
 #include "./mySpec.h"
+#include <math.h>
 
 typedef struct BoWords BoWords;
 typedef struct Bucket Bucket;
 typedef struct Record Record;
 typedef struct TextInfo TextInfo;
-
+typedef struct TfIdf_model tfidf;
 
 struct BoWords{
 	Bucket** myTable;
@@ -15,6 +16,7 @@ struct BoWords{
 	int maxRecs;
 	int bucSize;
 	int tableSize;
+	int specsSum;
 };
 
 struct Bucket{
@@ -35,6 +37,16 @@ struct TextInfo{
     float numofInstances;
 };
 
+struct TfIdf_model{
+	int count_Words;
+	int all_Words;
+	int max_Words;
+
+	int count_Texts;
+	int all_Texts;
+	int max_Texts;
+};
+
 BoWords* bow_create(int ,int);
 void bow_destroy(BoWords*);
 void bow_add(BoWords*, char*, mySpec*, int);
@@ -53,6 +65,23 @@ void bow_record_destroy(BoWords*, Record*);
 void bow_record_print(Record*);
 void bow_record_update(Record*, mySpec*);
 void bow_record_vectorize(Record*, float**, int*, mySpec*);
+
+
+// ~~~~ TF-IDF ~~~~~~
+
+
+tfidf* tfidf_create();
+void tfidf_set(tfidf*, int, int ); // (model, maxTexts, maxWords to scan)
+void tfidf_destroy(tfidf*);
+void tfidf_apply(tfidf*, BoWords*);
+void tfidf_apply_toBucket(tfidf*, Bucket*);
+void tfidf_apply_toRec(tfidf*, Record*);
+
+float tfidf_calc(int, int, int, int);
+			// > no. of apperiences in specific text
+			// > no. of specific text's word's sum
+			// > sum of all text's
+			// > no. of texts that include the word
 
 
 #endif

@@ -23,6 +23,8 @@ BoWords* bow_create(int HashSize, int BucSize){
 	newTable->maxRecs = (BucSize - sizeof(Bucket*)) / sizeof(Record);
 	newTable->entries = 0;
 	
+	newTable->specsSum = 0;
+
 	return newTable;
 }
 
@@ -261,4 +263,92 @@ void bow_record_vectorize(Record* record, float** vector, int* vectorSize, mySpe
 		(*vector)[*vectorSize] = 0;
 		(*vectorSize)++;
 	}
+}
+
+
+tfidf* tfidf_create(){
+	tfidf* newtf = malloc(sizeof(tfidf));
+
+	newtf->all_Texts = -1;
+	newtf->all_Words = -1;
+	newtf->max_Texts = -1;
+	newtf->max_Words = -1;
+	newtf->count_Texts = 0;
+	newtf->count_Words = 0;
+
+	return newtf;
+}
+
+void tfidf_destroy(tfidf* tf){
+	free(tf);
+}
+
+void tfidf_set(tfidf* tf, int maxTexts, int maxWords){
+	if(maxTexts > -1)
+		tf->max_Texts = maxTexts;
+	if(maxWords > -1)
+		tf->max_Words = maxWords;
+}
+
+void tfidf_apply(tfidf* tf, BoWords* bow){
+	tf->all_Words = bow->entries;
+	tf->all_Texts = bow->specsSum;
+
+	int i = 0;
+	while(i < bow->tableSize){
+		Bucket* tempBuc = bow->myTable[i];
+		while(tempBuc != NULL){
+			tfidf_apply_toBucket(tf, tempBuc);
+
+			tempBuc = tempBuc->next;
+		}
+		i++;
+	}
+}
+
+void tfidf_apply_toBucket(tfidf* tf, Bucket* buc){
+	Record* tempRec = buc->rec;
+	while(tempRec != NULL){
+		tfidf_apply_toRec(tf, tempRec);
+
+		if(tf->count_Words == tf->max_Words)
+			return;
+
+		tempRec = tempRec->next;
+	}
+}
+
+void tfidf_apply_toRec(tfidf* tf, Record* rec){
+	int texts_sum = tf->all_Texts;
+	int target_texts_sum = rec->numofTexts;
+
+	TextInfo* tempText = NULL;
+	int i = 0;
+	while(i < rec->numofTexts){
+		tempText = &rec->texts[i];
+
+		int counts_inText = tempText->numofInstances;
+		int words_sum = tempText->text->numofWords;
+		
+		tempText->numofInstances = tfidf_calc(counts_inText, words_sum, texts_sum, target_texts_sum);
+
+		i++;
+	}
+}
+
+float tfidf_calc(int counts_inText, int words_sum, int texts_sum, int target_texts_sum){
+
+	float num1 = (float)counts_inText / (float)words_sum;
+
+	float num2 = log((float)texts_sum / (float)target_texts_sum);
+
+	/*
+		!!!! TEST PRINTS !!!
+	printf("counts_inText: %d, words_sum: %d", counts_inText, words_sum);
+	printf(", texts_sum: %d, target_texts_sum: %d\n", texts_sum, target_texts_sum);
+	printf("num_1: %.4f, num_2: %.4f, final: %.4f\n", num1, num2, num1*num2);
+	
+	*/
+
+	return num1*num2;
 }

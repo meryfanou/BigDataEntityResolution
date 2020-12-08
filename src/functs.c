@@ -589,6 +589,7 @@ void text_to_bow(mySpec** set, int setSize, BoWords** boWords){
     for(int i=0; i<setSize; i++){
         spec_to_bow(set[i], *boWords);
     }
+    (*boWords)->specsSum = setSize;
 }
 
 void spec_to_bow(mySpec* spec, BoWords* boWords){

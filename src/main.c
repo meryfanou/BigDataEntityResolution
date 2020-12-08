@@ -169,16 +169,30 @@ int main(int argc, char** argv){
 
     printf("\nCreating Training, Testing and Validation Sets..\n");
     split_train_test_valid(allMatches, trainSet, testSet, validSet, &trainSize, &testSize, &validSize, TRAIN_PERC, TEST_PERC);
-    printf("       \t\t.. DONE !!\n\n");
+    printf("       \t\t.. DONE !!\n");
 
     //~~~~~~~~~~~~~~~~~~~~~~ PREPARE THE INPUT FOR THE MODEL
+    printf("\nBuilding BoW (test_Set) ..\n");
     BoWords*    bow = bow_create(HASH_SIZE, BUC_SIZE);
 
     text_to_bow(*trainSet, trainSize, &bow);
+    printf("       \t\t.. DONE !!\n");
+
+    //~~~~~~~~~~~~~~~~~~~~~~ TEST TF-IDF >
+    printf("\nApplying TF-IDF (test_Set)\n");
+    tfidf* mytf = tfidf_create();
+    tfidf_set(mytf, -1, -1);    // (model, maxTexts, maxWords to scan)
+    tfidf_apply(mytf, bow);
+    tfidf_destroy(mytf);
+    // bow_print(bow);
+    printf("       \t\t.. DONE !!\n");
+    //~~~~~~~~~~~~~~~~~~~~~ > TEST TF-IDF
+
+
     //bow_print(bow);
 
     // int vectorSize = 0;
-    // float* vector = vectorization(trainSet[0],bow,&vectorSize);
+    // float* vector = vectorization(*trainSet[0],bow,&vectorSize);
     // for(int i=0; i<vectorSize; i++){
     //     if(vector[i] > 0)
     //         printf("%.1f\n",vector[i]);
