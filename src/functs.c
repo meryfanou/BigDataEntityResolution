@@ -8,6 +8,7 @@
 #include "../include/mySpec.h"
 #include "../include/myHash.h"
 #include "../include/boWords.h"
+#include "../include/mbh.h"
 
 
 int readDataset(DIR *datasetX, char *path, hashTable **hashT, matchesInfo* allMatches){
@@ -664,13 +665,68 @@ char* checkWord(char* word){
     return result;
 }
 
+void set_mostSignificantWords(BoWords* bow, int mostSign){
+    char*   word = NULL;
+    MBH*    heap = NULL;
+
+    mbh_init(&heap, mostSign);
+
+    bow_get_signWords(bow, heap);
+    int n = 0;
+    while((word = mbh_extract_root(heap)) != NULL){
+        n += bow_set_significance(bow, word);
+        free(word);
+    }
+    mbh_delete(&heap);
+}
+
+void keep_mostSignificantWords(BoWords* bow){
+
+    bow_keep_signWords(bow);
+}
+
 float* vectorization(mySpec* spec, BoWords* bow, int* vectorSize){
     *vectorSize = 0;
     float*  vector = malloc((bow->entries)*sizeof(float));
 
+    // Get a vector of words' calculated values about a text (spec)
     bow_vectorize(bow,&vector,vectorSize,spec);
 
     return vector;
+}
+
+void train_per_clique(myMatches* clique, mySpec** trainSet, int trainSize, BoWords* bow){
+    int     tag , vectorSize;
+    float*  vector = NULL;
+    nNode*  negMatch = NULL;
+
+    for(int i=0; i<trainSize; i++){
+        tag = -1;
+        if(trainSet[i]->matches == clique){
+            tag = 1;
+        }
+        else{
+            negMatch = trainSet[i]->matches->negs->head;
+            while(negMatch != NULL){
+                if(negMatch->matchptr == clique){
+                    tag = 0;
+                    break;
+                }
+
+                negMatch = negMatch->next;
+            }
+        }
+        if(tag == -1)
+            continue;
+
+        vectorSize = 0;
+        vector = vectorization(trainSet[i],bow,&vectorSize);
+
+        // pass clique, vector, tag to the model !!
+
+        free(vector);
+        vector = NULL;
+    }
 }
 
 

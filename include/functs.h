@@ -22,7 +22,12 @@ void text_to_bow(mySpec**, int, BoWords**);
 void spec_to_bow(mySpec*, BoWords*);
 char* checkWord(char*);
 void sentence_to_bow(char*, mySpec*, BoWords*);
+
+void set_mostSignificantWords(BoWords*, int);
+void keep_mostSignificantWords(BoWords*);
+
 float* vectorization(mySpec*, BoWords*, int*);
+void train_per_clique(myMatches*, mySpec**, int, BoWords*);
 
 void sig_int_quit_handler(int);
 

@@ -15,9 +15,6 @@ struct myMatches{
 	int specsCount;
 	mySpec** specsTable;
 
-	myMatches** negativeMatches;
-	int negative_count;
-
 	nlist* negs;
 
 	myMatches* next;
@@ -52,7 +49,7 @@ void mergeMatches(matchesInfo*, myMatches*, myMatches*);
 void combineMatchesTables(myMatches*, myMatches*);
 
 void updateNegativeMatches(myMatches*, myMatches*);
-void combineNegativeTables(myMatches*, myMatches*);
+void combineNegativeLists(myMatches*, myMatches*);
 
 void printMatchesList(matchesInfo*); 		// TESTING
 void extractMatches(matchesInfo*, char*);

@@ -64,9 +64,6 @@ myMatches* myMatchesInit(){
 	newMatch->specsCount = 0;
 	newMatch->specsTable = NULL;
 
-	newMatch->negativeMatches = NULL;
-	newMatch->negative_count = 0;
-
 	newMatch->negs = create_nlist();
 	
 	newMatch->next = NULL;
@@ -118,10 +115,6 @@ void deleteMatches(matchesInfo* myInfo, myMatches* match){	// free mem
 		free(match->specsTable);
 
 
-	if(match->negativeMatches != NULL){
-		free(match->negativeMatches);
-	}
-
 	destroy_nlist(match->negs);
 
 	if(myInfo != NULL){
@@ -166,7 +159,7 @@ void mergeMatches(matchesInfo* myInfo, myMatches* match1, myMatches* match2){
 	// ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~ //
 
 	// Combine Negatives Lists
-	combineNegativeTables(match1, match2);
+	combineNegativeLists(match1, match2);
 
 
 		// Delete match2
@@ -194,7 +187,7 @@ void combineMatchesTables(myMatches* match1, myMatches* match2){
 	}
 }
 
-void combineNegativeTables(myMatches* match1, myMatches* match2){
+void combineNegativeLists(myMatches* match1, myMatches* match2){
 	// COMBINE AT MATCH_1 !!!!!!!!
 
 		// change match2 negatives matches to point at match1 &&  add match2 negatives to match1

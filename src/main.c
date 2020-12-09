@@ -13,11 +13,13 @@
 #define DATASET_X "../camera_specs/2013_camera_specs/"
 #define DATASET_W "../sigmod_large_labelled_dataset.csv"
 
+#define HASH_SIZE 200
+#define BUC_SIZE 100
+
 #define TRAIN_PERC 0.6
 #define TEST_PERC 0.2
 
-#define HASH_SIZE 200
-#define BUC_SIZE 100
+#define MOST_SIGN 1000
 
 int received_signal = 0;
 
@@ -176,14 +178,24 @@ int main(int argc, char** argv){
 
     text_to_bow(*trainSet, trainSize, &bow);
     //bow_print(bow);
+    printf("       \t\t.. DONE !!\n\n");
 
-    // int vectorSize = 0;
-    // float* vector = vectorization(trainSet[0],bow,&vectorSize);
-    // for(int i=0; i<vectorSize; i++){
-    //     if(vector[i] > 0)
-    //         printf("%.1f\n",vector[i]);
+    // Update bow: td-idf
+
+    // Keep most significant words from bow
+    set_mostSignificantWords(bow, MOST_SIGN);
+    printf("       \t\t.. DONE !!\n\n");
+    keep_mostSignificantWords(bow);
+    printf("       \t\t.. DONE !!\n\n");
+    //bow_print(bow);
+    //printf("%d\n",bow->entries);
+
+    // //~~~~~~~~~~~~~~~~~~~~~~ TRAIN MODEL
+    // myMatches*  clique = allMatches->head;
+
+    // while(clique != NULL){
+    //     train_per_clique(clique, trainSet, trainSize, bow);
     // }
-    // free(vector);
 
     //~~~~~~~~~~~~~~~~~~~~~~ FREE MEM
     printf("\nCleaning Memory...\n");
