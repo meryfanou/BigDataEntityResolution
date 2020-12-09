@@ -9,6 +9,7 @@
 #include "../include/myMatches.h"
 #include "../include/functs.h"
 #include "../include/boWords.h"
+#include "../include/logistic.h"
 
 #define DATASET_X "../camera_specs/2013_camera_specs/"
 #define DATASET_W "../sigmod_large_labelled_dataset.csv"
@@ -159,6 +160,8 @@ int main(int argc, char** argv){
     //~~~~~~~~~~~~~~~~~~~~~~ EXTARCT PAIRS
     extractMatches(allMatches, outputFile);
 
+// ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+// ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 
     //~~~~~~~~~~~~~~~~~~~~~~ SEPERATE SPECS TO TRAINING AND TESTING SETS
     mySpec*** trainSet = malloc(sizeof(mySpec**));
@@ -171,6 +174,9 @@ int main(int argc, char** argv){
     split_train_test_valid(allMatches, trainSet, testSet, validSet, &trainSize, &testSize, &validSize, TRAIN_PERC, TEST_PERC);
     printf("       \t\t.. DONE !!\n");
 
+// ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+// ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+
     //~~~~~~~~~~~~~~~~~~~~~~ PREPARE THE INPUT FOR THE MODEL
     printf("\nBuilding BoW (test_Set) ..\n");
     BoWords*    bow = bow_create(HASH_SIZE, BUC_SIZE);
@@ -178,8 +184,11 @@ int main(int argc, char** argv){
     text_to_bow(*trainSet, trainSize, &bow);
     printf("       \t\t.. DONE !!\n");
 
+// ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+// ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+
     //~~~~~~~~~~~~~~~~~~~~~~ TEST TF-IDF >
-    printf("\nApplying TF-IDF (test_Set)\n");
+    printf("\nApplying TF-IDF (test_Set) ..\n");
     tfidf* mytf = tfidf_create();
     tfidf_set(mytf, -1, -1);    // (model, maxTexts, maxWords to scan)
     tfidf_apply(mytf, bow);
@@ -188,22 +197,57 @@ int main(int argc, char** argv){
     printf("       \t\t.. DONE !!\n");
     //~~~~~~~~~~~~~~~~~~~~~ > TEST TF-IDF
 
+// ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+// ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 
+    //~~~~~~~~~~~~~~~~~~~~~~ VECTORIZATION  + LABELS (Ptr's to matches)>
+
+    printf("Vectorizing train_Bow .. \n");
     //bow_print(bow);
 
     // int vectorSize = 0;
-    // float* vector = vectorization(*trainSet[0],bow,&vectorSize);
-    // for(int i=0; i<vectorSize; i++){
-    //     if(vector[i] > 0)
-    //         printf("%.1f\n",vector[i]);
-    // }
-    // free(vector);
+    float** train_vector = malloc(trainSize*sizeof(float*));
+    myMatches** train_labels = malloc(trainSize*sizeof(myMatches*));
+
+
+    int vectorSize = 0;
+    int vecCount = 0;
+    while(5*vecCount < trainSize){
+        // printf("Train Size: %d, curr: %d\n", trainSize, vecCount);
+
+        vectorSize = 0;
+        train_vector[vecCount] = vectorization((*trainSet)[vecCount],bow,&vectorSize);
+        train_labels[vecCount] = (*trainSet)[vecCount]->matches;
+        vecCount++;
+    }
+
+    printf("       \t\t.. DONE !!\n");
+    //~~~~~~~~~~~~~~~~~~~~~~ > VECTORIZATION
+
+// ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+// ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+
+    //~~~~~~~~~~~~~~~~~~~~~~ TEST LOGISTIC - NOT FINISHED !!!! >
+
+
+    logM* model = logistic_create();
+    logistic_fit(model, vecCount, train_vector, vectorSize, train_labels);
+
+    //~~~~~~~~~~~~~~~~~~~~~~ > TEST LOGISTIC - NOT FINISHED !!!!
+
+
+
+// ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+// ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 
     //~~~~~~~~~~~~~~~~~~~~~~ FREE MEM
     printf("\nCleaning Memory...\n");
+
+        // free hash and match list
     deleteInfo(allMatches);
     hash_destroy(hashT);
 
+        // free Sets
     free(*trainSet);
     free(trainSet);
     free(*testSet);
@@ -211,11 +255,28 @@ int main(int argc, char** argv){
     free(*validSet);
     free(validSet);
 
+        // free vectors - labels
+    int free_t_vec = vecCount;
+    while(free_t_vec > 0){
+        free_t_vec--;
+        free(train_vector[free_t_vec]);
+    }
+    free(train_vector);
+
+        // free labels
+    free(train_labels);
+
+        // free bow
     bow_destroy(bow);
 
+        //free model
+    logistic_destroy(model);
+
+        // free paths - strings
     free(path_X);
     free(path_W);
 
+        // free File ptr's
     if(outputFile != NULL)
         free(outputFile);
     printf("       \t\t.. DONE !!\n\n");

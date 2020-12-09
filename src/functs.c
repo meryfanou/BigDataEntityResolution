@@ -666,6 +666,7 @@ char* checkWord(char* word){
 }
 
 float* vectorization(mySpec* spec, BoWords* bow, int* vectorSize){
+    // printf("mpjhke\n");
     *vectorSize = 0;
     float*  vector = malloc((bow->entries)*sizeof(float));
 
