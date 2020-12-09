@@ -195,7 +195,7 @@ int main(int argc, char** argv){
 //    printf("       \t\t.. DONE !!\n\n");
 
     //~~~~~~~~~~~~~~~~~~~~~~ Mark the most significan words and remove the rest from bow
-    printf("\nChoosing %d most significant words..\n",MOST_SIGN);
+    printf("\nChoosing %d most significant words (Training Set)..\n",MOST_SIGN);
     set_mostSignificantWords(bow, MOST_SIGN);
     keep_mostSignificantWords(bow);
     printf("       \t\t.. DONE !!\n\n");

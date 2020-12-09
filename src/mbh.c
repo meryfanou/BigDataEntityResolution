@@ -3,6 +3,8 @@
 #include <string.h>
 #include "../include/mbh.h"
 
+// ~~~~~~~~~~~~~~~~~~~~~~~~~~ MBHNode ~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+
 // Exchange info between two nodes of the heap, without changing their pointers
 void swap(MBHNode* node1, MBHNode* node2){
 	char*   temp_w;
@@ -44,8 +46,7 @@ MBHNode* add_mbh_node(MBHNode* heapNode, char* word, float key){
 	}
 	// Check left subtree
 	// If there is none, add new node as heapNode's left child
-	else if(diff < 0.0)
-	{
+	else if(diff < 0.0){
 		if(heapNode->left != NULL)
 			return add_mbh_node(heapNode->left,word,key);
 
@@ -59,8 +60,7 @@ MBHNode* add_mbh_node(MBHNode* heapNode, char* word, float key){
 	}
 	// Check right subtree
 	// If there is none, add new node as heapNode's right child
-	else
-	{
+	else{
 		if(heapNode->right != NULL)
 			return add_mbh_node(heapNode->right,word,key);
 
@@ -80,19 +80,20 @@ MBHNode* add_mbh_node(MBHNode* heapNode, char* word, float key){
 	return current;
 }
 
-void delete_mbh_node(MBH* heap, MBHNode* heapNode, int heapify)
-{
-	if(heap != NULL && heapNode != NULL)
-	{
+// Delete a node from the heap / 3rd argument: if 1 ~> heapify after deletion | if 0 ~> do nothing
+void delete_mbh_node(MBH* heap, MBHNode* heapNode, int heapify){
+
+	if(heap != NULL && heapNode != NULL){
 		int			isLeft = 0;
 		MBHNode*	parent = heap->max->parent;
 
+		// If max is also the root => only on node in heap
 		if(parent == NULL){
-			if(heapNode != heap->max){
-				printf("!%d %p %p %p\n",heap->numofNodes,heapNode,heap->max,heap->root);
+			// Max should be the only node in heap
+			if(heapNode != heap->max)
 				return;
-			}
 
+			// Simply remove it
 			free(heapNode->word);
 			free(heapNode);
 			heap->root = NULL;
@@ -101,18 +102,22 @@ void delete_mbh_node(MBH* heap, MBHNode* heapNode, int heapify)
 			return;
 		}
 
+		// Keep whether max is its parent's left or right child
 		if(parent->left == heap->max)
 			isLeft = 1;
 
+		// Swap heapNode with max node, so that heapNode's content is in a leaf and delete it
 		swap(heapNode, heap->max);
 		free(heap->max->word);
 		free(heap->max);
 
+		// Update parent's child
 		if(isLeft)
 			parent->left = NULL;
 		else
 			parent->right = NULL;
 
+		// If needed re-heapify the heap and update the max
 		if(heapify){
 			mbh_inverse_heapify(heapNode);
 			heap->max = mbh_find_max(heap->root);
@@ -122,12 +127,11 @@ void delete_mbh_node(MBH* heap, MBHNode* heapNode, int heapify)
 	}
 }
 
-/*----------------------------------------------------------------------------------------------*/
+// ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~ MBH ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 
-void mbh_init(MBH** heap, int maxNodes)
-{
-	if(*heap == NULL)
-	{
+// Init Max Binary Heap
+void mbh_init(MBH** heap, int maxNodes){
+	if(*heap == NULL){
 		*heap = (MBH*)malloc(sizeof(MBH));
 		(*heap)->root = NULL;
 		(*heap)->max = NULL;
@@ -136,16 +140,19 @@ void mbh_init(MBH** heap, int maxNodes)
 	}
 }
 
-int mbh_insert(MBH* heap, char* word, float key)
-{
+// Create a new node in heap ~ return 0 if successfull
+int mbh_insert(MBH* heap, char* word, float key){
 	if(heap == NULL)
 		return -1;
 
+	// If heap's maximum number of nodes has been reached
     if(heap->numofNodes == heap->maxNodes){
+		// If word's key is not high enough to be added in key
         if(key <= heap->root->key){
             return 1;
 		}
         else{
+			// Extract the word with the minimum key (root) before adding the new one
             char*	word = mbh_extract_root(heap);
 			if(word != NULL)
 				free(word);
@@ -153,8 +160,7 @@ int mbh_insert(MBH* heap, char* word, float key)
     }
 
 	// If heap is empty
-	if(heap->root == NULL)
-	{
+	if(heap->root == NULL){
 		heap->root = (MBHNode*)malloc(sizeof(MBHNode));
 		heap->root->word = strdup(word);
 		heap->root->key = key;
@@ -165,9 +171,10 @@ int mbh_insert(MBH* heap, char* word, float key)
 		// Heap's only element is also the max
 		heap->max = heap->root;
 	}
-	else
-	{
+	else{
+		// Create and add new node
 		add_mbh_node(heap->root,word,key);
+		// Update max node
 		heap->max = mbh_find_max(heap->root);
 	}
 
@@ -176,18 +183,18 @@ int mbh_insert(MBH* heap, char* word, float key)
     return 0;
 }
 
-void mbh_delete(MBH** heap)
-{
-	while((*heap)->numofNodes > 0)
+void mbh_delete(MBH** heap){
+	while((*heap)->numofNodes > 0){
+		// Delete each node, without heapifying after a deletion (cause of the 0 argument)
 		delete_mbh_node(*heap, (*heap)->root, 0);
+	}
 
 	free(*heap);
 	*heap = NULL;
 }
 
 // Heapify heap starting from a node and going upwards till the root
-void mbh_heapify(MBHNode* heapNode)
-{
+void mbh_heapify(MBHNode* heapNode){
 	// If current node has a left child with smaller key, swap them
 	if(heapNode->left != NULL && heapNode->key > heapNode->left->key)
 		swap(heapNode,heapNode->left);
@@ -195,56 +202,39 @@ void mbh_heapify(MBHNode* heapNode)
 	else if(heapNode->right != NULL && heapNode->key > heapNode->right->key)
 		swap(heapNode,heapNode->right);
 
-	// If current node has a parent, check if it is heapified too
+	// If current node has a parent, check if it is heapified as well
 	if(heapNode->parent != NULL)
 		mbh_heapify(heapNode->parent);
 }
 
 // Heapify heap starting from a node till a leaf
-void mbh_inverse_heapify(MBHNode *heapNode)
-{
+void mbh_inverse_heapify(MBHNode *heapNode){
 	// If current node has a left child with smaller key, swap them and call recursively for the left child
-	if(heapNode->left != NULL && heapNode->key > heapNode->left->key)
-	{
+	if(heapNode->left != NULL && heapNode->key > heapNode->left->key){
 		swap(heapNode,heapNode->left);
 		mbh_inverse_heapify(heapNode->left);
 	}
 	// If current node has a right child with smaller key, swap them and call recursively for the right child
-	else if(heapNode->right != NULL && heapNode->key > heapNode->right->key)
-	{
+	else if(heapNode->right != NULL && heapNode->key > heapNode->right->key){
 		swap(heapNode,heapNode->right);
 		mbh_inverse_heapify(heapNode->right);
 	}
 }
 
-// Delete heap's root and heapify the heap
-char* mbh_extract_root(MBH *heap)
-{
-	if(heap->root != NULL)
-	{
+// Delete heap's root and re-heapify the heap
+char* mbh_extract_root(MBH *heap){
+	if(heap->root != NULL){
         char*   word = strdup(heap->root->word);
 
         // Max is the last node to be extracted as root
-		if(heap->root == heap->max)
-		{
-//			if(heap->numofNodes == 20)
-//				printf("!3\n");
+		if(heap->root == heap->max){
+			// Remove it, no need to heapify
 			delete_mbh_node(heap,heap->root,0);
-//			if(heap->root == NULL)
-//				printf("!2\n");
 			return word;
 		}
 
-//		// Element with maximum key will be the new root
-//		swap(heap->root,heap->max);
-//		// Max's old node will be deleted
+		// Delete the root and re-heapify the heap
 		delete_mbh_node(heap,heap->root,1);
-//		if(heap->root == NULL)
-//			printf("!1\n");
-//		// Find suitable place for max element
-//		mbh_inverse_heapify(heap->root);
-//		// Update heap's max pointer
-//		heap->max = mbh_find_max(heap->root);
 
 		return word;
 	}
@@ -252,22 +242,19 @@ char* mbh_extract_root(MBH *heap)
 	return NULL;
 }
 
-// Find node with the minimum key in heap
-MBHNode* mbh_find_max(MBHNode* heapNode)
-{
+// Find node with the maximum key in heap
+MBHNode* mbh_find_max(MBHNode* heapNode){
 	MBHNode* max = heapNode;
 	MBHNode *max_l, *max_r;
 
 	// Get max in left subtree and compare it with max kept so far
-	if(heapNode->left != NULL)
-	{
+	if(heapNode->left != NULL){
 		max_l = mbh_find_max(heapNode->left);
 		if(max_l->key >= max->key)
 			max = max_l;
 	}
 	// Get max in right subtree and compare it with max kept so far
-	if(heapNode->right != NULL)
-	{
+	if(heapNode->right != NULL){
 		max_r = mbh_find_max(heapNode->right);
 		if(max_r->key >= max->key)
 			max = max_r;

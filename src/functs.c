@@ -10,6 +10,7 @@
 #include "../include/boWords.h"
 #include "../include/mbh.h"
 
+// ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~ READ DATA ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 
 int readDataset(DIR *datasetX, char *path, hashTable **hashT, matchesInfo* allMatches){
     int             propNum = -1;
@@ -584,7 +585,9 @@ int readCSV(char* fName, hashTable* hashT, matchesInfo* allMatches){
     return 0;
 }
 
+// ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~ BAG OF WORDS ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 
+// Turn a set of texts to bow
 void text_to_bow(mySpec** set, int setSize, BoWords** boWords){
     // For each spec of the set (either training or testing)
     for(int i=0; i<setSize; i++){
@@ -593,6 +596,7 @@ void text_to_bow(mySpec** set, int setSize, BoWords** boWords){
     (*boWords)->specsSum = setSize;
 }
 
+// Turn a text to bow
 void spec_to_bow(mySpec* spec, BoWords* boWords){
     char*   sentence = NULL;
 
@@ -619,6 +623,7 @@ void spec_to_bow(mySpec* spec, BoWords* boWords){
     }
 }
 
+// Turn a sentence to bow
 void sentence_to_bow(char* sentence, mySpec* spec, BoWords* boWords){
     int     hash = 0;
     char*   word = NULL;
@@ -640,6 +645,7 @@ void sentence_to_bow(char* sentence, mySpec* spec, BoWords* boWords){
     }
 }
 
+// Check if a word should be added in bow
 char* checkWord(char* word){
 
     char*   result = strdup(word);
@@ -666,6 +672,7 @@ char* checkWord(char* word){
     return result;
 }
 
+// Mark the most significant words in bow
 void set_mostSignificantWords(BoWords* bow, int mostSign){
     char*   word = NULL;
     MBH*    heap = NULL;
@@ -682,10 +689,13 @@ void set_mostSignificantWords(BoWords* bow, int mostSign){
     mbh_delete(&heap);
 }
 
+// Remove all insignificant words from bow
 void keep_mostSignificantWords(BoWords* bow){
 
     bow_keep_signWords(bow);
 }
+
+// ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~ TRAINING ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 
 float* vectorization(mySpec* spec, BoWords* bow, int* vectorSize){
     *vectorSize = 0;
@@ -731,6 +741,7 @@ void train_per_clique(myMatches* clique, mySpec** trainSet, int trainSize, BoWor
     }
 }
 
+// ~~~~~~~~~~~~~~~~~~~~~~~~ SIGNALS ~~~~~~~~~~~~~~~~~~~~~~~~~~
 
 void sig_int_quit_handler(int signo)
 {

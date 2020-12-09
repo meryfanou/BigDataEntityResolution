@@ -5,17 +5,16 @@
 #include "../include/myHash.h"
 #include "../include/mbh.h"
 
+// ~~~~~~~~~~~~~~~~~~~~~~~~~~~ BAG OF WORDS ~~~~~~~~~~~~~~~~~~~~~~~~~
 
-BoWords* bow_create(int HashSize, int BucSize){
-	// ALLOCARE AND RETURN NEW HASH_TABLE
+BoWords* bow_create(int HashSize, int BucSize){		// Allocate and return hash table
 
 	BoWords* newTable = malloc(sizeof(BoWords));
 
 	newTable->myTable = malloc(HashSize*sizeof(Bucket*));
-	int i = 0;
-	while(i < HashSize){
+
+	for(int i=0; i < HashSize; i++){
 		newTable->myTable[i] = NULL;
-		i++;		
 	}
 
 	newTable->bucSize = BucSize;
@@ -29,31 +28,33 @@ BoWords* bow_create(int HashSize, int BucSize){
 	return newTable;
 }
 
-void bow_destroy(BoWords* table){	// DESTROY HASH / FREE MEM
-	int i = 0;
-	while(i < table->tableSize){
+void bow_destroy(BoWords* table){	// Destroy hash, free memory
+
+	for(int i=0; i < table->tableSize; i++){
+		// If bucket is not empty
 		if(table->myTable[i] != NULL){
 			bow_bucket_destroy(table, table->myTable[i]);
 			table->myTable[i] = NULL;
 		}
-		i++;
 	}
 
 	free(table->myTable);
 	free(table);
-
 }
 
+// Add a word about a text (spec) to bow
 void bow_add(BoWords* table, char* word, mySpec* text, int hash){
 
 	if(word == NULL)
 		return;
 
-	int cell = hash % (table->tableSize);		/// FIND HASH TABLE CELL
+	// Find hash table cell
+	int cell = hash % (table->tableSize);
 	if(cell < 0)
 		cell = 0;
 
-	if(table->myTable[cell] == NULL){			/// CASE OF FIRST BUCKET
+	// Case of first backet
+	if(table->myTable[cell] == NULL){
 		table->myTable[cell] = bow_bucket_create(table->bucSize);
 	}
 
@@ -62,9 +63,9 @@ void bow_add(BoWords* table, char* word, mySpec* text, int hash){
 	Record* existingRec = NULL;
 	if((existingRec = bow_search_bucket(tempBuc, word)) != NULL)
 		flag = 1;
-	
-	while(tempBuc->next != NULL && flag == 0){	/// FIND LAST BUCKET
-		tempBuc = tempBuc->next;				/// + SEARCH FOR REC IN BUCS
+
+	while(tempBuc->next != NULL && flag == 0){	// Search for rec in buckets of the same cell
+		tempBuc = tempBuc->next;
 		if((existingRec = bow_search_bucket(tempBuc, word)) != NULL){
 			flag = 1;
 			break;
@@ -76,30 +77,33 @@ void bow_add(BoWords* table, char* word, mySpec* text, int hash){
 		bow_record_update(existingRec, text);
 	}
 	else{
-		if(tempBuc->cur >= table->maxRecs){			/// CHECK IF ITS FULL
+		// If the last bucket is full
+		if(tempBuc->cur >= table->maxRecs){
+			// Create a new one
 			tempBuc->next = bow_bucket_create(table->bucSize);
 			tempBuc = tempBuc->next;
 		}
 
-		bow_bucket_add(tempBuc, word, text);					/// ADD AT BUCKET
+		// Add record to bucket
+		bow_bucket_add(tempBuc, word, text);
 		table->entries++;
 	}
 
 }
 
-void bow_print(BoWords* t){			// testing funct - prints hash
-	printf("HASH_SIZE: %d\n", t->tableSize);
-	int i = 0;
-	while(i < t->tableSize){
-		if(t->myTable[i] != NULL){
-//			printf("cell [%d]:\n", i);
-			bow_bucket_print(t->myTable[i]);
+void bow_print(BoWords* bow){
+	printf("HASH_SIZE: %d\n", bow->tableSize);
+
+	for(int i=0; i < bow->tableSize; i++){
+		if(bow->myTable[i] != NULL){
+			printf("cell [%d]:\n", i);
+			bow_bucket_print(bow->myTable[i]);
 		}
-		i++;
 	}
 	printf("\n");
 }
 
+// Get a vector (1xn) that corresponds to the significance of the words in bow about a text (spec)
 void bow_vectorize(BoWords* bow, float** vector, int* vectorSize, mySpec* spec){
 	Bucket*	bucket = NULL;
 
@@ -112,6 +116,7 @@ void bow_vectorize(BoWords* bow, float** vector, int* vectorSize, mySpec* spec){
 	}
 }
 
+// Pass words to a min binary heap, based on their (maximum) idf value
 void bow_get_signWords(BoWords* bow, MBH* heap){
 	Bucket*	bucket = NULL;
 
@@ -124,43 +129,51 @@ void bow_get_signWords(BoWords* bow, MBH* heap){
 	}
 }
 
+// Mark a given word as significant in bow
 void bow_set_significance(BoWords* bow, char* word){
 	if(word == NULL)
 		return;
 
 	int	hash = hash1(word);
 
-	int cell = hash % (bow->tableSize);		/// FIND HASH TABLE CELL
+	// Find hash table cell
+	int cell = hash % (bow->tableSize);
 	if(cell < 0)
 		cell = 0;
 
 	Bucket*	bucket = bow->myTable[cell];
 	Record*	record = NULL;
 
+	// Search for the record with the given word
 	while(bucket != NULL){
 		record = bow_search_bucket(bucket, word);
+		// If found
 		if(record != NULL)
 			break;
 
 		bucket = bucket->next;
 	}
 
+	// If the word does not exist in bow
 	if(record == NULL)
 		return;
 
+	// Mark record as significant
 	record->isSignificant = 1;
 }
 
+// Remove from bow all insignificant words
 void bow_keep_signWords(BoWords* bow){
 	Bucket*	bucket = NULL;
 	Bucket*	next = NULL;
 
+	// For each bucket in bow
 	for(int i=0; i<(bow->tableSize); i++){
 		bucket = bow->myTable[i];
 
 		while(bucket != NULL){
 			next = bucket->next;
-
+			// Remove all insignificant words from a bucket
 			bow_bucket_keep_signWords(bow, bucket);
 
 			bucket = next;
@@ -169,8 +182,9 @@ void bow_keep_signWords(BoWords* bow){
 
 }
 
+// ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~ BUCKET ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 
-Bucket* bow_bucket_create(int size){				/// INIT BUCKET
+Bucket* bow_bucket_create(int size){				// Init bucket
 	Bucket* newBucket = malloc(sizeof(bucket));
 	newBucket->next = NULL;
 	newBucket->rec = NULL;
@@ -179,28 +193,30 @@ Bucket* bow_bucket_create(int size){				/// INIT BUCKET
 	return newBucket;
 }
 
+// Add a word about a text (spec) to a bucket
 void bow_bucket_add(Bucket* buc, char* word, mySpec* text){
+	// If there bucket is empty, create a new record
 	if(buc->rec == NULL){
 		buc->rec = bow_record_create(word, text);
 		buc->cur++;
 		return;
 	}
 
-	Record* tempRec = buc->rec;					/// FIND LAST ENTRY
-	while(tempRec->next != NULL){
-		tempRec = tempRec->next;
-	}
+	// Otherwise create the new record and add it before the (so far) first record
+	Record* tempRec = buc->rec;
+	buc->rec = bow_record_create(word, text);
+	buc->rec->next = tempRec;
 
-	tempRec->next = bow_record_create(word, text);				/// ADD RECORD
 	buc->cur++;
 
 }
 
-Record* bow_search_bucket(Bucket* b, char* key){	// search bucket for target key
-	if(b == NULL)
+// Find record with a key-word in a bucket (if it exists)
+Record* bow_search_bucket(Bucket* bucket, char* key){
+	if(bucket == NULL)
 		return NULL;
-	Record* temp = b->rec;
 
+	Record* temp = bucket->rec;
 	while(temp != NULL){
 		if(strcmp(temp->word, key) == 0)
 			return temp;
@@ -210,7 +226,8 @@ Record* bow_search_bucket(Bucket* b, char* key){	// search bucket for target key
 	return NULL;
 }
 
-void bow_bucket_print(Bucket* b){					// testing funct - prints bucket
+// Print all buckets of the same cell
+void bow_bucket_print(Bucket* b){
 	if(b->cur != 0)
 		printf("\t>buc: (%d)\n", b->cur);
 	Record* temp = b->rec;
@@ -223,7 +240,8 @@ void bow_bucket_print(Bucket* b){					// testing funct - prints bucket
 	}
 }
 
-void bow_bucket_destroy(BoWords* hash, Bucket* buc){		/// FREE BUC
+// Free a bucket
+void bow_bucket_destroy(BoWords* hash, Bucket* buc){
 	if(buc->next != NULL){
 		bow_bucket_destroy(hash, buc->next);
 		buc->next = NULL;
@@ -238,6 +256,7 @@ void bow_bucket_destroy(BoWords* hash, Bucket* buc){		/// FREE BUC
 	buc = NULL;
 }
 
+// Get a vector that corresponds to the significance of the words in a bucket about a text (spec)
 void bow_bucket_vectorize(Bucket* bucket, float** vector, int* vectorSize, mySpec* spec){
 	Record*	record = NULL;
 
@@ -248,6 +267,7 @@ void bow_bucket_vectorize(Bucket* bucket, float** vector, int* vectorSize, mySpe
 	}
 }
 
+// Pass words to a min binary heap, based on their (maximum) idf value
 void bow_bucket_signWords(Bucket* bucket, MBH* heap){
 	Record*	record = bucket->rec;
 
@@ -257,13 +277,17 @@ void bow_bucket_signWords(Bucket* bucket, MBH* heap){
 	}
 }
 
+// Remove all insignificant words from a bucket
 void bow_bucket_keep_signWords(BoWords* bow, Bucket* bucket){
 	Record*	record = bucket->rec;
 	Record	*prev = NULL, *next = NULL;
 
+	// For each record
 	while(record != NULL){
+		// Keep its next
 		next = record->next;
 
+		// If current record is not significant, it should be removed
 		if(record->isSignificant == 0){
 			free(record->word);
 			if(record->texts != NULL)
@@ -272,12 +296,14 @@ void bow_bucket_keep_signWords(BoWords* bow, Bucket* bucket){
 
 			(bucket->cur)--;
 			(bow->entries)--;
+			// If it is bucket's first record
 			if(prev == NULL)
 				bucket->rec = next;
 			else
 				prev->next = next;
 		}
 		else{
+			// Keep current record for the next loop
 			prev = record;
 		}
 
@@ -285,8 +311,9 @@ void bow_bucket_keep_signWords(BoWords* bow, Bucket* bucket){
 	}
 }
 
+// ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~ RECORD ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 
-Record* bow_record_create(char* word, mySpec* text){
+Record* bow_record_create(char* word, mySpec* text){	// Init record
 	Record* newRec = malloc(sizeof(Record));
 
 	newRec->next = NULL;
@@ -301,7 +328,7 @@ Record* bow_record_create(char* word, mySpec* text){
 	return newRec;
 }
 
-void bow_record_print(Record* rec){
+void bow_record_print(Record* rec){						// Print record
 	printf("\t\t>word %s has idf = %.4f\n", rec->word, rec->idf);
 
 	for(int i=0; i<(rec->numofTexts); i++){
@@ -309,7 +336,8 @@ void bow_record_print(Record* rec){
 	}
 }
 
-void bow_record_destroy(BoWords* boWords, Record* rec){				/// FREE REC
+// Free all records in a bucket
+void bow_record_destroy(BoWords* boWords, Record* rec){
 	if(rec->next != NULL){
 		bow_record_destroy(boWords, rec->next);
 		rec->next = NULL;
@@ -325,7 +353,11 @@ void bow_record_destroy(BoWords* boWords, Record* rec){				/// FREE REC
 	rec = NULL;
 }
 
+// Update an already initialized record about another text (spec)
 void bow_record_update(Record* rec, mySpec* text){
+	if(rec == NULL)
+		return;
+
 	int	i = 0;
 
 	for(; i<(rec->numofTexts); i++){
@@ -345,10 +377,12 @@ void bow_record_update(Record* rec, mySpec* text){
 	}
 }
 
+// Get a vector that corresponds to the significance of a word about a text (spec)
 void bow_record_vectorize(Record* record, float** vector, int* vectorSize, mySpec* spec){
 	int i = 0;
 
 	for(; i<(record->numofTexts); i++){
+		// If the given text is found in record
 		if(record->texts[i].text == spec){
 			(*vector)[*vectorSize] = record->texts[i].tf_idf;
 			(*vectorSize)++;
@@ -356,12 +390,14 @@ void bow_record_vectorize(Record* record, float** vector, int* vectorSize, mySpe
 		}
 	}
 
+	// If the word does not appear in the given text
 	if(i == record->numofTexts){
 		(*vector)[*vectorSize] = 0.0;
 		(*vectorSize)++;
 	}
 }
 
+// ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~ TF-IDF ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 
 tfidf* tfidf_create(){
 	tfidf* newtf = malloc(sizeof(tfidf));

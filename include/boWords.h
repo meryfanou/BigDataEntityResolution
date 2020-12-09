@@ -51,32 +51,41 @@ struct TfIdf_model{
 	int max_Texts;
 };
 
-BoWords* bow_create(int ,int);
+// ~~~~~~~~~~~~~~~~~~~~ BOW ~~~~~~~~~~~~~~~~~~~~~~~
+
+BoWords* bow_create(int ,int);							// Create a boWords structure (hash table)
 void bow_destroy(BoWords*);
-void bow_add(BoWords*, char*, mySpec*, int);
+void bow_add(BoWords*, char*, mySpec*, int);			// Add a word about a text (spec) to bow
 void bow_print(BoWords*);
-void bow_vectorize(BoWords*, float**, int*, mySpec*);
-void bow_get_signWords(BoWords*, MBH*);
-void bow_set_significance(BoWords*, char*);
-void bow_keep_signWords(BoWords*);
+void bow_vectorize(BoWords*, float**, int*, mySpec*);	// Get a vector that corresponds to the significance
+														// of the words in bow about a text (spec)
+void bow_get_signWords(BoWords*, MBH*);					// Pass words to a min binary heap, based on their idf value
+void bow_set_significance(BoWords*, char*);				// Mark a given word as significant in bow
+void bow_keep_signWords(BoWords*);						// Remove from bow all insignificant words
+
+// ~~~~~~~~~~~~~~~~~~~~ BUCKET ~~~~~~~~~~~~~~~~~~~~
 
 Bucket* bow_bucket_create(int);
-void bow_bucket_add(Bucket*, char*, mySpec*);
+void bow_bucket_add(Bucket*, char*, mySpec*);			// Add a word about a text (spec) to a bucket
 void bow_bucket_destroy(BoWords*, Bucket*);
-void bow_bucket_print(Bucket*);
-Record* bow_search_bucket(Bucket*, char*);
-void bow_bucket_vectorize(Bucket*, float**, int*, mySpec*);
-void bow_bucket_signWords(Bucket*, MBH*);
-void bow_bucket_keep_signWords(BoWords*, Bucket*);
+void bow_bucket_print(Bucket*);							// Print all buckets of the same cell
+Record* bow_search_bucket(Bucket*, char*);				// Find record with a key-word in a bucket
+void bow_bucket_vectorize(Bucket*, float**, int*, mySpec*);	// Get a vector that corresponds to the significance
+														// of the words in a bucket about a text (spec)
+void bow_bucket_signWords(Bucket*, MBH*);				// Pass words to a min binary heap, based on their idf value
+void bow_bucket_keep_signWords(BoWords*, Bucket*);		// Remove all insignificant words from a bucket
+
+// ~~~~~~~~~~~~~~~~~~ RECORD ~~~~~~~~~~~~~~~~~~~~~~
 
 Record* bow_record_create(char*, mySpec*);
-void bow_record_destroy(BoWords*, Record*);
+void bow_record_destroy(BoWords*, Record*);				// Free all records in a bucket
 void bow_record_print(Record*);
-void bow_record_update(Record*, mySpec*);
-void bow_record_vectorize(Record*, float**, int*, mySpec*);
+void bow_record_update(Record*, mySpec*);				// Update an already initialized record about another text
+void bow_record_vectorize(Record*, float**, int*, mySpec*);	// Get a vector that corresponds to the significance
+														// of a word about a text (spec)
 
 
-// ~~~~ TF-IDF ~~~~~~
+// ~~~~~~~~~~~~~~~~~~~ TF-IDF ~~~~~~~~~~~~~~~~~~~~~
 
 
 tfidf* tfidf_create();
