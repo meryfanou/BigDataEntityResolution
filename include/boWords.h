@@ -31,14 +31,14 @@ struct Record{
 	Record* next;
 	char* word;
 	int isSignificant;
-	int significance;
+	float idf;
     TextInfo* texts;
     int numofTexts;
 };
 
 struct TextInfo{
     mySpec* text;
-    float numofInstances;
+    float tf_idf;
 };
 
 struct TfIdf_model{
@@ -57,7 +57,7 @@ void bow_add(BoWords*, char*, mySpec*, int);
 void bow_print(BoWords*);
 void bow_vectorize(BoWords*, float**, int*, mySpec*);
 void bow_get_signWords(BoWords*, MBH*);
-int bow_set_significance(BoWords*, char*);
+void bow_set_significance(BoWords*, char*);
 void bow_keep_signWords(BoWords*);
 
 Bucket* bow_bucket_create(int);
@@ -86,11 +86,13 @@ void tfidf_apply(tfidf*, BoWords*);
 void tfidf_apply_toBucket(tfidf*, Bucket*);
 void tfidf_apply_toRec(tfidf*, Record*);
 
-float tfidf_calc(int, int, int, int);
-			// > no. of apperiences in specific text
-			// > no. of specific text's word's sum
+float idf_calc(int, int);
 			// > sum of all text's
 			// > no. of texts that include the word
+float tfidf_calc(int, int, float);
+			// > no. of apperiences in specific text
+			// > no. of specific text's word's sum
+			// > idf
 
 
 #endif

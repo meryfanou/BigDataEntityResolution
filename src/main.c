@@ -174,14 +174,14 @@ int main(int argc, char** argv){
     printf("       \t\t.. DONE !!\n");
 
     //~~~~~~~~~~~~~~~~~~~~~~ PREPARE THE INPUT FOR THE MODEL
-    printf("\nBuilding BoW (test_Set) ..\n");
+    printf("\nBuilding BoW (Training Set)..\n");
     BoWords*    bow = bow_create(HASH_SIZE, BUC_SIZE);
 
     text_to_bow(*trainSet, trainSize, &bow);
     printf("       \t\t.. DONE !!\n");
 
     //~~~~~~~~~~~~~~~~~~~~~~ TEST TF-IDF >
-    printf("\nApplying TF-IDF (test_Set)\n");
+    printf("\nApplying TF-IDF (Training Set)..\n");
     tfidf* mytf = tfidf_create();
     tfidf_set(mytf, -1, -1);    // (model, maxTexts, maxWords to scan)
     tfidf_apply(mytf, bow);
@@ -191,16 +191,16 @@ int main(int argc, char** argv){
     //~~~~~~~~~~~~~~~~~~~~~ > TEST TF-IDF
 
 
-    //bow_print(bow);
-    //printf("       \t\t.. DONE !!\n\n");
+//    bow_print(bow);
+//    printf("       \t\t.. DONE !!\n\n");
 
-    // Keep most significant words from bow
+    //~~~~~~~~~~~~~~~~~~~~~~ Mark the most significan words and remove the rest from bow
+    printf("\nChoosing %d most significant words..\n",MOST_SIGN);
     set_mostSignificantWords(bow, MOST_SIGN);
-    printf("       \t\t.. DONE !!\n\n");
     keep_mostSignificantWords(bow);
     printf("       \t\t.. DONE !!\n\n");
-    //bow_print(bow);
-    //printf("%d\n",bow->entries);
+//    bow_print(bow);
+//    printf("%d\n",bow->entries);
 
     // //~~~~~~~~~~~~~~~~~~~~~~ TRAIN MODEL
     // myMatches*  clique = allMatches->head;

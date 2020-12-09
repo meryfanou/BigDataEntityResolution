@@ -23,11 +23,8 @@ BoWords* bow_create(int HashSize, int BucSize){
 
 	newTable->maxRecs = (BucSize - sizeof(Bucket*)) / sizeof(Record);
 	newTable->entries = 0;
-<<<<<<< HEAD
-=======
 	
 	newTable->specsSum = 0;
->>>>>>> 67724a0912a52c735d3021b25e4b802993d0750c
 
 	return newTable;
 }
@@ -95,7 +92,7 @@ void bow_print(BoWords* t){			// testing funct - prints hash
 	int i = 0;
 	while(i < t->tableSize){
 		if(t->myTable[i] != NULL){
-			printf("cell [%d]:\n", i);
+//			printf("cell [%d]:\n", i);
 			bow_bucket_print(t->myTable[i]);
 		}
 		i++;
@@ -127,9 +124,9 @@ void bow_get_signWords(BoWords* bow, MBH* heap){
 	}
 }
 
-int bow_set_significance(BoWords* bow, char* word){
+void bow_set_significance(BoWords* bow, char* word){
 	if(word == NULL)
-		return 0;
+		return;
 
 	int	hash = hash1(word);
 
@@ -149,10 +146,9 @@ int bow_set_significance(BoWords* bow, char* word){
 	}
 
 	if(record == NULL)
-		return 0;
+		return;
 
 	record->isSignificant = 1;
-	return 1;
 }
 
 void bow_keep_signWords(BoWords* bow){
@@ -215,7 +211,8 @@ Record* bow_search_bucket(Bucket* b, char* key){	// search bucket for target key
 }
 
 void bow_bucket_print(Bucket* b){					// testing funct - prints bucket
-	printf("\t>buc: (%d)\n", b->cur);
+	if(b->cur != 0)
+		printf("\t>buc: (%d)\n", b->cur);
 	Record* temp = b->rec;
 	while(temp != NULL){
 		bow_record_print(temp);
@@ -255,7 +252,7 @@ void bow_bucket_signWords(Bucket* bucket, MBH* heap){
 	Record*	record = bucket->rec;
 
 	while(record != NULL){
-		mbh_insert(heap, record->word, record->significance);
+		mbh_insert(heap, record->word, record->idf);
 		record = record->next;
 	}
 }
@@ -295,20 +292,20 @@ Record* bow_record_create(char* word, mySpec* text){
 	newRec->next = NULL;
 	newRec->word = strdup(word);
 	newRec->isSignificant = 0;
-	newRec->significance = 0;
+	newRec->idf = 0.0;
 	newRec->texts = malloc(sizeof(TextInfo));
 	newRec->texts[0].text = text;
-	newRec->texts[0].numofInstances = 1.0;
+	newRec->texts[0].tf_idf = 1.0;
 	newRec->numofTexts = 1;
 
 	return newRec;
 }
 
 void bow_record_print(Record* rec){
-	printf("\t\t>word: %s\n", rec->word);
+	printf("\t\t>word %s has idf = %.4f\n", rec->word, rec->idf);
 
 	for(int i=0; i<(rec->numofTexts); i++){
-		printf("\t\t\t>appears %.4f times in %s\n",rec->texts[i].numofInstances,rec->texts[i].text->specID);
+		printf("\t\t\t>has tf-idf = %.4f for text %s\n",rec->texts[i].tf_idf,rec->texts[i].text->specID);
 	}
 }
 
@@ -334,7 +331,7 @@ void bow_record_update(Record* rec, mySpec* text){
 	for(; i<(rec->numofTexts); i++){
 		// If the word has already appeared in current text
 		if(rec->texts[i].text == text){
-			rec->texts[i].numofInstances += 1.0;
+			rec->texts[i].tf_idf += 1.0;
 			break;
 		}
 	}
@@ -344,7 +341,7 @@ void bow_record_update(Record* rec, mySpec* text){
 		(rec->numofTexts)++;
 		rec->texts = realloc(rec->texts, (rec->numofTexts)*sizeof(TextInfo));
 		rec->texts[i].text = text;
-		rec->texts[i].numofInstances = 1.0;
+		rec->texts[i].tf_idf = 1.0;
 	}
 }
 
@@ -353,7 +350,7 @@ void bow_record_vectorize(Record* record, float** vector, int* vectorSize, mySpe
 
 	for(; i<(record->numofTexts); i++){
 		if(record->texts[i].text == spec){
-			(*vector)[*vectorSize] = record->texts[i].numofInstances;
+			(*vector)[*vectorSize] = record->texts[i].tf_idf;
 			(*vectorSize)++;
 			break;
 		}
@@ -427,28 +424,31 @@ void tfidf_apply_toRec(tfidf* tf, Record* rec){
 	while(i < rec->numofTexts){
 		tempText = &rec->texts[i];
 
-		int counts_inText = tempText->numofInstances;
+		int counts_inText = tempText->tf_idf;
 		int words_sum = tempText->text->numofWords;
-		
-		tempText->numofInstances = tfidf_calc(counts_inText, words_sum, texts_sum, target_texts_sum);
+
+		rec->idf = idf_calc(texts_sum, target_texts_sum);
+		tempText->tf_idf = tfidf_calc(counts_inText, words_sum, rec->idf);
 
 		i++;
 	}
 }
 
-float tfidf_calc(int counts_inText, int words_sum, int texts_sum, int target_texts_sum){
+float idf_calc(int texts_sum, int target_texts_sum){
+	return log((float)texts_sum / (float)target_texts_sum);
+}
 
-	float num1 = (float)counts_inText / (float)words_sum;
+float tfidf_calc(int counts_inText, int words_sum, float idf){
 
-	float num2 = log((float)texts_sum / (float)target_texts_sum);
+	float num = (float)counts_inText / (float)words_sum;
 
 	/*
 		!!!! TEST PRINTS !!!
 	printf("counts_inText: %d, words_sum: %d", counts_inText, words_sum);
 	printf(", texts_sum: %d, target_texts_sum: %d\n", texts_sum, target_texts_sum);
-	printf("num_1: %.4f, num_2: %.4f, final: %.4f\n", num1, num2, num1*num2);
+	printf("num_1: %.4f, num_2: %.4f, final: %.4f\n", num, idf, num*idf);
 	
 	*/
 
-	return num1*num2;
+	return num*idf;
 }

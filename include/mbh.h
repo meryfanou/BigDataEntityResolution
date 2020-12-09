@@ -17,20 +17,20 @@ struct MBH{
 // Heap's node
 struct MBHNode{
     char*       word;
-	int		    key;
+	float		    key;
 	MBHNode*    left;
 	MBHNode*    right;
 	MBHNode*    parent;
 };
 
 void swap(MBHNode*, MBHNode*);			// Exchange two nodes' info
-MBHNode* add_mbh_node(MBHNode*, char*, int);
+MBHNode* add_mbh_node(MBHNode*, char*, float);
 void delete_mbh_node(MBH*,MBHNode*,int);
 
 /*------------------------------------------------------------------*/
 
 void mbh_init(MBH**, int);              // Initialize heap, passing the maximum number of nodes in the heap
-int mbh_insert(MBH*, char*, int);
+int mbh_insert(MBH*, char*, float);
 void mbh_delete(MBH**);
 void mbh_heapify(MBHNode*);	    		// Heapify heap starting from a node and going upwards till the root
 void mbh_inverse_heapify(MBHNode*);		// Heapify heap starting from a node till a leaf

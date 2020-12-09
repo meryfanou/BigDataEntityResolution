@@ -673,11 +673,12 @@ void set_mostSignificantWords(BoWords* bow, int mostSign){
     mbh_init(&heap, mostSign);
 
     bow_get_signWords(bow, heap);
-    int n = 0;
+
     while((word = mbh_extract_root(heap)) != NULL){
-        n += bow_set_significance(bow, word);
+        bow_set_significance(bow, word);
         free(word);
     }
+
     mbh_delete(&heap);
 }
 
