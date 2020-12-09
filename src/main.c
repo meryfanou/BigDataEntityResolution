@@ -171,16 +171,28 @@ int main(int argc, char** argv){
 
     printf("\nCreating Training, Testing and Validation Sets..\n");
     split_train_test_valid(allMatches, trainSet, testSet, validSet, &trainSize, &testSize, &validSize, TRAIN_PERC, TEST_PERC);
-    printf("       \t\t.. DONE !!\n\n");
+    printf("       \t\t.. DONE !!\n");
 
     //~~~~~~~~~~~~~~~~~~~~~~ PREPARE THE INPUT FOR THE MODEL
+    printf("\nBuilding BoW (test_Set) ..\n");
     BoWords*    bow = bow_create(HASH_SIZE, BUC_SIZE);
 
     text_to_bow(*trainSet, trainSize, &bow);
-    //bow_print(bow);
-    printf("       \t\t.. DONE !!\n\n");
+    printf("       \t\t.. DONE !!\n");
 
-    // Update bow: td-idf
+    //~~~~~~~~~~~~~~~~~~~~~~ TEST TF-IDF >
+    printf("\nApplying TF-IDF (test_Set)\n");
+    tfidf* mytf = tfidf_create();
+    tfidf_set(mytf, -1, -1);    // (model, maxTexts, maxWords to scan)
+    tfidf_apply(mytf, bow);
+    tfidf_destroy(mytf);
+
+    printf("       \t\t.. DONE !!\n");
+    //~~~~~~~~~~~~~~~~~~~~~ > TEST TF-IDF
+
+
+    //bow_print(bow);
+    //printf("       \t\t.. DONE !!\n\n");
 
     // Keep most significant words from bow
     set_mostSignificantWords(bow, MOST_SIGN);
@@ -195,7 +207,7 @@ int main(int argc, char** argv){
 
     // while(clique != NULL){
     //     train_per_clique(clique, trainSet, trainSize, bow);
-    // }
+
 
     //~~~~~~~~~~~~~~~~~~~~~~ FREE MEM
     printf("\nCleaning Memory...\n");
