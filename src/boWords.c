@@ -455,6 +455,8 @@ void tfidf_apply_toRec(tfidf* tf, Record* rec){
 	int texts_sum = tf->all_Texts;
 	int target_texts_sum = rec->numofTexts;
 
+	rec->idf = idf_calc(texts_sum, target_texts_sum);
+
 	TextInfo* tempText = NULL;
 	int i = 0;
 	while(i < rec->numofTexts){
@@ -463,7 +465,6 @@ void tfidf_apply_toRec(tfidf* tf, Record* rec){
 		int counts_inText = tempText->tf_idf;
 		int words_sum = tempText->text->numofWords;
 
-		rec->idf = idf_calc(texts_sum, target_texts_sum);
 		tempText->tf_idf = tfidf_calc(counts_inText, words_sum, rec->idf);
 
 		i++;
