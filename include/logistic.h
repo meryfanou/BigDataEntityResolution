@@ -6,7 +6,8 @@
 #include "../include/myMatches.h"
 
 #define LEARING_RATE 0.2
-#define STOP_LIMIT 0.4
+#define STOP_LIMIT 0.2
+#define THRESHOLD 0.7
 
 
 
@@ -27,6 +28,7 @@ struct logistic_weights{
 
     float limit;
     float rate;
+    float threshold;
 
     float b;
     float* weightsT;
@@ -40,7 +42,9 @@ void logistic_destroy(logM*);
 
 void logistic_fit(logM*, int, int, float**, int*);
                 //model, size, dimensions, vector, tagsArray
-float logistic_predict(logM*, float*, int);
+float* logistic_predict_proba(logM*, float**, int, int);
+int* logistic_predict(logM*, float**, int, int);
+float logistic_score(logM*, int*, int*, int);
 
 void logistic_regression(logM*, float**, int , int, int*);
 float logistic_gradDescent();
@@ -59,7 +63,7 @@ float calc_f(weights*, float*);
 float calc_s(weights*, float*);
 float calc_L_WB(weights*, float*, int);
 float calc_L_Rate(weights*, float*, int);
-float mean(float*, int);
+float active_mean(float*, int);
 // ~~~~~~~~~~~~~~
 
 #endif

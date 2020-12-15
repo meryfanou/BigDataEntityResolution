@@ -47,21 +47,17 @@ void logistic_regression(logM* model, float** vector, int vector_rows, int vecto
 
     float limit = 1.000;
 
+    model->trained_times = 1;
     while(limit > model->finalWeights->limit){
 
             // 1. Build predicts table
-        float* predicts = malloc(vector_rows*sizeof(float));
-        int i = 0;
-        while(i < vector_rows){
-            predicts[i] = logistic_predict(model, vector[i], vector_cols);
-            i++;
-        }
+        float* predicts = logistic_predict_proba(model, vector, vector_rows, vector_cols);
 
             // 2. Calc weights
                 // 2.1 Build Missed Table
         float b_grad = 0.0;
         float* missed_by = malloc(vector_rows*sizeof(float));
-        i = 0;
+        int i = 0;
         while(i < vector_rows){
             missed_by[i] = predicts[i] - (float) tags[i];
             b_grad += missed_by[i];
@@ -75,35 +71,29 @@ void logistic_regression(logM* model, float** vector, int vector_rows, int vecto
         float* grad = malloc((vector_cols+1)*sizeof(float));
         grad[0] = b_grad;
 
-        // printf("b_grtad: %.4f\n", b_grad);
-
         int y = 0;
         while(y < vector_cols){
             int x = 0;
             float magic_num = 0.0;
             while(x < vector_rows){
-                if(vector[x][y]!=0){
-                    // printf("vector[%d][%d]: %.4f, missed_by[%d]: %.4f\n", x,y, vector[x][y] ,x, missed_by[x]);
-
-                    // printf("VRHKA ENA\n");
-                }
-                magic_num += vector[x][y]*missed_by[x];
-                    // printf("vector[%d][%d]: %.4f, missed_by[%d]: %.4f", x,y, vector[x][y] ,x, missed_by[x]);
+                magic_num += vector[x][y] * missed_by[x];
                 x++;
             }
             grad[1+y] = magic_num;
             y++;
         }
 
-                // 2.3 Update Weights
-        limit = weights_update(model->finalWeights, grad, vector_cols);
-        limit = mean(missed_by, vector_rows);
-        // printf("limit: %.4f\n", limit);
+            // 3 Update Weights
+        weights_update(model->finalWeights, grad, vector_cols);
+        limit = active_mean(missed_by, vector_rows);
+        printf("limit: %.4f\n", limit);
+
 
         model->trained_times++;
 
-        // if(model->trained_times > 5)
-            // limit = 0.0;
+        // ΜAX ITERATIONS
+        if(model->trained_times > 100)
+            limit = 0.0;
         
 
         // FREE MEM
@@ -111,43 +101,71 @@ void logistic_regression(logM* model, float** vector, int vector_rows, int vecto
         free(missed_by);
         free(grad);
     }
-    printf("limit: %.4f\n", limit);
-    // int i = 0;
-    // while(i < vector_rows ){
-        // if()
-        // printf("my_pred: %.4f, target: %d\n", logistic_predict(model, vector[i], vector_cols), tags[i]);
-        // i++;
-    // }
     
-
+    
+    // printf("limit: %.4f\n", limit);
+    int* final_predicts = logistic_predict(model, vector, vector_rows, vector_cols);
+    printf("Score after train: %.4f\n", logistic_score(model, final_predicts, tags, vector_rows));
+    free(final_predicts);
 }
 
 
-float logistic_predict(logM* model, float* vector, int size){
-    float pred = -1.000;
-
+float* logistic_predict_proba(logM* model, float** vector, int vector_rows, int vector_cols){
     if(model->finalWeights == NULL){
         printf("Error - Untrained model !!\n");
-        return -1.000;
+        return NULL;
     }
+
+    if(vector_cols > model->weights_count){
+        printf("Error ~ Invalid Size Array !!");
+        return NULL;
+    }
+
+    float* predicts = malloc(vector_rows*sizeof(float*));
+    int i = 0;
+    while(i < vector_rows){
+        predicts[i] = calc_s(model->finalWeights, vector[i]);
+        i++;
+    }
+
+    return predicts;
+}
+
+int* logistic_predict(logM* model, float** vector, int vector_rows, int vector_cols){
+    float* probs = logistic_predict_proba(model, vector, vector_rows, vector_cols);
     
-    if(size == model->weights_count){
-        pred = calc_s(model->finalWeights, vector);
-    }
-    else{   // case we give more info than weights inside
-        float* newVec = malloc(model->weights_count*sizeof(float));
+    int* predicts = NULL;
+    if(probs != NULL){
+        predicts = malloc(vector_rows*sizeof(int));
         int i = 0;
-        while(i < model->weights_count){
-            newVec[i] = vector[i];
+        while(i < vector_rows){
+            if(probs[i] < model->finalWeights->threshold){
+                predicts[i] = 1;
+            }
+            else
+                predicts[i] = 0;
             i++;
         }
-
-        pred =  calc_s(model->finalWeights, newVec);
-        free(newVec);
     }
 
-    return pred;
+    free(probs);
+    return predicts;
+}
 
+float logistic_score(logM* model, int* labels1, int* labels2, int size){
+    float score = 0.0;
+
+    int i = 0;
+    while(i < size){
+        // printf("predict: %d, target: %d\n", labels1[i], labels2[i]);
+        if(labels1[i] == labels2[i]){
+            score++;
+        }
+        i++;
+    }
+    
+    printf("corrects: %.f, total: %d\n", score, size);
+    return score / (float) size;
 }
 
 // ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
@@ -159,6 +177,7 @@ weights* weights_create(){
     newWeight->entries = 0;
     newWeight->limit = STOP_LIMIT;
     newWeight->rate = LEARING_RATE;
+    newWeight->threshold = THRESHOLD;
 
     newWeight->b = 0.0000;
     newWeight->weightsT = NULL;
@@ -259,11 +278,19 @@ float calc_L_WB(weights* weights, float* values, int tag){
     return (float) L;
 }
 
-float mean(float* vec, int size){
+float active_mean(float* vec, int size){
     float m = 0.0;
     int i = 0;
+    int active = 0;
     while(i < size){
-        m += vec[i++];
+        if(vec[i] > 0.0){
+            m += vec[i];
+            active ++;
+        }
+        i++;
     }
-    return m / (float)size;
+    
+    if(active == 0)
+        return 1;
+    return m / (float)active;
 }

@@ -35,6 +35,8 @@ void keep_mostSignificantWords(BoWords*);				// Remove all insignificant words f
 // ~~~~~~~~~~~~~~~~ TRAINING ~~~~~~~~~~~~~~~~
 
 float* vectorization(mySpec*, BoWords*, int*);
+float*** spars_array(mySpec*, BoWords*, int*, int*, int*);
+
 void train_per_spec(mySpec**, int, BoWords*, logM*, matchesInfo*);
 float* concat_specVectors(float*, float*, int);
 float** concat_pairsVectors(float**, float*, int);
