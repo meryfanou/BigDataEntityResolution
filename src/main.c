@@ -214,8 +214,8 @@ int main(int argc, char** argv){
 
     //~~~~~~~~~~~~~~~~~~~~~~ TEST LOGISTIC - NOT FINISHED !!!! >
  
-    logM** modelsT = make_models_array(bow, *trainSet, allMatches, trainSize);
-
+    // logM** modelsT = make_models_array(bow, *trainSet, allMatches, trainSize);
+    logM* model = make_model(bow, *trainSet, trainSize, allMatches);
     //~~~~~~~~~~~~~~~~~~~~~~ > TEST LOGISTIC - NOT FINISHED !!!!
 
 
@@ -239,13 +239,17 @@ int main(int argc, char** argv){
     
         // free bow
     bow_destroy(bow);
+   
         //free models array
-    int free_i = trainSize;
-    if(modelsT != NULL){
-        while(free_i > 0){
-            logistic_destroy(modelsT[--free_i]);
-        }
-    }
+    // int free_i = trainSize;
+    // if(modelsT != NULL){
+    //     while(free_i > 0){
+    //         logistic_destroy(modelsT[--free_i]);
+    //     }
+    // }
+
+    logistic_destroy(model);
+
         // free paths - strings
     free(path_X);
     free(path_W);

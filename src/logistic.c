@@ -14,7 +14,6 @@ logM* logistic_create(){
 
     newModel->size_totrain = 0;
     newModel->weights_count = 0;
-    newModel->clique = NULL;
     newModel->trained_times = 0;
 
     newModel->finalWeights = weights_create();
@@ -29,27 +28,26 @@ void logistic_destroy(logM* model){
 
 }
 
-void logistic_fit(logM* model, int vector_rows, int vector_cols, float** vector , int* labels, myMatches* clique){
+void logistic_fit(logM* model, int vector_rows, int vector_cols, float** vector , int* labels){
+        // set model
     model->size_totrain = vector_rows;
 
-    model->clique = clique;
-
-    // model->finalWeights = weights_create();
+        // set weights
     weights_set(model->finalWeights, vector_cols);
     model->weights_count = vector_cols;
 
+        // train
     logistic_regression(model, vector, vector_rows, vector_cols, labels);
 
-    // printf("logistic_fit Finished\n");
 }
 
 void logistic_regression(logM* model, float** vector, int vector_rows, int vector_cols, int* tags){
     
     printf("vector_rows: %d, vector_cols: %d\n", vector_rows, vector_cols);
 
-    float dif = 1.00000;
-    
-    while(dif > model->finalWeights->limit){
+    float limit = 1.000;
+
+    while(limit > model->finalWeights->limit){
 
             // 1. Build predicts table
         float* predicts = malloc(vector_rows*sizeof(float));
@@ -61,7 +59,7 @@ void logistic_regression(logM* model, float** vector, int vector_rows, int vecto
 
             // 2. Calc weights
                 // 2.1 Build Missed Table
-        float b_grad = 0.00000;
+        float b_grad = 0.0;
         float* missed_by = malloc(vector_rows*sizeof(float));
         i = 0;
         while(i < vector_rows){
@@ -97,29 +95,30 @@ void logistic_regression(logM* model, float** vector, int vector_rows, int vecto
             y++;
         }
 
-
                 // 2.3 Update Weights
-        dif = weights_update(model->finalWeights, grad, vector_cols);
-        // printf("dif: %.4f\n", dif);
-
-        // printf("dif: %.4f\n", dif);
+        limit = weights_update(model->finalWeights, grad, vector_cols);
+        limit = mean(missed_by, vector_rows);
+        // printf("limit: %.4f\n", limit);
 
         model->trained_times++;
 
         // if(model->trained_times > 5)
-            // dif = 0.00000;
+            // limit = 0.0;
+        
 
         // FREE MEM
         free(predicts);
         free(missed_by);
         free(grad);
     }
-    printf("dif: %.4f\n", dif);
-    int i = 0;
-    while(i < vector_rows ){
-        printf("my_pred: %.4f, target: %d\n", logistic_predict(model, vector[i], vector_cols), tags[i]);
-        i++;   
-    }
+    printf("limit: %.4f\n", limit);
+    // int i = 0;
+    // while(i < vector_rows ){
+        // if()
+        // printf("my_pred: %.4f, target: %d\n", logistic_predict(model, vector[i], vector_cols), tags[i]);
+        // i++;
+    // }
+    
 
 }
 
@@ -258,4 +257,13 @@ float calc_L_WB(weights* weights, float* values, int tag){
     }
 
     return (float) L;
+}
+
+float mean(float* vec, int size){
+    float m = 0.0;
+    int i = 0;
+    while(i < size){
+        m += vec[i++];
+    }
+    return m / (float)size;
 }

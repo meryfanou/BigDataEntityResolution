@@ -558,7 +558,6 @@ int readCSV(char* fName, hashTable* hashT, matchesInfo* allMatches){
                 }
                 else
                     failed++;
-                
             }
         }
         else if(strcmp(isMatch, "0") == 0){
@@ -710,12 +709,13 @@ logM** make_models_array(BoWords* bow, mySpec** set, matchesInfo* matches, int s
         modelsT[i] = logistic_create();
         // if(i < 500){
             train_per_clique(clique, set, set_size, bow, modelsT[i]);
+            
             printf("Clique %d trained Succefully %d times !!\n", i, modelsT[i]->trained_times);
         // }
         i++;
         clique = clique->next;
 
-        
+        // ABORT METHOD
         // if(modelsT[i-1]->trained_times < 2){
         //     printf("Aborting ..\n");
         //     while(i > 0){
@@ -731,7 +731,16 @@ logM** make_models_array(BoWords* bow, mySpec** set, matchesInfo* matches, int s
     return modelsT;
 }
 
+logM* make_model(BoWords* bow, mySpec** train_set, int set_size, matchesInfo* matches){
 
+    // Create & init model
+    logM* model = logistic_create();
+
+    // Train_per_Spec
+    train_per_spec(train_set, set_size, bow, model, matches);
+
+    return model;
+}
 
 
 float* vectorization(mySpec* spec, BoWords* bow, int* vectorSize){
@@ -743,6 +752,167 @@ float* vectorization(mySpec* spec, BoWords* bow, int* vectorSize){
     bow_vectorize(bow,&vector,vectorSize,spec);
 
     return vector;
+}
+
+void train_per_spec(mySpec** train_set, int set_size, BoWords* bow, logM* model, matchesInfo* matches){
+
+        // Create vectors for all specs to be passed
+    int vectorSize = 0;
+    float** all_vectors = malloc(set_size*sizeof(float*));
+    int make_vectors = 0;
+    while(make_vectors < set_size){
+        all_vectors[make_vectors] = vectorization(train_set[make_vectors], bow, &vectorSize);
+        make_vectors++;
+    }
+
+
+        // Pass all specs by pairs (All with All)
+    int* labels = NULL;
+    int count_labels = 0;
+
+    int tag = -1;
+    
+    float** pairsVector = NULL;
+    int count_pairs = 0;
+
+    int passed_specs = 0;
+    while(passed_specs < set_size){
+
+        int check_specs = passed_specs + 1;
+        while(check_specs < set_size){
+
+            tag = isPair(train_set[passed_specs], train_set[check_specs]);
+            if(tag != -1){
+                float* combined = concat_specVectors(all_vectors[passed_specs], all_vectors[check_specs], vectorSize);
+                pairsVector = concat_pairsVectors(pairsVector, combined, count_pairs);
+                count_pairs++;
+
+                labels = concat_tags(labels, tag, count_labels);
+                count_labels++;
+
+                // free(combined);
+            }
+
+            check_specs++;
+        }
+        passed_specs++;
+    }
+
+    // TEST PRINTS
+    int test_prints = 0;
+    while(test_prints < 10){
+        printf("pairsVec[%d]:\n", test_prints);
+        int test1 = 0;
+        while(test1 < 5){
+            printf("\t%.4f", pairsVector[test_prints][test1++]);
+        }
+        printf("   |||   ");
+
+        test1 = 0 + vectorSize;
+        while(test1 < 5 + vectorSize){
+            printf("\t%.4f", pairsVector[test_prints][test1++]);
+        }
+        printf("\n");
+        test_prints++;
+    }
+
+    /*       !!!        EXPLAIN STRUCTS - VARS        !!!
+    pairsVector = { {}-{}, ..., {}-{} } -> all Vectors by pairs
+    labels = {tag, tag, ..., tag} -> all pairs tags
+    count_labales = Sum of Labels - Must be equal to count_pairs
+    count_pairs = Sum of every possible pair found - Equal to count_labels
+    vectorSise = Sum of dimensions - pairesVector's num of cols
+    */
+
+    // TODO: >pass everything to model
+    logistic_fit(model, count_pairs, 2*vectorSize, pairsVector, labels);
+
+
+    // PRINT STATS FOR TESTING
+    printf("vecSize: %d, count_pairs: %d, count_labels: %d\n", vectorSize, count_pairs, count_labels);
+    printf("trained times: %d\n", model->trained_times);
+
+        //  FREE MEM
+    while(count_pairs > 0){
+        free(pairsVector[--count_pairs]);
+    }
+
+    free(pairsVector);
+    free(labels);
+
+    while(make_vectors > 0){
+        free(all_vectors[--make_vectors]);
+    }
+    free(all_vectors);
+}
+
+int isPair(mySpec* spec1, mySpec* spec2){
+            // CHECK IF THEY ARE IN THE SAME MATCH > RETURN 1
+    myMatches* match = spec1->matches;
+    int i = 0;
+    while(i < match->specsCount){
+        if(match->specsTable[i] == spec2)
+            return 1;
+        i++;
+    }
+
+            // CHECK IF THEY ARE NEGATIVES  > RETURN 0
+    i = 0;
+    nNode* node = match->negs->head;
+
+    while(node != NULL){
+        int check_negs = 0;
+        while(check_negs < node->matchptr->specsCount){
+            if(node->matchptr->specsTable[check_negs] == spec2)
+                return 0;
+            check_negs++;
+        }
+        node = node->next;
+    }
+
+            // ELSE > RETURN -1
+    return -1;
+}
+
+int* concat_tags(int* table, int tag, int size){
+    table = realloc(table, (size+1)*sizeof(int));
+    table[size] = tag;
+    return table;
+}
+
+float* concat_specVectors(float* vec1, float* vec2, int size){
+        // find which is bigger
+    float sum1 = 0.0;
+    float sum2 = 0.0;
+    
+    int i = 0;
+    while(i < size){
+        sum1 += vec1[i];
+        sum2 += vec2[i];
+        i++;
+    }
+
+    int place1 = 0;
+    int place2 = size;
+
+    if(sum1 < sum2){    //swap
+        place1 = size;
+        place2 = 0;
+    }
+
+    float* newVec = malloc(2*size*sizeof(float));
+
+    memcpy(&newVec[place1], vec1, size*sizeof(float));
+    memcpy(&newVec[place2], vec2, size*sizeof(float));
+
+    return newVec;
+}
+
+float** concat_pairsVectors(float** main_vec, float* to_add, int size){
+    main_vec = realloc(main_vec, (size+1)*sizeof(float*));
+    main_vec[size] = to_add;
+
+    return main_vec;
 }
 
 void train_per_clique(myMatches* clique, mySpec** trainSet, int trainSize, BoWords* bow, logM* model){
@@ -785,7 +955,7 @@ void train_per_clique(myMatches* clique, mySpec** trainSet, int trainSize, BoWor
     }
 
     // pass clique, vector, tag to the model !!
-    logistic_fit(model, specs_in, vectorSize, vector, labels, clique);
+    // logistic_fit(model, specs_in, vectorSize, vector, labels, clique);
 
     // FREE MEM
     while(specs_in > 0){

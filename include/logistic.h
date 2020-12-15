@@ -5,8 +5,8 @@
 
 #include "../include/myMatches.h"
 
-#define LEARING_RATE 2
-#define STOP_LIMIT 0.003
+#define LEARING_RATE 0.2
+#define STOP_LIMIT 0.4
 
 
 
@@ -18,8 +18,6 @@ struct logistic_model{
     int weights_count;
 
     int trained_times;
-
-    myMatches* clique;
 
     weights* finalWeights;
 };
@@ -40,8 +38,8 @@ struct logistic_weights{
 logM* logistic_create();
 void logistic_destroy(logM*);
 
-void logistic_fit(logM*, int, int, float**, int*, myMatches*);
-                //model, size, vector, tagsArray, clique
+void logistic_fit(logM*, int, int, float**, int*);
+                //model, size, dimensions, vector, tagsArray
 float logistic_predict(logM*, float*, int);
 
 void logistic_regression(logM*, float**, int , int, int*);
@@ -61,6 +59,7 @@ float calc_f(weights*, float*);
 float calc_s(weights*, float*);
 float calc_L_WB(weights*, float*, int);
 float calc_L_Rate(weights*, float*, int);
+float mean(float*, int);
 // ~~~~~~~~~~~~~~
 
 #endif

@@ -35,6 +35,14 @@ void keep_mostSignificantWords(BoWords*);				// Remove all insignificant words f
 // ~~~~~~~~~~~~~~~~ TRAINING ~~~~~~~~~~~~~~~~
 
 float* vectorization(mySpec*, BoWords*, int*);
+void train_per_spec(mySpec**, int, BoWords*, logM*, matchesInfo*);
+float* concat_specVectors(float*, float*, int);
+float** concat_pairsVectors(float**, float*, int);
+int* concat_tags(int*, int, int);
+int isPair(mySpec*, mySpec*);
+logM* make_model(BoWords*, mySpec**, int, matchesInfo*);
+
+/* NOT USED */
 void train_per_clique(myMatches*, mySpec**, int, BoWords*, logM*);
 logM** make_models_array(BoWords*, mySpec**, matchesInfo*, int);
 
