@@ -209,47 +209,14 @@ int main(int argc, char** argv){
     //bow_print(bow);
     //printf("%d\n",bow->entries);
 
-    // //~~~~~~~~~~~~~~~~~~~~~~ TRAIN MODEL
-    // myMatches*  clique = allMatches->head;
-
-    // while(clique != NULL){
-    //     train_per_clique(clique, trainSet, trainSize, bow);
-
-    //~~~~~~~~~~~~~~~~~~~~~~ VECTORIZATION  + LABELS (Ptr's to matches)>
-
-    printf("Vectorizing train_Bow .. \n");
-    //bow_print(bow);
-
-    // int vectorSize = 0;
-    float** train_vector = malloc(trainSize*sizeof(float*));
-    myMatches** train_labels = malloc(trainSize*sizeof(myMatches*));
-
-
-    int vectorSize = 0;
-    int vecCount = 0;
-    while(5*vecCount < trainSize){
-        // printf("Train Size: %d, curr: %d\n", trainSize, vecCount);
-
-        vectorSize = 0;
-        train_vector[vecCount] = vectorization((*trainSet)[vecCount],bow,&vectorSize);
-        train_labels[vecCount] = (*trainSet)[vecCount]->matches;
-        vecCount++;
-    }
-
-    printf("       \t\t.. DONE !!\n");
-    //~~~~~~~~~~~~~~~~~~~~~~ > VECTORIZATION
-
 // ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 // ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 
     //~~~~~~~~~~~~~~~~~~~~~~ TEST LOGISTIC - NOT FINISHED !!!! >
-
-
-    logM* model = logistic_create();
-    logistic_fit(model, vecCount, train_vector, vectorSize, train_labels);
+ 
+    logM** modelsT = make_models_array(bow, *trainSet, allMatches, trainSize);
 
     //~~~~~~~~~~~~~~~~~~~~~~ > TEST LOGISTIC - NOT FINISHED !!!!
-
 
 
 // ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
@@ -269,24 +236,16 @@ int main(int argc, char** argv){
     free(testSet);
     free(*validSet);
     free(validSet);
-
-        // free vectors - labels
-    int free_t_vec = vecCount;
-    while(free_t_vec > 0){
-        free_t_vec--;
-        free(train_vector[free_t_vec]);
-    }
-    free(train_vector);
-
-        // free labels
-    free(train_labels);
-
+    
         // free bow
     bow_destroy(bow);
-
-        //free model
-    logistic_destroy(model);
-
+        //free models array
+    int free_i = trainSize;
+    if(modelsT != NULL){
+        while(free_i > 0){
+            logistic_destroy(modelsT[--free_i]);
+        }
+    }
         // free paths - strings
     free(path_X);
     free(path_W);

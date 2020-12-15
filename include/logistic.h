@@ -5,28 +5,33 @@
 
 #include "../include/myMatches.h"
 
+#define LEARING_RATE 2
+#define STOP_LIMIT 0.003
+
+
+
 typedef struct logistic_model logM;
 typedef struct logistic_weights weights;
-typedef struct logistic_sigmoid sigmoid;
 
 struct logistic_model{
-    int vectors_size;
-    int weights_in;
+    int size_totrain;
+    int weights_count;
 
-    weights** allWeights;
-    sigmoid* mySigmoid;
+    int trained_times;
+
+    myMatches* clique;
+
+    weights* finalWeights;
 };
 
 struct logistic_weights{
     int entries;
 
-    myMatches* label;
+    float limit;
+    float rate;
 
     float b;
     float* weightsT;
-};
-
-struct logistic_sigmoid{
 };
 
 // ~~~~~~~~~~~~~~
@@ -35,23 +40,27 @@ struct logistic_sigmoid{
 logM* logistic_create();
 void logistic_destroy(logM*);
 
-void logistic_fit(logM*, int, float**, int, myMatches**);
+void logistic_fit(logM*, int, int, float**, int*, myMatches*);
+                //model, size, vector, tagsArray, clique
+float logistic_predict(logM*, float*, int);
+
+void logistic_regression(logM*, float**, int , int, int*);
+float logistic_gradDescent();
 
 // ~~~~~~~~~~~~~~
 weights* weights_create();
 void weights_destroy(weights*);
 
 void weights_set(weights*, int);
-void weights_fit(weights*, float*, myMatches*);
-void weights_merge(weights*, float*);
-
+void weights_fit(weights*, float*, int);
+float weights_update(weights*, float*, int);
 // ~~~~~~~~~~~~~~
-sigmoid* sigmoid_create();
-void sigmoid_destroy(sigmoid*);
 
 // ~~~~~~~~~~~~~~
 float calc_f(weights*, float*);
 float calc_s(weights*, float*);
+float calc_L_WB(weights*, float*, int);
+float calc_L_Rate(weights*, float*, int);
 // ~~~~~~~~~~~~~~
 
 #endif

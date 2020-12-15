@@ -697,6 +697,43 @@ void keep_mostSignificantWords(BoWords* bow){
 
 // ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~ TRAINING ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 
+logM** make_models_array(BoWords* bow, mySpec** set, matchesInfo* matches, int set_size){
+    
+    // make array
+    logM** modelsT = malloc(matches->entries*sizeof(logM*));
+
+    // train_per_clique
+    myMatches* clique = matches->head;
+    int i = 0;
+    while(clique != NULL){
+
+        modelsT[i] = logistic_create();
+        // if(i < 500){
+            train_per_clique(clique, set, set_size, bow, modelsT[i]);
+            printf("Clique %d trained Succefully %d times !!\n", i, modelsT[i]->trained_times);
+        // }
+        i++;
+        clique = clique->next;
+
+        
+        // if(modelsT[i-1]->trained_times < 2){
+        //     printf("Aborting ..\n");
+        //     while(i > 0){
+        //         logistic_destroy(modelsT[--i]);
+        //     }
+        //     free(modelsT);
+        //     return NULL;
+        // }
+    }
+
+    printf("Trained for %d different Matches Groups !!\n", i);
+
+    return modelsT;
+}
+
+
+
+
 float* vectorization(mySpec* spec, BoWords* bow, int* vectorSize){
     // printf("mpjhke\n");
     *vectorSize = 0;
@@ -708,11 +745,19 @@ float* vectorization(mySpec* spec, BoWords* bow, int* vectorSize){
     return vector;
 }
 
-void train_per_clique(myMatches* clique, mySpec** trainSet, int trainSize, BoWords* bow){
+void train_per_clique(myMatches* clique, mySpec** trainSet, int trainSize, BoWords* bow, logM* model){
     int     tag , vectorSize;
-    float*  vector = NULL;
+    float**  vector = NULL;
     nNode*  negMatch = NULL;
 
+    //tags array
+    int* labels = malloc(trainSize*sizeof(int));
+    
+    // vectors array
+    vector = malloc(trainSize*sizeof(float*));
+    int specs_in = 0;   // measures true vector_size
+
+    // gather qlique's specs
     for(int i=0; i<trainSize; i++){
         tag = -1;
         if(trainSet[i]->matches == clique){
@@ -732,14 +777,24 @@ void train_per_clique(myMatches* clique, mySpec** trainSet, int trainSize, BoWor
         if(tag == -1)
             continue;
 
+        labels[specs_in] = tag;
         vectorSize = 0;
-        vector = vectorization(trainSet[i],bow,&vectorSize);
-
-        // pass clique, vector, tag to the model !!
-
-        free(vector);
-        vector = NULL;
+        vector[specs_in++] = vectorization(trainSet[i],bow,&vectorSize);
+        
+ 
     }
+
+    // pass clique, vector, tag to the model !!
+    logistic_fit(model, specs_in, vectorSize, vector, labels, clique);
+
+    // FREE MEM
+    while(specs_in > 0){
+        free(vector[--specs_in]);
+    }
+    free(vector);
+
+    free(labels);
+
 }
 
 // ~~~~~~~~~~~~~~~~~~~~~~~~ SIGNALS ~~~~~~~~~~~~~~~~~~~~~~~~~~

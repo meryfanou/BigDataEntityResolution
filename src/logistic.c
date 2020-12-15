@@ -12,50 +12,144 @@
 logM* logistic_create(){
     logM* newModel = malloc(sizeof(logM));
 
-    newModel->vectors_size = 0;
-    newModel->weights_in = 0;
+    newModel->size_totrain = 0;
+    newModel->weights_count = 0;
+    newModel->clique = NULL;
+    newModel->trained_times = 0;
 
-    newModel->allWeights = NULL;
-    newModel->mySigmoid = sigmoid_create();
+    newModel->finalWeights = weights_create();
 
     return newModel;
 }
 
 void logistic_destroy(logM* model){
-
-    int i = model->weights_in;
-    while(i > 0){
-        weights_destroy(model->allWeights[--i]);
-    }
-    sigmoid_destroy(model->mySigmoid);
-
+    
+    weights_destroy(model->finalWeights);
     free(model);
 
 }
 
-void logistic_fit(logM* model, int vector_size, float** vector , int labels_size, myMatches** labels){
-    model->vectors_size = vector_size;
+void logistic_fit(logM* model, int vector_rows, int vector_cols, float** vector , int* labels, myMatches* clique){
+    model->size_totrain = vector_rows;
 
-    int count_labels = 0;
-    int count_vector = 0;
+    model->clique = clique;
 
-    printf("lablesSize: %d, vectorSize: %d\n", labels_size, vector_size);
+    // model->finalWeights = weights_create();
+    weights_set(model->finalWeights, vector_cols);
+    model->weights_count = vector_cols;
 
-    while(count_labels < count_vector){
-        model->allWeights = realloc(model->allWeights, (model->weights_in+1)*sizeof(weights*));
-        
-        model->allWeights[model->weights_in] = weights_create();
-        weights_set(model->allWeights[model->weights_in], vector_size);
-        weights_fit(model->allWeights[model->weights_in], vector[count_vector], labels[count_labels]);
+    logistic_regression(model, vector, vector_rows, vector_cols, labels);
 
-        model->weights_in++;
-        count_labels++;
-        count_vector++;
-    }
-
-    printf("log_fit Finished\n");
+    // printf("logistic_fit Finished\n");
 }
 
+void logistic_regression(logM* model, float** vector, int vector_rows, int vector_cols, int* tags){
+    
+    printf("vector_rows: %d, vector_cols: %d\n", vector_rows, vector_cols);
+
+    float dif = 1.00000;
+    
+    while(dif > model->finalWeights->limit){
+
+            // 1. Build predicts table
+        float* predicts = malloc(vector_rows*sizeof(float));
+        int i = 0;
+        while(i < vector_rows){
+            predicts[i] = logistic_predict(model, vector[i], vector_cols);
+            i++;
+        }
+
+            // 2. Calc weights
+                // 2.1 Build Missed Table
+        float b_grad = 0.00000;
+        float* missed_by = malloc(vector_rows*sizeof(float));
+        i = 0;
+        while(i < vector_rows){
+            missed_by[i] = predicts[i] - (float) tags[i];
+            b_grad += missed_by[i];
+            // printf("my_pred: %.4f, target: %d\n", predicts[i], tags[i]);
+            i++;
+        }
+
+        b_grad /= (float) i;
+
+                // 2.2 Calc Grad - PER WEIGHT !!!
+        float* grad = malloc((vector_cols+1)*sizeof(float));
+        grad[0] = b_grad;
+
+        // printf("b_grtad: %.4f\n", b_grad);
+
+        int y = 0;
+        while(y < vector_cols){
+            int x = 0;
+            float magic_num = 0.0;
+            while(x < vector_rows){
+                if(vector[x][y]!=0){
+                    // printf("vector[%d][%d]: %.4f, missed_by[%d]: %.4f\n", x,y, vector[x][y] ,x, missed_by[x]);
+
+                    // printf("VRHKA ENA\n");
+                }
+                magic_num += vector[x][y]*missed_by[x];
+                    // printf("vector[%d][%d]: %.4f, missed_by[%d]: %.4f", x,y, vector[x][y] ,x, missed_by[x]);
+                x++;
+            }
+            grad[1+y] = magic_num;
+            y++;
+        }
+
+
+                // 2.3 Update Weights
+        dif = weights_update(model->finalWeights, grad, vector_cols);
+        // printf("dif: %.4f\n", dif);
+
+        // printf("dif: %.4f\n", dif);
+
+        model->trained_times++;
+
+        // if(model->trained_times > 5)
+            // dif = 0.00000;
+
+        // FREE MEM
+        free(predicts);
+        free(missed_by);
+        free(grad);
+    }
+    printf("dif: %.4f\n", dif);
+    int i = 0;
+    while(i < vector_rows ){
+        printf("my_pred: %.4f, target: %d\n", logistic_predict(model, vector[i], vector_cols), tags[i]);
+        i++;   
+    }
+
+}
+
+
+float logistic_predict(logM* model, float* vector, int size){
+    float pred = -1.000;
+
+    if(model->finalWeights == NULL){
+        printf("Error - Untrained model !!\n");
+        return -1.000;
+    }
+    
+    if(size == model->weights_count){
+        pred = calc_s(model->finalWeights, vector);
+    }
+    else{   // case we give more info than weights inside
+        float* newVec = malloc(model->weights_count*sizeof(float));
+        int i = 0;
+        while(i < model->weights_count){
+            newVec[i] = vector[i];
+            i++;
+        }
+
+        pred =  calc_s(model->finalWeights, newVec);
+        free(newVec);
+    }
+
+    return pred;
+
+}
 
 // ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 // ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
@@ -64,7 +158,10 @@ weights* weights_create(){
     weights* newWeight = malloc(sizeof(weights));
 
     newWeight->entries = 0;
-    newWeight->b = 0.0;
+    newWeight->limit = STOP_LIMIT;
+    newWeight->rate = LEARING_RATE;
+
+    newWeight->b = 0.0000;
     newWeight->weightsT = NULL;
 
     return newWeight;
@@ -84,36 +181,40 @@ void weights_set(weights* myWeights, int size){
 
     int i = 0;
     while(i < size){
-        myWeights->weightsT[i++] = 1.0;
+        myWeights->weightsT[i++] = 0.0000;
     }
 }
 
-void weights_fit(weights* myWeights, float* vector, myMatches* target){
-    myWeights->label = target;
-    float test_num = calc_s(myWeights, vector);
-    printf("Magic Num - p(x) = %.3f\n", test_num);
+float weights_update(weights* myWeights, float* grad, int size){
+    
+    float dif = 0.0000;
+    int active = 1;
+// printf("size: %d, grad_test[1]: %.4f\n", size, grad[1]);
+    
+    float new_b = myWeights->b - myWeights->rate*grad[0];
+    dif += new_b - myWeights->b;
+    myWeights->b = new_b;
+
+    int i = 0;
+
+    while(i < size){
+        float new = myWeights->weightsT[i] - ( myWeights->rate * grad[i+1] );
+
+        if(grad[i+1] != 0){
+            // printf("grad[%d]: %.4f, old: %.4f, new: %.4f\n", i+1, grad[i+1], myWeights->weightsT[i], new);
+            active++;
+        }
+
+        dif += new - myWeights->weightsT[i];
+        myWeights->weightsT[i] = new;
+
+        i++;
+    }
+// printf("dif inside: %.4f, active: %d\n", dif, active);
+    dif = dif / (float) active;
+
+    return dif;
 }
-
-
-void weights_merge(weights* myWeights, float* newT){
-
-}
-
-// ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
-// ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
-
-sigmoid* sigmoid_create(){
-    sigmoid* newS = malloc(sizeof(sigmoid));
-
-
-    return newS;
-}
-
-
-void sigmoid_destroy(sigmoid* myS){
-    free(myS);
-}
-
 
 // ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 // ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
@@ -127,16 +228,34 @@ float calc_f(weights* myWeights, float* values){
         i++;
     }
 
-    printf("\t f: %.4f\n", sum);
+    // printf("\t f: %.4f\n", sum);
     return sum;
 }
 
 float calc_s(weights* myWeights, float* values){
-    float f = calc_f(myWeights, values);
+    float f = 0.0;
+    f =  calc_f(myWeights, values);
 
-    double fixed = -1.0*( (double) f);
+    double fixed = 0.0; 
+    fixed = -1.0000*( (double) f);
 
-    float sum =  1.0 / ( 1.0+ (float)exp(fixed));
+    float sum = 0.0;
+    sum =  1.0000 / ( 1.0000+ (float)exp(fixed));
 
     return sum;
+}
+
+float calc_L_WB(weights* weights, float* values, int tag){
+    
+    double L = 0;
+    double p_x =  (double)calc_s(weights, values);
+    
+    if(tag == 1){
+        L = -1.0 * log(p_x);
+    }
+    else if(tag == 0){
+        L = -1.0 * log(1.0 - p_x);
+    }
+
+    return (float) L;
 }

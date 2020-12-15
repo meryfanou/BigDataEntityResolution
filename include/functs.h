@@ -10,6 +10,7 @@
 #include "mySpec.h"
 #include "boWords.h"
 #include "math.h"
+#include "logistic.h"
 
 extern int received_signal;
 
@@ -34,8 +35,8 @@ void keep_mostSignificantWords(BoWords*);				// Remove all insignificant words f
 // ~~~~~~~~~~~~~~~~ TRAINING ~~~~~~~~~~~~~~~~
 
 float* vectorization(mySpec*, BoWords*, int*);
-void train_per_clique(myMatches*, mySpec**, int, BoWords*);
-
+void train_per_clique(myMatches*, mySpec**, int, BoWords*, logM*);
+logM** make_models_array(BoWords*, mySpec**, matchesInfo*, int);
 
 // ~~~~~~~~~~~~~~~~ SIGNALS ~~~~~~~~~~~~~~~~
 
