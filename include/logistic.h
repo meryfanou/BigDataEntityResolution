@@ -5,9 +5,9 @@
 
 #include "../include/myMatches.h"
 
-#define LEARING_RATE 0.2
-#define STOP_LIMIT 0.2
-#define THRESHOLD 0.7
+#define LEARING_RATE 0.6
+#define STOP_LIMIT 0.15
+#define THRESHOLD 0.5
 
 
 
@@ -56,6 +56,7 @@ void weights_destroy(weights*);
 void weights_set(weights*, int);
 void weights_fit(weights*, float*, int);
 float weights_update(weights*, float*, int);
+void weights_print(weights*);
 // ~~~~~~~~~~~~~~
 
 // ~~~~~~~~~~~~~~

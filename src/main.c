@@ -20,7 +20,7 @@
 #define TRAIN_PERC 0.6
 #define TEST_PERC 0.2
 
-#define MOST_SIGN 3000
+#define MOST_SIGN 1000
 
 int received_signal = 0;
 
@@ -218,7 +218,7 @@ int main(int argc, char** argv){
     //~~~~~~~~~~~~~~~~~~~~~~ CREATE & TRAIN LOGISTIC MODEL >
     printf("\nTraining Logistic Model ..\n");
     // logM** modelsT = make_models_array(bow, *trainSet, allMatches, trainSize);
-    logM* model = make_model(bow, *trainSet, trainSize, allMatches);
+    logM* model = make_model(bow, *trainSet, trainSize);
 
     printf("       \t\t.. DONE !!\n\n");
 
@@ -226,7 +226,7 @@ int main(int argc, char** argv){
 // ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 
     //~~~~~~~~~~~~~~~~~~~~~ USE TEST_SET FOR PREDICTIONS
-
+    make_tests(bow, model, *testSet, testSize);
 
 // ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 // ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~

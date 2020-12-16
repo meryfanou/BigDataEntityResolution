@@ -731,13 +731,13 @@ logM** make_models_array(BoWords* bow, mySpec** set, matchesInfo* matches, int s
     return modelsT;
 }
 
-logM* make_model(BoWords* bow, mySpec** train_set, int set_size, matchesInfo* matches){
+logM* make_model(BoWords* bow, mySpec** train_set, int set_size){
 
     // Create & init model
     logM* model = logistic_create();
 
     // Train_per_Spec
-    train_per_spec(train_set, set_size, bow, model, matches);
+    train_per_spec(train_set, set_size, bow, model);
 
     return model;
 }
@@ -754,67 +754,16 @@ float* vectorization(mySpec* spec, BoWords* bow, int* vectorSize){
     return vector;
 }
 
-void train_per_spec(mySpec** train_set, int set_size, BoWords* bow, logM* model, matchesInfo* matches){
-
-        // Create vectors for all specs to be passed
-    int vectorSize = 0;
-    float** all_vectors = malloc(set_size*sizeof(float*));
-    int make_vectors = 0;
-    while(make_vectors < set_size){
-        all_vectors[make_vectors] = vectorization(train_set[make_vectors], bow, &vectorSize);
-        make_vectors++;
-    }
-
-
-        // Pass all specs by pairs (All with All)
-    int* labels = NULL;
-    int count_labels = 0;
-
-    int tag = -1;
-    
-    float** pairsVector = NULL;
+void train_per_spec(mySpec** train_set, int set_size, BoWords* bow, logM* model){
+        //  Init values to pass
+    int vector_cols = 0;
     int count_pairs = 0;
 
-    int passed_specs = 0;
-    while(passed_specs < set_size){
+    float** all_vectors = NULL;
+    float** pairsVector = NULL;
+    int* labels = NULL;
 
-        int check_specs = passed_specs + 1;
-        while(check_specs < set_size){
-
-            tag = isPair(train_set[passed_specs], train_set[check_specs]);
-            if(tag != -1){
-                float* combined = concat_specVectors(all_vectors[passed_specs], all_vectors[check_specs], vectorSize);
-                pairsVector = concat_pairsVectors(pairsVector, combined, count_pairs);
-                count_pairs++;
-
-                labels = concat_tags(labels, tag, count_labels);
-                count_labels++;
-
-                // free(combined);
-            }
-
-            check_specs++;
-        }
-        passed_specs++;
-    }
-
-    // TEST PRINTS
-    int test_prints = 0;
-    while(test_prints < 10){
-        printf("pairsVec[%d]:\n", test_prints);
-        int test1 = 0;
-        while(test1 < 5){
-            printf("\t%.4f", pairsVector[test_prints][test1++]);
-        }
-        printf("   |||   ");
-
-        test1 = 0 + vectorSize;
-        while(test1 < 5 + vectorSize){
-            printf("\t%.4f", pairsVector[test_prints][test1++]);
-        }
-        printf("\n");
-        test_prints++;
-    }
+    make_vectors(train_set, set_size, bow, &pairsVector, &all_vectors, &labels, &count_pairs, &vector_cols);
 
     /*       !!!        EXPLAIN STRUCTS - VARS        !!!
     pairsVector = { {}-{}, ..., {}-{} } -> all Vectors by pairs
@@ -824,13 +773,44 @@ void train_per_spec(mySpec** train_set, int set_size, BoWords* bow, logM* model,
     vectorSise = Sum of dimensions - pairesVector's num of cols
     */
 
-    // TODO: >pass everything to model
-    logistic_fit(model, count_pairs, 2*vectorSize, pairsVector, labels);
+
+    // TRAIN MODEL
+    logistic_fit(model, count_pairs, 2*vector_cols, pairsVector, labels);
 
 
     // PRINT STATS FOR TESTING
-    printf("vecSize: %d, count_pairs: %d, count_labels: %d\n", vectorSize, count_pairs, count_labels);
     printf("trained times: %d\n", model->trained_times);
+
+    //  FREE MEM
+    while(count_pairs > 0){
+        free(pairsVector[--count_pairs]);
+    }
+
+    free(pairsVector);
+
+    int i = 0;
+    while(i < set_size){
+        free(all_vectors[i++]);
+    }
+    free(all_vectors);
+
+    free(labels);
+}
+
+void make_tests(BoWords* bow, logM* model, mySpec** test_set, int set_size){
+
+            //  Init values to pass
+    int vector_cols = 0;
+    int count_pairs = 0;
+
+    float** all_vectors = NULL;
+    float** pairsVector = NULL;
+    int* labels = NULL;
+
+    make_vectors(test_set, set_size, bow, &pairsVector, &all_vectors, &labels, &count_pairs, &vector_cols);
+
+    int* predicts = logistic_predict(model, pairsVector, count_pairs, vector_cols);
+    printf("Accuracy at test_set: %.4f\n", logistic_score(model, predicts, labels, count_pairs));
 
         //  FREE MEM
     while(count_pairs > 0){
@@ -838,12 +818,57 @@ void train_per_spec(mySpec** train_set, int set_size, BoWords* bow, logM* model,
     }
 
     free(pairsVector);
-    free(labels);
 
-    while(make_vectors > 0){
-        free(all_vectors[--make_vectors]);
+    int i = 0;
+    while(i < set_size){
+        free(all_vectors[i++]);
     }
     free(all_vectors);
+
+    free(labels);
+
+}
+
+void make_vectors(mySpec** set, int set_size, BoWords* bow, float*** pairsVector, float*** all_vectors, int** labels, int* count_pairs, int* vector_cols){
+        //  INIT PASSED VALUES IN CASE THEY ARE NOT !
+    *vector_cols = 0;
+    *pairsVector = NULL;
+    *labels = NULL;
+    *count_pairs = 0;
+    *all_vectors = NULL;
+
+        // Create vectors for all specs to be passed
+    *all_vectors = malloc(set_size*sizeof(float*));
+    int make_vectors = 0;
+    while(make_vectors < set_size){
+        (*all_vectors)[make_vectors] = vectorization(set[make_vectors], bow, vector_cols);
+        make_vectors++;
+    }
+
+
+        // Pass all specs by pairs (All with All (no doubles) )
+
+    int tag = -1;
+
+    int passed_specs = 0;
+    while(passed_specs < set_size){
+
+        int check_specs = passed_specs + 1;
+        while(check_specs < set_size){
+
+            tag = isPair(set[passed_specs], set[check_specs]);
+            if(tag != -1){
+                float* combined = concat_specVectors((*all_vectors)[passed_specs], (*all_vectors)[check_specs], *vector_cols);
+                *pairsVector = concat_pairsVectors(*pairsVector, combined, *count_pairs);
+                
+                *labels = concat_tags(*labels, tag, *count_pairs);
+                
+                (*count_pairs) += 1;
+            }
+            check_specs++;
+        }
+        passed_specs++;
+    }
 }
 
 int isPair(mySpec* spec1, mySpec* spec2){

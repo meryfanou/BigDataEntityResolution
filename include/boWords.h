@@ -32,6 +32,7 @@ struct Record{
 	char* word;
 	int isSignificant;
 	float idf;
+	float tfidf_sum_mean;
     TextInfo* texts;
     int numofTexts;
 };

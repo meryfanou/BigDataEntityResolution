@@ -272,7 +272,7 @@ void bow_bucket_signWords(Bucket* bucket, MBH* heap){
 	Record*	record = bucket->rec;
 
 	while(record != NULL){
-		mbh_insert(heap, record->word, record->idf);
+		mbh_insert(heap, record->word, record->tfidf_sum_mean);
 		record = record->next;
 	}
 }
@@ -320,6 +320,7 @@ Record* bow_record_create(char* word, mySpec* text){	// Init record
 	newRec->word = strdup(word);
 	newRec->isSignificant = 0;
 	newRec->idf = 0.0;
+	newRec->tfidf_sum_mean = 0.0;
 	newRec->texts = malloc(sizeof(TextInfo));
 	newRec->texts[0].text = text;
 	newRec->texts[0].tf_idf = 1.0;
@@ -466,9 +467,11 @@ void tfidf_apply_toRec(tfidf* tf, Record* rec){
 		int words_sum = tempText->text->numofWords;
 
 		tempText->tf_idf = tfidf_calc(counts_inText, words_sum, rec->idf);
+		rec->tfidf_sum_mean += tempText->tf_idf;
 
 		i++;
 	}
+	rec->tfidf_sum_mean /= tf->all_Texts;
 }
 
 float idf_calc(int texts_sum, int target_texts_sum){

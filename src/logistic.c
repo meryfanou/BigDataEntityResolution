@@ -86,13 +86,16 @@ void logistic_regression(logM* model, float** vector, int vector_rows, int vecto
             // 3 Update Weights
         weights_update(model->finalWeights, grad, vector_cols);
         limit = active_mean(missed_by, vector_rows);
+        printf("\t\t~~~~~~~~~~~~~~~~~~~~~~~~\n");
+        printf("Time: %d\n", model->trained_times);
         printf("limit: %.4f\n", limit);
-
+        // weights_print(model->finalWeights);
+        
 
         model->trained_times++;
 
         // ΜAX ITERATIONS
-        if(model->trained_times > 100)
+        if(model->trained_times > 200)
             limit = 0.0;
         
 
@@ -104,6 +107,9 @@ void logistic_regression(logM* model, float** vector, int vector_rows, int vecto
     
     
     // printf("limit: %.4f\n", limit);
+    // TESTS
+    printf("FINISHED !!!\n");
+    weights_print(model->finalWeights);
     int* final_predicts = logistic_predict(model, vector, vector_rows, vector_cols);
     printf("Score after train: %.4f\n", logistic_score(model, final_predicts, tags, vector_rows));
     free(final_predicts);
@@ -139,6 +145,7 @@ int* logistic_predict(logM* model, float** vector, int vector_rows, int vector_c
         predicts = malloc(vector_rows*sizeof(int));
         int i = 0;
         while(i < vector_rows){
+            // printf("probs[%d]: %.4f  ||  ", i, probs[i]);
             if(probs[i] < model->finalWeights->threshold){
                 predicts[i] = 1;
             }
@@ -234,6 +241,18 @@ float weights_update(weights* myWeights, float* grad, int size){
     return dif;
 }
 
+void weights_print(weights* myWeights){
+    printf("Weights:\n\t");
+    printf("b: %.4f\n\t", myWeights->b);
+    int i = 0;
+    while(i < myWeights->entries){
+        if(myWeights->weightsT[i] != 0.0)
+            printf("w[%d]: %.4f  ||  ", i , myWeights->weightsT[i]);
+        i++;
+    }
+    printf("\n");
+}
+
 // ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 // ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 
@@ -281,16 +300,18 @@ float calc_L_WB(weights* weights, float* values, int tag){
 float active_mean(float* vec, int size){
     float m = 0.0;
     int i = 0;
-    int active = 0;
+    // int active = 0;
     while(i < size){
-        if(vec[i] > 0.0){
-            m += vec[i];
-            active ++;
-        }
+        if(vec[i] > 0.0)
+            m+= vec[i];
+        else
+            m += -1.0*vec[i];
+            // active ++;
+        // }
         i++;
     }
     
-    if(active == 0)
-        return 1;
-    return m / (float)active;
+    // if(active == 0)
+        // return 1;
+    return m / (float) i;
 }
