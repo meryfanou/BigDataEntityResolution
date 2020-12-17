@@ -4,9 +4,15 @@
 #include <stdlib.h>
 #include <math.h>
 #include <signal.h>
+#include <sys/stat.h>
+#include <errno.h>
+#include <error.h>
+#include <unistd.h>
+#include <string.h>
 
 #include "../include/logistic.h"
 #include "../include/functs.h"
+#define PATH "./Outputs"
 
 // ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 // ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
@@ -219,8 +225,43 @@ float logistic_score(logM* model, int* labels1, int* labels2, int size){
 }
 
 void logistic_extract(logM* model){
+    if(chdir(PATH) == -1){
+		if(mkdir(PATH, S_IRWXU|S_IRWXG|S_IROTH)){ 
+		  error(EXIT_FAILURE, errno, "Failed to create directory");
+   		}
+   	}
+   	else{
+   		chdir("..");
+   	}
+
+    int target_size = strlen(EXTRACT_FILE)+strlen(PATH)+2;
+    char* target = malloc(target_size);
+    memset(target, 0, target_size);
+
+    strcat(target, PATH);
+	strcat(target, "/");
+	strcat(target, EXTRACT_FILE);
+
+    
+
     FILE* fpout = NULL;
-    fpout = fopen(EXTRACT_FILE, "w");
+    fpout = fopen(target, "w");
+    if(fpout == NULL){
+        printf("Can't create extraction file ~ model\n");
+        return;
+    }
+
+    fprintf(fpout, "MODEL:\n");
+    fprintf(fpout, "\tsize_totrain: %d\n", model->size_totrain);
+    fprintf(fpout, "\tweights_count: %d\n", model->weights_count);
+    fprintf(fpout, "\ttrained_times: %d\n", model->trained_times);
+
+    fclose(fpout);
+
+    weights_extract(model->finalWeights);
+
+    free(target);
+
 }
 
 // ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
@@ -299,6 +340,49 @@ void weights_print(weights* myWeights){
         i++;
     }
     printf("\n");
+}
+
+void weights_extract(weights* myWeights){
+    FILE* fpout = NULL;
+
+    if(chdir(PATH) == -1){
+		if(mkdir(PATH, S_IRWXU|S_IRWXG|S_IROTH)){ 
+		  error(EXIT_FAILURE, errno, "Failed to create directory");
+   		}
+   	}
+   	else{
+   		chdir("..");
+   	}
+
+    int target_size = strlen(EXTRACT_FILE)+strlen(PATH)+2;
+    char* target = malloc(target_size);
+    memset(target, 0, target_size);
+
+    strcat(target, PATH);
+	strcat(target, "/");
+	strcat(target, EXTRACT_FILE);
+
+    fpout = fopen(target, "r+");
+    if(fpout == NULL){
+        printf("Cant open file - weights\n");
+        return;
+    }
+
+    fseek(fpout, 0, SEEK_END);
+    fprintf(fpout, "WEIGHTS:\n");
+    fprintf(fpout, "\tentries: %d\n", myWeights->entries);
+    fprintf(fpout, "\tlimit: %.4f\n", myWeights->limit);
+    fprintf(fpout, "\trate: %.4f\n", myWeights->rate);
+    fprintf(fpout, "\tthreshold: %.4f\n", myWeights->threshold);
+    fprintf(fpout, "\tb: %.4f\n", myWeights->b);
+    int i = 0;
+    while( i < myWeights->entries){
+        fprintf(fpout, "\tw[%d]: %.4f\n", i, myWeights->weightsT[i]);
+        i++;
+    }
+
+    fclose(fpout);
+    free(target);
 }
 
 // ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~

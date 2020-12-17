@@ -289,7 +289,7 @@ int main(int argc, char** argv){
 
     //~~~~~~~~~~~~~~~~~~~~~ USE TEST_SET FOR PREDICTIONS
     printf("\nTesting Logistic Model ..\n");
-    make_tests(bow, model, *testSet, testSize);
+    // make_tests(bow, model, *testSet, testSize);
 
     // Check for termination signal
     if(received_signal == 1){
@@ -305,6 +305,13 @@ int main(int argc, char** argv){
 
 // ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 // ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+    printf("Extract ..\n");
+    logistic_extract(model);
+    printf("       \t\t.. DONE !!\n\n");
+
+// ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+// ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+
 
 printf("All Specs: %d\n", hashT->entries);
 myMatches* gamw = allMatches->head;
@@ -319,39 +326,6 @@ printf("All matches: %d\n", allMatches->entries);
 
     //~~~~~~~~~~~~~~~~~~~~~~ FREE MEM
     printf("\nCleaning Memory...\n");
-
-    //     // free hash and match list
-    // deleteInfo(allMatches);
-    // hash_destroy(hashT);
-
-    //     // free Sets
-    // free(*trainSet);
-    // free(trainSet);
-    // free(*testSet);
-    // free(testSet);
-    // free(*validSet);
-    // free(validSet);
-    
-    //     // free bow
-    // bow_destroy(bow);
-   
-    //     //free models array
-    // // int free_i = trainSize;
-    // // if(modelsT != NULL){
-    // //     while(free_i > 0){
-    // //         logistic_destroy(modelsT[--free_i]);
-    // //     }
-    // // }
-
-    // logistic_destroy(model);
-
-    //     // free paths - strings
-    // free(path_X);
-    // free(path_W);
-
-    //     // free File ptr's
-    // if(outputFile != NULL)
-    //     free(outputFile);
 
     FREE_MEM(path_X,path_W,outputFile,allMatches,hashT,trainSet,testSet,validSet,bow,model);
 

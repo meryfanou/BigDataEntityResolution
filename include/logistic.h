@@ -9,7 +9,7 @@
 #define STOP_LIMIT 0.15
 #define THRESHOLD 0.5
 #define EXTRACT_FILE "extract_model.txt"
-
+// #define PATH "./Outputs"
 
 
 typedef struct logistic_model logM;
@@ -59,7 +59,7 @@ void weights_set(weights*, int);
 void weights_fit(weights*, float*, int);
 float weights_update(weights*, float*, int);
 void weights_print(weights*);
-void weights_extract(weights*, char*);
+void weights_extract(weights*);
 // ~~~~~~~~~~~~~~
 
 // ~~~~~~~~~~~~~~
