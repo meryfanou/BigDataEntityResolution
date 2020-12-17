@@ -464,6 +464,16 @@ void split_train_test_valid(matchesInfo* allMatches, mySpec*** trainSet, mySpec*
 	int	currTrain, currTest, currValid;
 	// For each set of specs, where all specs match with each other
 	while(match != NULL){
+
+		// Check for Valid match
+		if(match->specsCount == 1){
+			if(match->negs->entries == 0){
+				match = match->next;
+				continue;
+			}
+		}
+
+
 		// A percentage of the specs will be used for the training set
 		currTrain = (int)ceil((match->specsCount)*trainPerc);
 		currTrain = (currTrain >= trainingNum) ? (trainingNum) : (currTrain);

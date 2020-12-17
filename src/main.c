@@ -185,7 +185,7 @@ int main(int argc, char** argv){
 
     text_to_bow(*trainSet, trainSize, &bow);
     text_to_bow(*testSet, testSize, &bow);
-    // text_to_bow(*validSet, validSize, &bow);
+    text_to_bow(*validSet, validSize, &bow);
 
     printf("       \t\t.. DONE !!\n");
 
@@ -230,6 +230,17 @@ int main(int argc, char** argv){
 
 // ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 // ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+
+printf("All Specs: %d\n", hashT->entries);
+myMatches* gamw = allMatches->head;
+int mpla = 0;
+while(gamw!=NULL){
+    mpla += gamw->specsCount;
+    gamw = gamw->next;
+}
+printf("Specs in Matches: %d\n", mpla);
+printf("TrainSize: %d\n", trainSize);
+printf("All matches: %d\n", allMatches->entries);
 
     //~~~~~~~~~~~~~~~~~~~~~~ FREE MEM
     printf("\nCleaning Memory...\n");

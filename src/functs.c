@@ -825,6 +825,7 @@ void make_tests(BoWords* bow, logM* model, mySpec** test_set, int set_size){
     }
     free(all_vectors);
 
+    free(predicts);
     free(labels);
 
 }
