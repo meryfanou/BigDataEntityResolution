@@ -8,6 +8,7 @@
 #define LEARING_RATE 0.6
 #define STOP_LIMIT 0.15
 #define THRESHOLD 0.5
+#define EXTRACT_FILE "extract_model.txt"
 
 
 
@@ -49,6 +50,7 @@ float logistic_score(logM*, int*, int*, int);
 void logistic_regression(logM*, float**, int , int, int*);
 float logistic_gradDescent();
 
+void logistic_extract(logM*);
 // ~~~~~~~~~~~~~~
 weights* weights_create();
 void weights_destroy(weights*);
@@ -57,6 +59,7 @@ void weights_set(weights*, int);
 void weights_fit(weights*, float*, int);
 float weights_update(weights*, float*, int);
 void weights_print(weights*);
+void weights_extract(weights*, char*);
 // ~~~~~~~~~~~~~~
 
 // ~~~~~~~~~~~~~~

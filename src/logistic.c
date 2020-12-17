@@ -175,6 +175,11 @@ float logistic_score(logM* model, int* labels1, int* labels2, int size){
     return score / (float) size;
 }
 
+void logistic_extract(logM* model){
+    FILE* fpout = NULL;
+    fpout = fopen(EXTRACT_FILE, "w");
+}
+
 // ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 // ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 
