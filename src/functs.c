@@ -882,8 +882,6 @@ void make_tests(BoWords* bow, logM* model, mySpec** test_set, int set_size){
 
     free(predicts);
     free(labels);
-
-    free(predicts);
 }
 
 void make_vectors(mySpec** set, int set_size, BoWords* bow, float*** pairsVector, float*** all_vectors, int** labels, int* count_pairs, int* vector_cols){
