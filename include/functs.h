@@ -5,6 +5,7 @@
 	Functs for main*/
 #ifndef FUNCTS_H
 #define FUNCTS_H
+#include <dirent.h>
 #include "myHash.h"
 #include "myMatches.h"
 #include "mySpec.h"
@@ -37,7 +38,7 @@ void keep_mostSignificantWords(BoWords*);				// Remove all insignificant words f
 float* vectorization(mySpec*, BoWords*, int*);
 float*** spars_array(mySpec*, BoWords*, int*, int*, int*);
 
-void train_per_spec(mySpec**, int, BoWords*, logM*);
+int train_per_spec(mySpec**, int, BoWords*, logM*);
 float* concat_specVectors(float*, float*, int);
 float** concat_pairsVectors(float**, float*, int);
 int* concat_tags(int*, int, int);
@@ -47,6 +48,7 @@ logM* make_model(BoWords*, mySpec**, int);
 void make_vectors(mySpec**, int, BoWords*, float***, float***, int**, int*, int*);
 
 /// ~~~~~~~~~~~~~~~~ TESTING ~~~~~~~~~~~~~~~~
+
 void make_tests(BoWords*, logM*, mySpec**, int);
 
 /* NOT USED */
@@ -56,5 +58,49 @@ logM** make_models_array(BoWords*, mySpec**, matchesInfo*, int);
 // ~~~~~~~~~~~~~~~~ SIGNALS ~~~~~~~~~~~~~~~~
 
 void sig_int_quit_handler(int);
+
+// ~~~~~~~~~~~~~~~~ FREE MEM ~~~~~~~~~~~~~~~~
+
+#define FREE_MEM(pathX,pathW,outputFile,allMatches,hashT,trainSet,testSet,validSet,bow,model)   \
+{																								\
+	if(pathX != NULL)																			\
+		free(pathX);																			\
+	if(pathW != NULL)																			\
+		free(pathW);																			\
+																								\
+	if(outputFile != NULL)																		\
+        free(outputFile);																		\
+																								\
+	if(allMatches != NULL)																		\
+		deleteInfo((matchesInfo*)allMatches);																	\
+	if(hashT != NULL)																			\
+		hash_destroy((hashTable*)hashT);																	\
+																								\
+	if(trainSet != NULL){																		\
+		if(*trainSet != NULL)																	\
+			free(*trainSet);																	\
+		free(trainSet);																			\
+	}																							\
+																								\
+	if(testSet != NULL){																		\
+		if(*testSet != NULL)																	\
+			free(*testSet);																		\
+		free(testSet);																			\
+	}																							\
+																								\
+	if(validSet != NULL){																		\
+		if(*validSet != NULL)																	\
+			free(*validSet);																	\
+		free(validSet);																			\
+	}																							\
+																								\
+	if(bow != NULL)																				\
+		bow_destroy((BoWords*)bow);																		\
+																								\
+	if(model != NULL)																			\
+		logistic_destroy((logM*)model);																\
+}
+
+
 
 #endif

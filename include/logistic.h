@@ -40,13 +40,13 @@ struct logistic_weights{
 logM* logistic_create();
 void logistic_destroy(logM*);
 
-void logistic_fit(logM*, int, int, float**, int*);
+int logistic_fit(logM*, int, int, float**, int*);
                 //model, size, dimensions, vector, tagsArray
 float* logistic_predict_proba(logM*, float**, int, int);
 int* logistic_predict(logM*, float**, int, int);
 float logistic_score(logM*, int*, int*, int);
 
-void logistic_regression(logM*, float**, int , int, int*);
+int logistic_regression(logM*, float**, int , int, int*);
 float logistic_gradDescent();
 
 // ~~~~~~~~~~~~~~

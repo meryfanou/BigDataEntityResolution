@@ -131,6 +131,9 @@ void deleteMatches(matchesInfo* myInfo, myMatches* match){	// free mem
 }
 
 void deleteInfo(matchesInfo* myInfo){ 	// free mem
+	if(myInfo == NULL)
+		return;
+
 	int count = myInfo->entries;
 	while(count > 0){
 		// printf("delete Info count: %d\n", count);
@@ -464,6 +467,15 @@ void split_train_test_valid(matchesInfo* allMatches, mySpec*** trainSet, mySpec*
 	int	currTrain, currTest, currValid;
 	// For each set of specs, where all specs match with each other
 	while(match != NULL){
+
+		// Check for Valid match
+		if(match->specsCount == 1){
+			if(match->negs->entries == 0){
+				match = match->next;
+				continue;
+			}
+		}
+
 		// A percentage of the specs will be used for the training set
 		currTrain = (int)ceil((match->specsCount)*trainPerc);
 		currTrain = (currTrain >= trainingNum) ? (trainingNum) : (currTrain);

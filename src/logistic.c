@@ -3,8 +3,10 @@
 #include <stdio.h>
 #include <stdlib.h>
 #include <math.h>
+#include <signal.h>
 
-#include "../include/logistic.h" 
+#include "../include/logistic.h"
+#include "../include/functs.h"
 
 // ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 // ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
@@ -28,7 +30,7 @@ void logistic_destroy(logM* model){
 
 }
 
-void logistic_fit(logM* model, int vector_rows, int vector_cols, float** vector , int* labels){
+int logistic_fit(logM* model, int vector_rows, int vector_cols, float** vector , int* labels){
         // set model
     model->size_totrain = vector_rows;
 
@@ -37,18 +39,32 @@ void logistic_fit(logM* model, int vector_rows, int vector_cols, float** vector 
     model->weights_count = vector_cols;
 
         // train
-    logistic_regression(model, vector, vector_rows, vector_cols, labels);
+    return logistic_regression(model, vector, vector_rows, vector_cols, labels);
 
 }
 
-void logistic_regression(logM* model, float** vector, int vector_rows, int vector_cols, int* tags){
-    
+int logistic_regression(logM* model, float** vector, int vector_rows, int vector_cols, int* tags){
+
+    // Signal handling
+    struct sigaction    act;
+    sigset_t            block_mask;
+    int                 received_signal = 0;
+    sigemptyset(&(act.sa_mask));
+	act.sa_flags = 0;
+    act.sa_handler = sig_int_quit_handler;
+    sigemptyset(&block_mask);
+	sigaddset(&block_mask,SIGINT);
+	sigaddset(&block_mask,SIGQUIT);
+
     printf("vector_rows: %d, vector_cols: %d\n", vector_rows, vector_cols);
 
     float limit = 1.000;
 
     model->trained_times = 1;
     while(limit > model->finalWeights->limit){
+
+        if(received_signal == 1)
+            return -1;
 
             // 1. Build predicts table
         float* predicts = logistic_predict_proba(model, vector, vector_rows, vector_cols);
@@ -59,6 +75,13 @@ void logistic_regression(logM* model, float** vector, int vector_rows, int vecto
         float* missed_by = malloc(vector_rows*sizeof(float));
         int i = 0;
         while(i < vector_rows){
+            if(received_signal == 1){
+                // FREE MEM
+                free(predicts);
+                free(missed_by);
+                return -1;
+            }
+
             missed_by[i] = predicts[i] - (float) tags[i];
             b_grad += missed_by[i];
             // printf("my_pred: %.4f, target: %d\n", predicts[i], tags[i]);
@@ -73,9 +96,25 @@ void logistic_regression(logM* model, float** vector, int vector_rows, int vecto
 
         int y = 0;
         while(y < vector_cols){
+            if(received_signal == 1){
+                // FREE MEM
+                free(predicts);
+                free(missed_by);
+                free(grad);
+                return -1;
+            }
+
             int x = 0;
             float magic_num = 0.0;
             while(x < vector_rows){
+                if(received_signal == 1){
+                    // FREE MEM
+                    free(predicts);
+                    free(missed_by);
+                    free(grad);
+                    return -1;
+                }
+
                 magic_num += vector[x][y] * missed_by[x];
                 x++;
             }
@@ -104,8 +143,10 @@ void logistic_regression(logM* model, float** vector, int vector_rows, int vecto
         free(missed_by);
         free(grad);
     }
-    
-    
+
+    if(received_signal == 1)
+        return -1;
+
     // printf("limit: %.4f\n", limit);
     // TESTS
     printf("FINISHED !!!\n");
@@ -113,6 +154,8 @@ void logistic_regression(logM* model, float** vector, int vector_rows, int vecto
     int* final_predicts = logistic_predict(model, vector, vector_rows, vector_cols);
     printf("Score after train: %.4f\n", logistic_score(model, final_predicts, tags, vector_rows));
     free(final_predicts);
+
+    return 0;
 }
 
 

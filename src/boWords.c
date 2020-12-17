@@ -30,6 +30,9 @@ BoWords* bow_create(int HashSize, int BucSize){		// Allocate and return hash tab
 
 void bow_destroy(BoWords* table){	// Destroy hash, free memory
 
+	if(table == NULL)
+		return;
+
 	for(int i=0; i < table->tableSize; i++){
 		// If bucket is not empty
 		if(table->myTable[i] != NULL){
