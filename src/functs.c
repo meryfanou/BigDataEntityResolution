@@ -733,17 +733,35 @@ logM** make_models_array(BoWords* bow, mySpec** set, matchesInfo* matches, int s
 
 logM* make_model(BoWords* bow, mySpec** train_set, int set_size){
 
+    // Signal handling
+    struct sigaction    act;
+    sigset_t            block_mask;
+    received_signal = 0;
+    sigemptyset(&(act.sa_mask));
+	act.sa_flags = 0;
+    act.sa_handler = sig_int_quit_handler;
+    sigemptyset(&block_mask);
+	sigaddset(&block_mask,SIGINT);
+	sigaddset(&block_mask,SIGQUIT);
+
     // Create & init model
     logM* model = logistic_create();
 
     // Train_per_Spec
-    train_per_spec(train_set, set_size, bow, model);
+    int check = train_per_spec(train_set, set_size, bow, model);
+
+    // If a termination signal was recieved
+    if(received_signal == 1 || check == -1){
+        logistic_destroy(model);
+        return NULL;
+    }
 
     return model;
 }
 
 
 float* vectorization(mySpec* spec, BoWords* bow, int* vectorSize){
+
     // printf("mpjhke\n");
     *vectorSize = 0;
     float*  vector = malloc((bow->entries)*sizeof(float));
@@ -754,7 +772,19 @@ float* vectorization(mySpec* spec, BoWords* bow, int* vectorSize){
     return vector;
 }
 
-void train_per_spec(mySpec** train_set, int set_size, BoWords* bow, logM* model){
+int train_per_spec(mySpec** train_set, int set_size, BoWords* bow, logM* model){
+
+    // Signal handling
+    struct sigaction    act;
+    sigset_t            block_mask;
+    received_signal = 0;
+    sigemptyset(&(act.sa_mask));
+	act.sa_flags = 0;
+    act.sa_handler = sig_int_quit_handler;
+    sigemptyset(&block_mask);
+	sigaddset(&block_mask,SIGINT);
+	sigaddset(&block_mask,SIGQUIT);
+
         //  Init values to pass
     int vector_cols = 0;
     int count_pairs = 0;
@@ -764,6 +794,18 @@ void train_per_spec(mySpec** train_set, int set_size, BoWords* bow, logM* model)
     int* labels = NULL;
 
     make_vectors(train_set, set_size, bow, &pairsVector, &all_vectors, &labels, &count_pairs, &vector_cols);
+
+    if(received_signal == 1){
+        //  FREE MEM
+        while(count_pairs > 0)
+            free(pairsVector[--count_pairs]);
+        free(pairsVector);
+        for(int i=0; i < set_size; )
+            free(all_vectors[i++]);
+        free(all_vectors);
+        free(labels);
+        return -1;
+    }
 
     /*       !!!        EXPLAIN STRUCTS - VARS        !!!
     pairsVector = { {}-{}, ..., {}-{} } -> all Vectors by pairs
@@ -775,8 +817,19 @@ void train_per_spec(mySpec** train_set, int set_size, BoWords* bow, logM* model)
 
 
     // TRAIN MODEL
-    logistic_fit(model, count_pairs, 2*vector_cols, pairsVector, labels);
+    int check = logistic_fit(model, count_pairs, 2*vector_cols, pairsVector, labels);
 
+    if(received_signal == 1 || check == -1){
+        //  FREE MEM
+        while(count_pairs > 0)
+            free(pairsVector[--count_pairs]);
+        free(pairsVector);
+        for(int i=0; i < set_size; )
+            free(all_vectors[i++]);
+        free(all_vectors);
+        free(labels);
+        return -1;
+    }
 
     // PRINT STATS FOR TESTING
     printf("trained times: %d\n", model->trained_times);
@@ -795,6 +848,8 @@ void train_per_spec(mySpec** train_set, int set_size, BoWords* bow, logM* model)
     free(all_vectors);
 
     free(labels);
+
+    return 0;
 }
 
 void make_tests(BoWords* bow, logM* model, mySpec** test_set, int set_size){
@@ -827,7 +882,6 @@ void make_tests(BoWords* bow, logM* model, mySpec** test_set, int set_size){
 
     free(predicts);
     free(labels);
-
 }
 
 void make_vectors(mySpec** set, int set_size, BoWords* bow, float*** pairsVector, float*** all_vectors, int** labels, int* count_pairs, int* vector_cols){

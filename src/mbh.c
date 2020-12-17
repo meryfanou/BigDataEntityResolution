@@ -184,6 +184,9 @@ int mbh_insert(MBH* heap, char* word, float key){
 }
 
 void mbh_delete(MBH** heap){
+	if(*heap == NULL)
+		return;
+
 	while((*heap)->numofNodes > 0){
 		// Delete each node, without heapifying after a deletion (cause of the 0 argument)
 		delete_mbh_node(*heap, (*heap)->root, 0);

@@ -88,12 +88,14 @@ int main(int argc, char** argv){
     // Check for termination signal
     if(received_signal == 1){
         printf("\nCleaning Memory ...\n");
-        deleteInfo(allMatches);
-        hash_destroy(hashT);
-        free(path_X);
-        free(path_W);
-        if(outputFile != NULL)
-            free(outputFile);
+        // deleteInfo(allMatches);
+        // hash_destroy(hashT);
+        // free(path_X);
+        // free(path_W);
+        // if(outputFile != NULL)
+        //     free(outputFile);
+        int** null = NULL;
+        FREE_MEM(path_X,path_W,outputFile,allMatches,hashT,null,null,null,*null,*null);
 
         printf("Exiting after receiving termination signal..\n");
         exit(-2);
@@ -103,12 +105,14 @@ int main(int argc, char** argv){
     if((datasetX = opendir(path_X)) == NULL){
         perror("opendir");
         printf("\nCleaning Memory ...\n");
-        deleteInfo(allMatches);
-        hash_destroy(hashT);
-        free(path_X);
-        free(path_W);
-        if(outputFile != NULL)
-            free(outputFile);
+        // deleteInfo(allMatches);
+        // hash_destroy(hashT);
+        // free(path_X);
+        // free(path_W);
+        // if(outputFile != NULL)
+        //     free(outputFile);
+        int** null = NULL;
+        FREE_MEM(path_X,path_W,outputFile,allMatches,hashT,null,null,null,*null,*null);
         exit(-3);
     }
 
@@ -118,12 +122,14 @@ int main(int argc, char** argv){
 
     if(received_signal == 1 || check != 0){
         printf("\nCleaning Memory ...\n");
-        deleteInfo(allMatches);
-        hash_destroy(hashT);
-        free(path_X);
-        free(path_W);
-        if(outputFile != NULL)
-            free(outputFile);
+        // deleteInfo(allMatches);
+        // hash_destroy(hashT);
+        // free(path_X);
+        // free(path_W);
+        // if(outputFile != NULL)
+        //     free(outputFile);
+        int** null = NULL;
+        FREE_MEM(path_X,path_W,outputFile,allMatches,hashT,null,null,null,*null,*null);
 
         closedir(datasetX);
 
@@ -144,12 +150,14 @@ int main(int argc, char** argv){
 
     if(received_signal == 1 || check != 0){
         printf("\nCleaning Memory ...\n");
-        deleteInfo(allMatches);
-        hash_destroy(hashT);
-        free(path_X);
-        free(path_W);
-        if(outputFile != NULL)
-            free(outputFile);
+        // deleteInfo(allMatches);
+        // hash_destroy(hashT);
+        // free(path_X);
+        // free(path_W);
+        // if(outputFile != NULL)
+        //     free(outputFile);
+        int** null = NULL;
+        FREE_MEM(path_X,path_W,outputFile,allMatches,hashT,null,null,null,*null,*null);
 
         if(check == 1)
             printf("Exiting after receiving termination signal..\n");
@@ -165,7 +173,7 @@ int main(int argc, char** argv){
 // ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 // ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 
-    //~~~~~~~~~~~~~~~~~~~~~~ SEPERATE SPECS TO TRAINING AND TESTING SETS
+    //~~~~~~~~~~~~~~~~ SEPERATE SPECS TO TRAINING, TESTING AND VALIDATION SETS
     mySpec*** trainSet = malloc(sizeof(mySpec**));
 	mySpec*** testSet = malloc(sizeof(mySpec**));
 	mySpec*** validSet = malloc(sizeof(mySpec**));
@@ -174,43 +182,87 @@ int main(int argc, char** argv){
 
     printf("\nCreating Training, Testing and Validation Sets..\n");
     split_train_test_valid(allMatches, trainSet, testSet, validSet, &trainSize, &testSize, &validSize, TRAIN_PERC, TEST_PERC);
-    printf("       \t\t.. DONE !!\n");
+
+    // Check for termination signal
+    if(received_signal == 1){
+        printf("\nCleaning Memory ...\n");
+
+        int* null = NULL;
+        FREE_MEM(path_X,path_W,outputFile,allMatches,hashT,trainSet,testSet,validSet,null,null);
+
+        printf("Exiting after receiving termination signal..\n");
+        exit(-2);
+    }
+
+    printf("       \t\t.. DONE !!\n\n");
 
 // ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 // ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 
     //~~~~~~~~~~~~~~~~~~~~~~ PREPARE THE INPUT FOR THE MODEL
-    printf("\nBuilding BoW (Training Set)..\n");
+    printf("\nBuilding BoW..\n");
     BoWords*    bow = bow_create(HASH_SIZE, BUC_SIZE);
 
     text_to_bow(*trainSet, trainSize, &bow);
     text_to_bow(*testSet, testSize, &bow);
     text_to_bow(*validSet, validSize, &bow);
 
-    printf("       \t\t.. DONE !!\n");
+    // Check for termination signal
+    if(received_signal == 1){
+        printf("\nCleaning Memory ...\n");
+
+        int* null = NULL;
+        FREE_MEM(path_X,path_W,outputFile,allMatches,hashT,trainSet,testSet,validSet,bow,null);
+
+        printf("Exiting after receiving termination signal..\n");
+        exit(-2);
+    }
+
+    printf("       \t\t.. DONE !!\n\n");
 
 // ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 // ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 
     //~~~~~~~~~~~~~~~~~~~~~~ TEST TF-IDF
-    printf("\nApplying TF-IDF (Training Set)..\n");
+    printf("\nApplying TF-IDF..\n");
     tfidf* mytf = tfidf_create();
     tfidf_set(mytf, -1, -1);    // (model, maxTexts, maxWords to scan)
     tfidf_apply(mytf, bow);
     tfidf_destroy(mytf);
 
-    printf("       \t\t.. DONE !!\n");
+    // Check for termination signal
+    if(received_signal == 1){
+        printf("\nCleaning Memory ...\n");
+
+        int* null = NULL;
+        FREE_MEM(path_X,path_W,outputFile,allMatches,hashT,trainSet,testSet,validSet,bow,null);
+
+        printf("Exiting after receiving termination signal..\n");
+        exit(-2);
+    }
+
+    printf("       \t\t.. DONE !!\n\n");
 
 // ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 // ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 
-    //~~~~~~~~~~~~~~~~~~~~~~ Mark the most significan words and remove the rest from bow
-    printf("\nChoosing %d most significant words (Training Set)..\n",MOST_SIGN);
+    //~~~~~~~~~~~~~~~~~~~~~~ Mark the most significant words and remove the rest from bow
+    printf("\nChoosing %d most significant words..\n",MOST_SIGN);
     set_mostSignificantWords(bow, MOST_SIGN);
     keep_mostSignificantWords(bow);
+
+    // Check for termination signal
+    if(received_signal == 1){
+        printf("\nCleaning Memory ...\n");
+
+        int* null = NULL;
+        FREE_MEM(path_X,path_W,outputFile,allMatches,hashT,trainSet,testSet,validSet,bow,null);
+
+        printf("Exiting after receiving termination signal..\n");
+        exit(-2);
+    }
+
     printf("       \t\t.. DONE !!\n\n");
-    //bow_print(bow);
-    //printf("%d\n",bow->entries);
 
 // ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 // ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
@@ -220,13 +272,36 @@ int main(int argc, char** argv){
     // logM** modelsT = make_models_array(bow, *trainSet, allMatches, trainSize);
     logM* model = make_model(bow, *trainSet, trainSize);
 
+    // Check for termination signal
+    if(received_signal == 1 || model == NULL){
+        printf("\nCleaning Memory ...\n");
+
+        FREE_MEM(path_X,path_W,outputFile,allMatches,hashT,trainSet,testSet,validSet,bow,model);
+
+        printf("Exiting after receiving termination signal..\n");
+        exit(-2);
+    }
+
     printf("       \t\t.. DONE !!\n\n");
 
 // ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 // ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 
     //~~~~~~~~~~~~~~~~~~~~~ USE TEST_SET FOR PREDICTIONS
+    printf("\nTesting Logistic Model ..\n");
     make_tests(bow, model, *testSet, testSize);
+
+    // Check for termination signal
+    if(received_signal == 1){
+        printf("\nCleaning Memory ...\n");
+
+        FREE_MEM(path_X,path_W,outputFile,allMatches,hashT,trainSet,testSet,validSet,bow,model);
+
+        printf("Exiting after receiving termination signal..\n");
+        exit(-2);
+    }
+
+    printf("       \t\t.. DONE !!\n\n");
 
 // ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 // ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
@@ -245,38 +320,41 @@ printf("All matches: %d\n", allMatches->entries);
     //~~~~~~~~~~~~~~~~~~~~~~ FREE MEM
     printf("\nCleaning Memory...\n");
 
-        // free hash and match list
-    deleteInfo(allMatches);
-    hash_destroy(hashT);
+    //     // free hash and match list
+    // deleteInfo(allMatches);
+    // hash_destroy(hashT);
 
-        // free Sets
-    free(*trainSet);
-    free(trainSet);
-    free(*testSet);
-    free(testSet);
-    free(*validSet);
-    free(validSet);
+    //     // free Sets
+    // free(*trainSet);
+    // free(trainSet);
+    // free(*testSet);
+    // free(testSet);
+    // free(*validSet);
+    // free(validSet);
     
-        // free bow
-    bow_destroy(bow);
+    //     // free bow
+    // bow_destroy(bow);
    
-        //free models array
-    // int free_i = trainSize;
-    // if(modelsT != NULL){
-    //     while(free_i > 0){
-    //         logistic_destroy(modelsT[--free_i]);
-    //     }
-    // }
+    //     //free models array
+    // // int free_i = trainSize;
+    // // if(modelsT != NULL){
+    // //     while(free_i > 0){
+    // //         logistic_destroy(modelsT[--free_i]);
+    // //     }
+    // // }
 
-    logistic_destroy(model);
+    // logistic_destroy(model);
 
-        // free paths - strings
-    free(path_X);
-    free(path_W);
+    //     // free paths - strings
+    // free(path_X);
+    // free(path_W);
 
-        // free File ptr's
-    if(outputFile != NULL)
-        free(outputFile);
+    //     // free File ptr's
+    // if(outputFile != NULL)
+    //     free(outputFile);
+
+    FREE_MEM(path_X,path_W,outputFile,allMatches,hashT,trainSet,testSet,validSet,bow,model);
+
     printf("       \t\t.. DONE !!\n\n");
 
     return 0;

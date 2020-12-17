@@ -26,6 +26,9 @@ hashTable* hash_create(int HashSize, int BucSize){
 }
 
 void hash_destroy(hashTable* table){	// DESTROY HASH / FREE MEM
+	if(table == NULL)
+		return;
+
 	int i = 0;
 	while(i < table->tableSize){
 		if(table->myTable[i] != NULL){
