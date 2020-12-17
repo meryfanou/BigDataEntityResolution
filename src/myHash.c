@@ -191,6 +191,7 @@ record* record_create(mySpec* spec){
 	record* newRec = malloc(sizeof(record));
 
 	newRec->spec = spec;
+	newRec->visited = 'n';
 	newRec->next = NULL;
 
 	return newRec;
@@ -223,15 +224,11 @@ mySpec* findRecord_byKey(hashTable* table, char* key){
 		cell = 0;
 	// printf("cell: %d, tSize: %d, maxRecs/buc: %d\n", cell, table->tableSize, table->maxRecs);
 
-	if(table == NULL){
-		// printf("edw\n");
+	if(table == NULL)
 		return NULL;
-	}
 
-	if(table->myTable[cell] == NULL){
-		// printf("edw edw\n");
+	if(table->myTable[cell] == NULL)
 		return NULL;
-	}
 
 
 	bucket* tempBuc = table->myTable[cell];
@@ -252,4 +249,61 @@ mySpec* findRecord_byKey(hashTable* table, char* key){
 	if(flag == 0)
 		return NULL;
 	return existingRec->spec;
+}
+
+// Find a record for either the testing or the validation set
+mySpec* findRecord_forSet(hashTable* table, char* key, char set){
+	int cell = hash1(key) % (table->tableSize);		/// FIND HASH TABLE CELL
+	if(cell < 0)
+		cell = 0;
+
+	if(table == NULL)
+		return NULL;
+
+	if(table->myTable[cell] == NULL)
+		return NULL;
+
+	bucket* tempBuc = table->myTable[cell];
+	int flag = 0;		// 0 ~ not found / 1 ~ found
+	record* existingRec = NULL;
+	
+	while(flag == 0){	/// FIND LAST BUCKET
+		if((existingRec = search_bucket(tempBuc, key)) != NULL){
+			flag = 1;
+			break;
+		}
+		if(tempBuc->next == NULL)
+			break;
+		tempBuc = tempBuc->next;
+	}
+
+	// If 'key' was not found in the hashtable
+	if(flag == 0)
+		return NULL;
+
+	// If it is for the testing set
+	if(set == 't'){
+		// If current spec has not been added to the testing set
+		if(existingRec->visited == 'n'){
+			// Mark it as visited for the testing set
+			existingRec->visited = 't';
+			return existingRec->spec;
+		}
+
+		return NULL;
+	}
+
+	// If it is for the validation set
+	if(set == 'v'){
+		// If current spec has not been added to the validation set
+		if(existingRec->visited == 'n' || existingRec->visited == 't'){
+			// Mark it as visited for the validation set
+			existingRec->visited = 'v';
+			return existingRec->spec;
+		}
+
+		return NULL;
+	}
+
+	return NULL;
 }

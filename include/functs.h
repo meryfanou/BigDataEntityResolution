@@ -1,6 +1,3 @@
-//typedef struct hashTable hashTable;
-//typedef struct specInfo specInfo;
-
 /* functs.h
 	Functs for main*/
 #ifndef FUNCTS_H
@@ -19,9 +16,16 @@ extern int received_signal;
 
 int readDataset(DIR*, char*, hashTable**, matchesInfo*);	// reads from dataset and parse json form properly
 
-specInfo** readFile(FILE*, int*, specInfo**);			// called by readDataset on each inner file
+specInfo** readFile(FILE*, int*, specInfo**);				// called by readDataset on each inner file
 
-int readCSV(char* , hashTable* , matchesInfo*);			//reads csv, creates matches at hash values
+int readCSV(char* , hashTable* , matchesInfo*, float, long int*);	//reads part of csv (for the training set), creates matches at hash values
+
+// ~~~~~~~~~~~~~~ SETS OF SPECS ~~~~~~~~~~~~~~
+
+mySpec** get_trainSet(matchesInfo*, int*);							// Create the training set from the given cliques
+mySpec** get_testSet(char*, hashTable*, int*, long int*, int);		// Create the testing set (distinct) while reading the csv
+mySpec** get_validationSet(char*, hashTable*, int*, long int*, int);	// Create the validation set (distinct) while reading the csv
+mySpec** get_set(char*, hashTable*, int*, long int*, int, char);	// Used for creating the testing + validation sets
 
 // ~~~~~~~~~~~~~~ BAG OF WORDS ~~~~~~~~~~~~~~~
 
@@ -72,33 +76,24 @@ void sig_int_quit_handler(int);
         free(outputFile);																		\
 																								\
 	if(allMatches != NULL)																		\
-		deleteInfo((matchesInfo*)allMatches);																	\
+		deleteInfo((matchesInfo*)allMatches);													\
 	if(hashT != NULL)																			\
-		hash_destroy((hashTable*)hashT);																	\
+		hash_destroy((hashTable*)hashT);														\
 																								\
-	if(trainSet != NULL){																		\
-		if(*trainSet != NULL)																	\
-			free(*trainSet);																	\
+	if(trainSet != NULL)																		\
 		free(trainSet);																			\
-	}																							\
 																								\
-	if(testSet != NULL){																		\
-		if(*testSet != NULL)																	\
-			free(*testSet);																		\
+	if(testSet != NULL)																			\
 		free(testSet);																			\
-	}																							\
 																								\
-	if(validSet != NULL){																		\
-		if(*validSet != NULL)																	\
-			free(*validSet);																	\
+	if(validSet != NULL)																		\
 		free(validSet);																			\
-	}																							\
 																								\
 	if(bow != NULL)																				\
-		bow_destroy((BoWords*)bow);																		\
+		bow_destroy((BoWords*)bow);																\
 																								\
 	if(model != NULL)																			\
-		logistic_destroy((logM*)model);																\
+		logistic_destroy((logM*)model);															\
 }
 
 

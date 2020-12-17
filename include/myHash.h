@@ -24,6 +24,7 @@ struct bucket{
 struct record{
 	record* next;
 	mySpec* spec;
+	char visited;
 };
 
 hashTable* hash_create(int HashSize, int BucSize);
@@ -44,4 +45,6 @@ void record_destroy(hashTable*, record* rec);
 void record_print(record* rec);
 
 mySpec* findRecord_byKey(hashTable*, char*);
+mySpec* findRecord_forSet(hashTable*, char*, char);		// Find a record for either the testing or the validation set
+														// Make sure each spec is added only once to a set
 #endif

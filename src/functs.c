@@ -470,14 +470,14 @@ specInfo** readFile(FILE *specFd, int *propNum, specInfo **properties){
     return properties;
 }
 
-int readCSV(char* fName, hashTable* hashT, matchesInfo* allMatches){
 
+int readCSV(char* fName, hashTable* hashT, matchesInfo* allMatches, float percentage, long int* offset){
     // ~~~~~~~~~~~~~~~~~~ READ CSV FILE + FILL MATCHES STRUCT
+
+    // Signal handling
     struct sigaction    act;
     sigset_t            block_mask;
-
     received_signal = 0;
-
     sigemptyset(&(act.sa_mask));
 	act.sa_flags = 0;
     act.sa_handler = sig_int_quit_handler;
@@ -500,6 +500,11 @@ int readCSV(char* fName, hashTable* hashT, matchesInfo* allMatches){
         return -2;
     }
 
+        // ~~~~~~~~~~~~~~~~~ GET FILE SIZE
+    fseek(fpin, 0, SEEK_END);
+    long int totalBytes = ftell(fpin);
+    fseek(fpin, 0, SEEK_SET);
+
         // ~~~~~~~~~~~~~~~~~ SET MRU LIST
     // MRU_info* mruL = create_MRU(MRU_SIZE);
 
@@ -509,15 +514,29 @@ int readCSV(char* fName, hashTable* hashT, matchesInfo* allMatches){
     fgets(line, 100, fpin);
     memset(line, 0, 100);
 
+    // Ignore first line's size
+    totalBytes -= ftell(fpin);
+    // Number of bytes to be read
+    long int readBytes = percentage*totalBytes;
+    // Number of bytes in current line
+    long int lineBytes = ftell(fpin);
+    // Number of lines read
+    int      lines = 0;
+
     int count = 0;
     int failed = 0;
     int passed = 0;
     int skipped = 0;
-    while(fgets(line, 100, fpin) != NULL){
-        // printf("count: %d\n", count);
+    // Until expected number of bytes is read or end of file is reached
+    while(readBytes > 0 && fgets(line, 100, fpin) != NULL){
+        lines++;
+        // If current line has more bytes than the amount that is to be read
+        if((ftell(fpin) - lineBytes) > readBytes)
+            break;
+
         if(received_signal == 1){
             fclose(fpin);
-            return 1;
+            return -3;
         }
         
                     //~~~~~~~~~ GET CSV INFO-KEYS
@@ -572,8 +591,15 @@ int readCSV(char* fName, hashTable* hashT, matchesInfo* allMatches){
         memset(line, 0, 100);
 
         count++;
+
+        // Update number of bytes left to be read
+        lineBytes = ftell(fpin) - lineBytes;
+        readBytes -= lineBytes;
+        lineBytes = ftell(fpin);
     }
 
+    // Keep the point in file where the reading stopped
+    *offset = ftell(fpin);
     fclose(fpin);
 
     // Uncomment to print stats
@@ -581,7 +607,95 @@ int readCSV(char* fName, hashTable* hashT, matchesInfo* allMatches){
 
     // printMatchNeg(allMatches);
 
-    return 0;
+    return lines;
+}
+
+// ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~ SETS OF SPECS ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+
+mySpec** get_trainSet(matchesInfo* allMatches, int* trainSize){
+
+    mySpec** trainSet = NULL;
+    *trainSize = 0;
+
+    myMatches* match = allMatches->head;
+    while(match != NULL){
+        // If current clique was not in dataset W
+        if(match->specsCount == 1){
+            match = match->next;
+            continue;
+        }
+
+        for(int j=0; j<match->specsCount; j++){
+            (*trainSize)++;
+            trainSet = realloc(trainSet, (*trainSize)*sizeof(mySpec*));
+            trainSet[*trainSize - 1] = match->specsTable[j];
+        }
+
+        match = match->next;
+    }
+
+    return trainSet;
+}
+
+mySpec** get_testSet(char* path, hashTable* hashT, int* testSize, long int* offset, int lines){
+    return get_set(path, hashT, testSize, offset, lines, 't');
+}
+
+mySpec** get_validationSet(char* path, hashTable* hashT, int* testSize, long int* offset, int lines){
+    return get_set(path, hashT, testSize, offset, lines, 'v');
+}
+
+mySpec** get_set(char* path, hashTable* hashT, int* size, long int* offset, int lines, char setType){
+
+    FILE*   fp = fopen(path, "r");
+    if(fp == NULL){
+        perror("fopen");
+        return NULL;
+    }
+
+    mySpec* spec = NULL;
+    mySpec** set = NULL;
+    *size = 0;
+
+    // Start reading from where it stopped before
+    fseek(fp, *offset, SEEK_SET);
+
+    char    line[100];
+    // Until expected number of lines is read or end of file is reached
+    while(lines > 0 && fgets(line, sizeof(line), fp) != NULL){
+        // If it is the testing set, read the expected number of lines
+        // If it is the validation set, read all the lines left in dataset W
+        if(setType == 't' || (setType == 'v' && lines > 1))
+            lines--;
+        
+        // Get csv info-keys
+        char* key1 = strtok(line, ",\n");
+        char* key2 = strtok(NULL, ",\n");
+
+        // Find spec with key1 in hash table, return it only if it has not been already used in the set
+        spec = findRecord_forSet(hashT, key1, setType);
+        // If the spec was found, add it to the set
+        if(spec != NULL){
+            (*size)++;
+            set = realloc(set, (*size)*sizeof(mySpec*));
+            set[*size - 1] = spec;
+        }
+
+        // Find spec with key2 in hash table, return it only if it has not been already used in the set
+        spec = findRecord_forSet(hashT, key2, setType);
+        // If the spec was found, add it to the set
+        if(spec != NULL){
+            (*size)++;
+            set = realloc(set, (*size)*sizeof(mySpec*));
+            set[*size - 1] = spec;
+        }
+    }
+
+    // Keep the point in file where the reading stopped
+    *offset = ftell(fp);
+    fclose(fp);
+
+    return set;
 }
 
 // ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~ BAG OF WORDS ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~

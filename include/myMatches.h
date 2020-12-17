@@ -72,6 +72,4 @@ void destroy_nlist(nlist*);
 nNode* create_nNode(myMatches*);
 void destroy_nNode(nNode*);
 
-void split_train_test_valid(matchesInfo*, mySpec***, mySpec***, mySpec***, int*, int*, int*, float, float);
-
 #endif
