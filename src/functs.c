@@ -845,7 +845,7 @@ logM** make_models_array(BoWords* bow, mySpec** set, matchesInfo* matches, int s
     return modelsT;
 }
 
-logM* make_model(BoWords* bow, mySpec** train_set, int set_size){
+logM* make_model_vec(BoWords* bow, mySpec** train_set, int set_size){
 
     // Signal handling
     struct sigaction    act;
@@ -862,7 +862,35 @@ logM* make_model(BoWords* bow, mySpec** train_set, int set_size){
     logM* model = logistic_create();
 
     // Train_per_Spec
-    int check = train_per_spec(train_set, set_size, bow, model);
+    int check = train_per_spec_vec(train_set, set_size, bow, model);
+
+    // If a termination signal was recieved
+    if(received_signal == 1 || check == -1){
+        logistic_destroy(model);
+        return NULL;
+    }
+
+    return model;
+}
+
+logM* make_model_spars(BoWords* bow, mySpec** train_set, int set_size){
+
+    // Signal handling
+    struct sigaction    act;
+    sigset_t            block_mask;
+    received_signal = 0;
+    sigemptyset(&(act.sa_mask));
+	act.sa_flags = 0;
+    act.sa_handler = sig_int_quit_handler;
+    sigemptyset(&block_mask);
+	sigaddset(&block_mask,SIGINT);
+	sigaddset(&block_mask,SIGQUIT);
+
+    // Create & init model
+    logM* model = logistic_create();
+
+    // Train_per_Spec
+    int check = train_per_spec_spars(train_set, set_size, bow, model);
 
     // If a termination signal was recieved
     if(received_signal == 1 || check == -1){
@@ -886,7 +914,75 @@ float* vectorization(mySpec* spec, BoWords* bow, int* vectorSize){
     return vector;
 }
 
-int train_per_spec(mySpec** train_set, int set_size, BoWords* bow, logM* model){
+float** make_it_spars(mySpec** set, int set_size, BoWords* bow, int* spars_size, int** labels, int* labels_size){
+    *spars_size = 0;
+    *labels_size = 0;
+    float** spars = NULL;
+    int row = 0;
+    int col = 0;
+
+    float*** all_spars = malloc(set_size*sizeof(float**));
+    int* all_spars_sizes = malloc(set_size*sizeof(int));
+    int i = 0;
+    while(i < set_size){
+        col = 0;
+        all_spars[i] = NULL;
+        all_spars_sizes[i] = 0;
+        bow_to_spars(bow, &all_spars[i], &all_spars_sizes[i], &row, &col, set[i]);
+        i++;
+    }
+
+    i = 0;
+    while(i<set_size){
+        int z = i + 1;
+        while(z < set_size){
+            int tag = isPair(set[i], set[z]);
+            if(tag != -1){
+                float** temp = spars_concat_col(all_spars[i], all_spars[z], all_spars_sizes[i], all_spars_sizes[z], bow->entries);
+                int temp_size = all_spars_sizes[z] + all_spars_sizes[i];
+                spars_concat_row(&spars, temp, spars_size, temp_size, row);
+
+                (*labels) = realloc((*labels), ((*labels_size)+1)*sizeof(int));
+                (*labels)[*labels_size] = tag;
+                (*labels_size) = (*labels_size) + 1;
+
+                row++;
+                while(temp_size > 0){
+                    free(temp[--temp_size]);
+                }
+                free(temp);
+            }
+            z++;
+        }
+        i++;
+    }
+    // printf("spars_size: %d\n", *spars_size);
+    // printf("s0 %.4f, %.4f, %.4f\n", spars[0][0], spars[0][1], spars[0][2]);
+    
+    int i1 = 0;
+    while(i1 < set_size){
+        int i2 = 0;
+        while(i2 < all_spars_sizes[i1]){
+            free(all_spars[i1][i2++]);
+        }
+        free(all_spars[i1++]);
+    }
+    free(all_spars);
+    free(all_spars_sizes);
+
+    return spars;
+}
+
+void print_spars(float** spars, int size){
+    int i = 0;
+    printf("spars_size: %d\n", size);
+    while(i < size){
+        printf("s%d [0]: %.4f, [1]: %.4f, [2]: %.4f\n", i, spars[i][0], spars[i][1], spars[i][2]);
+        i++;
+    }
+}
+
+int train_per_spec_vec(mySpec** train_set, int set_size, BoWords* bow, logM* model){
 
     // Signal handling
     struct sigaction    act;
@@ -966,6 +1062,119 @@ int train_per_spec(mySpec** train_set, int set_size, BoWords* bow, logM* model){
     return 0;
 }
 
+float** spars_concat_col(float** spar1, float** spar2, int size1, int size2, int to_add){
+    float** spar3 = malloc((size1+size2)*sizeof(float*));
+    int i = 0;
+    while(i < size1+size2){
+        spar3[i] = malloc(3*sizeof(float));
+        if(i < size1){
+            spar3[i][0] = spar1[i][0];
+            spar3[i][1] = spar1[i][1];
+            spar3[i][2] = spar1[i][2];
+        }
+        else{
+            spar3[i][0] = spar2[i-size1][0];
+            spar3[i][1] = spar2[i-size1][1] + (float) to_add;
+            spar3[i][2] = spar2[i-size1][2];
+        }
+        i++;
+    }
+    return spar3;
+}
+
+void spars_concat_row(float*** spar1, float** spar2, int* size1, int size2, int new_row){
+    // printf("cur_row: %d, size1: %d, size2: %d\n", new_row, *size1, size2);
+
+        (*spar1) = realloc(*spar1, ((*size1)+size2)*sizeof(float*));
+
+    int i = 0;
+    while(i < size2){
+        (*spar1)[(*size1)+i] = malloc(3*sizeof(float));
+
+        (*spar1)[(*size1)+i][0] = (float) new_row;
+        (*spar1)[(*size1)+i][1] = spar2[i][1];
+        (*spar1)[(*size1)+i][2] = spar2[i][2];        
+
+        i++;
+    }
+
+    (*size1) = (*size1) + size2;
+}
+
+int train_per_spec_spars(mySpec** train_set, int set_size, BoWords* bow, logM* model){
+
+    // Signal handling
+    struct sigaction    act;
+    sigset_t            block_mask;
+    received_signal = 0;
+    sigemptyset(&(act.sa_mask));
+	act.sa_flags = 0;
+    act.sa_handler = sig_int_quit_handler;
+    sigemptyset(&block_mask);
+	sigaddset(&block_mask,SIGINT);
+	sigaddset(&block_mask,SIGQUIT);
+
+        //  Init values to pass
+    float** spars = NULL;
+    int spars_size = 0;
+    int* labels = NULL;
+    int labels_size;
+
+    printf("!1\n");
+    spars = make_it_spars(train_set, set_size, bow, &spars_size, &labels, &labels_size);
+    int size = spars_size;
+    // printf("s0, %.4f, %.4f, %.4f\n", spars[0][0], spars[0][1], spars[0][2]);
+    // print_spars(spars, spars_size);
+    printf("!2\n");
+
+    if(received_signal == 1){
+        //  FREE MEM;
+        for(int i=0; i < spars_size; )
+            free(spars[i++]);
+        free(labels);
+        return -1;
+    }
+
+    /*       !!!        EXPLAIN STRUCTS - VARS        !!!
+    pairsVector = { {}-{}, ..., {}-{} } -> all Vectors by pairs
+    labels = {tag, tag, ..., tag} -> all pairs tags
+    count_labales = Sum of Labels - Must be equal to count_pairs
+    count_pairs = Sum of every possible pair found - Equal to count_labels
+    vectorSise = Sum of dimensions - pairesVector's num of cols
+    */
+
+
+    // TRAIN MODEL
+    int check = logistic_fit_spars(model, spars_size, spars, labels, labels_size, 2*bow->entries);
+
+    if(received_signal == 1 || check == -1){
+        //  FREE MEM;
+        while(spars_size > 0){
+            free(spars[--spars_size]);
+        }
+        free(spars);
+
+        free(labels);
+        return -1;
+    }
+
+    // PRINT STATS FOR TESTING
+    printf("trained times: %d\n", model->trained_times);
+
+    //  FREE MEM
+    while(size > 0){
+        free(spars[--size]);
+    }
+
+    free(spars);
+
+
+    free(labels);
+
+    return 0;
+}
+
+
 void make_tests(BoWords* bow, logM* model, mySpec** test_set, int set_size){
 
             //  Init values to pass
@@ -996,6 +1205,34 @@ void make_tests(BoWords* bow, logM* model, mySpec** test_set, int set_size){
 
     free(predicts);
     free(labels);
+}
+
+void make_tests_spars(BoWords* bow, logM* model, mySpec** test_set, int set_size){
+
+        //  Init values to pass
+    float** spars = NULL;
+    int spars_size = 0;
+    int* labels = NULL;
+    int labels_size;
+
+
+    spars = make_it_spars(test_set, set_size, bow, &spars_size, &labels, &labels_size);
+    int size = spars_size;
+    int* predicts = logistic_predict_spars(model, spars, spars_size, 2*bow->entries, labels_size);
+
+    printf("Accuracy at test_set: %.4f\n", logistic_score(model, predicts, labels, labels_size));
+
+        //  FREE MEM
+    while(size > 0){
+        free(spars[--size]);
+    }
+
+    free(spars);
+
+
+    free(labels);
+
+    free(predicts);
 }
 
 void make_vectors(mySpec** set, int set_size, BoWords* bow, float*** pairsVector, float*** all_vectors, int** labels, int* count_pairs, int* vector_cols){

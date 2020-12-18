@@ -119,6 +119,18 @@ void bow_vectorize(BoWords* bow, float** vector, int* vectorSize, mySpec* spec){
 	}
 }
 
+void bow_to_spars(BoWords* bow, float*** spars, int* spars_size, int* cur_row, int* cur_col, mySpec* spec){
+	Bucket*	bucket = NULL;
+
+	for(int i=0; i<(bow->tableSize); i++){
+		bucket = bow->myTable[i];
+		while(bucket != NULL){
+			bow_bucket_to_spars(bucket, spars, spars_size, cur_row, cur_col, spec);
+			bucket = bucket->next;
+		}
+	}
+}
+
 // Pass words to a min binary heap, based on their (maximum) idf value
 void bow_get_signWords(BoWords* bow, MBH* heap){
 	Bucket*	bucket = NULL;
@@ -270,6 +282,16 @@ void bow_bucket_vectorize(Bucket* bucket, float** vector, int* vectorSize, mySpe
 	}
 }
 
+void bow_bucket_to_spars(Bucket* bucket, float*** spars, int* spars_size, int* cur_row, int* cur_col, mySpec* spec){
+	Record*	record = NULL;
+
+	record = bucket->rec;
+	while(record != NULL){
+		bow_record_to_spars(record, spars, spars_size, cur_row, cur_col, spec);
+		record = record->next;
+	}
+}
+
 // Pass words to a min binary heap, based on their (maximum) idf value
 void bow_bucket_signWords(Bucket* bucket, MBH* heap){
 	Record*	record = bucket->rec;
@@ -399,6 +421,29 @@ void bow_record_vectorize(Record* record, float** vector, int* vectorSize, mySpe
 		(*vector)[*vectorSize] = 0.0;
 		(*vectorSize)++;
 	}
+}
+
+void bow_record_to_spars(Record* record, float*** spars, int* spars_size, int* cur_row, int* cur_col, mySpec* spec){
+	int i = 0;
+
+	for(; i<(record->numofTexts); i++){
+		// If the given text is found in record
+		if(record->texts[i].text == spec){
+
+			(*spars) = realloc((*spars), ((*spars_size)+1)*sizeof(float*));
+			(*spars)[*spars_size] = malloc(3*sizeof(float));
+			(*spars)[*spars_size][0] = (float) (*cur_row);
+			(*spars)[*spars_size][1] = (float) (*cur_col);
+			(*spars)[*spars_size][2] = record->texts[i].tf_idf;
+			(*spars_size) = (*spars_size) + 1;
+			// printf("s%d [0]: %.4f, [1]: %.4f, [2]: %.4f\n", *spars_size, (float) (*cur_row), (float)(*cur_col), record->texts[i].tf_idf);
+
+			break;
+		}
+	}
+
+	(*cur_col) = (*cur_col) + 1;
+
 }
 
 // ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~ TF-IDF ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~

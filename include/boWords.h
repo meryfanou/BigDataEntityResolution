@@ -60,6 +60,7 @@ void bow_add(BoWords*, char*, mySpec*, int);			// Add a word about a text (spec)
 void bow_print(BoWords*);
 void bow_vectorize(BoWords*, float**, int*, mySpec*);	// Get a vector that corresponds to the significance
 														// of the words in bow about a text (spec)
+void bow_to_spars(BoWords*, float***, int*, int*, int*,mySpec*);														
 void bow_get_signWords(BoWords*, MBH*);					// Pass words to a min binary heap, based on their idf value
 void bow_set_significance(BoWords*, char*);				// Mark a given word as significant in bow
 void bow_keep_signWords(BoWords*);						// Remove from bow all insignificant words
@@ -73,6 +74,7 @@ void bow_bucket_print(Bucket*);							// Print all buckets of the same cell
 Record* bow_search_bucket(Bucket*, char*);				// Find record with a key-word in a bucket
 void bow_bucket_vectorize(Bucket*, float**, int*, mySpec*);	// Get a vector that corresponds to the significance
 														// of the words in a bucket about a text (spec)
+void bow_bucket_to_spars(Bucket*, float***, int*, int*, int*, mySpec*);
 void bow_bucket_signWords(Bucket*, MBH*);				// Pass words to a min binary heap, based on their idf value
 void bow_bucket_keep_signWords(BoWords*, Bucket*);		// Remove all insignificant words from a bucket
 
@@ -84,7 +86,7 @@ void bow_record_print(Record*);
 void bow_record_update(Record*, mySpec*);				// Update an already initialized record about another text
 void bow_record_vectorize(Record*, float**, int*, mySpec*);	// Get a vector that corresponds to the significance
 														// of a word about a text (spec)
-
+void bow_record_to_spars(Record*, float***, int*, int*, int*, mySpec*);
 
 // ~~~~~~~~~~~~~~~~~~~ TF-IDF ~~~~~~~~~~~~~~~~~~~~~
 

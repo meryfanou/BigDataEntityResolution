@@ -261,7 +261,8 @@ int main(int argc, char** argv){
     //~~~~~~~~~~~~~~~~~~~~~~ CREATE & TRAIN LOGISTIC MODEL >
     printf("\nTraining Logistic Model ..\n");
     // logM** modelsT = make_models_array(bow, *trainSet, allMatches, trainSize);
-    logM* model = make_model(bow, trainSet, trainSize);
+    // logM* model = make_model_vec(bow, *trainSet, trainSize);
+    logM* model = make_model_spars(bow, trainSet, trainSize);
 
     // Check for termination signal
     if(received_signal == 1 || model == NULL){
@@ -280,7 +281,9 @@ int main(int argc, char** argv){
 
     //~~~~~~~~~~~~~~~~~~~~~ USE TEST_SET FOR PREDICTIONS
     printf("\nTesting Logistic Model ..\n");
-    make_tests(bow, model, testSet, testSize);
+
+    // make_tests(bow, model, *testSet, testSize);
+    make_tests_spars(bow, model, testSet, testSize);
 
     // Check for termination signal
     if(received_signal == 1){
@@ -296,6 +299,17 @@ int main(int argc, char** argv){
 
 // ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 // ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+    printf("Extract ..\n");
+    // logistic_extract(model);
+    printf("       \t\t.. DONE !!\n\n");
+
+// ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+// ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+
+
+// ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+// ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+
 
 printf("All Specs: %d\n", hashT->entries);
 myMatches* gamw = allMatches->head;
