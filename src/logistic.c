@@ -254,6 +254,10 @@ int logistic_regression_spars(logM* model, float** spars, int spars_size, int* t
                     magic_num += spars[x][2] * missed_by[(int)spars[x][0]];
                 x++;
             }
+
+            //
+            // I CAN UPDATE WEIGHTS HERE SAVING TIME !!!!
+            //
             grad[1+y] = magic_num;
             y++;
         }
