@@ -36,20 +36,31 @@ void keep_mostSignificantWords(BoWords*);				// Remove all insignificant words f
 // ~~~~~~~~~~~~~~~~ TRAINING ~~~~~~~~~~~~~~~~
 
 float* vectorization(mySpec*, BoWords*, int*);
-float*** spars_array(mySpec*, BoWords*, int*, int*, int*);
+float** make_it_spars(mySpec**, int, BoWords*, int*, int**, int*);
+void print_spars(float**, int);
 
-int train_per_spec(mySpec**, int, BoWords*, logM*);
+int train_per_spec_spars(mySpec**, int, BoWords*, logM*);
+float** spars_concat_col(float**, float**, int, int, int);
+void spars_concat_row(float***, float**, int*, int, int);
+
+int train_per_spec_vec(mySpec**, int, BoWords*, logM*);
 float* concat_specVectors(float*, float*, int);
 float** concat_pairsVectors(float**, float*, int);
 int* concat_tags(int*, int, int);
+
 int isPair(mySpec*, mySpec*);
-logM* make_model(BoWords*, mySpec**, int);
+
+logM* make_model_vec(BoWords*, mySpec**, int);
+logM* make_model_spars(BoWords*, mySpec**, int);
+
 
 void make_vectors(mySpec**, int, BoWords*, float***, float***, int**, int*, int*);
 
 /// ~~~~~~~~~~~~~~~~ TESTING ~~~~~~~~~~~~~~~~
 
 void make_tests(BoWords*, logM*, mySpec**, int);
+void make_tests_spars(BoWords*, logM*, mySpec**, int);
+
 
 /* NOT USED */
 void train_per_clique(myMatches*, mySpec**, int, BoWords*, logM*);

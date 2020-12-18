@@ -41,7 +41,7 @@ run:	bin/main
         endif
 
 valgrind: main
-		  valgrind ./bin/main -o matches_log_DEF
+		  valgrind --leak-check=full ./bin/main -o matches_log_DEF
 
 #-------------------------------------------------------------------------#
 

@@ -49,6 +49,19 @@ int logistic_fit(logM* model, int vector_rows, int vector_cols, float** vector ,
 
 }
 
+int logistic_fit_spars(logM* model, int spars_size, float** spars, int* labels, int labels_size, int dimensions){
+        // set model
+    model->size_totrain = labels_size;
+
+        // set weights
+    weights_set(model->finalWeights, dimensions);
+    model->weights_count = dimensions;
+
+        // train
+    return logistic_regression_spars(model, spars, spars_size, labels, labels_size, dimensions);
+
+}
+
 int logistic_regression(logM* model, float** vector, int vector_rows, int vector_cols, int* tags){
 
     // Signal handling
@@ -155,10 +168,127 @@ int logistic_regression(logM* model, float** vector, int vector_rows, int vector
 
     // printf("limit: %.4f\n", limit);
     // TESTS
-    printf("FINISHED !!!\n");
-    weights_print(model->finalWeights);
+    // printf("FINISHED !!!\n");
+    // weights_print(model->finalWeights);
     int* final_predicts = logistic_predict(model, vector, vector_rows, vector_cols);
-    printf("Score after train: %.4f\n", logistic_score(model, final_predicts, tags, vector_rows));
+    printf("\tScore after train: %.4f\n", logistic_score(model, final_predicts, tags, vector_rows));
+    free(final_predicts);
+
+    return 0;
+}
+
+
+int logistic_regression_spars(logM* model, float** spars, int spars_size, int* tags, int tags_size, int dimensions){
+
+    // Signal handling
+    struct sigaction    act;
+    sigset_t            block_mask;
+    int                 received_signal = 0;
+    sigemptyset(&(act.sa_mask));
+	act.sa_flags = 0;
+    act.sa_handler = sig_int_quit_handler;
+    sigemptyset(&block_mask);
+	sigaddset(&block_mask,SIGINT);
+	sigaddset(&block_mask,SIGQUIT);
+
+    // printf("spars_rows: %d, dimensions: %d\n", spars_size, dimensions);
+
+    float limit = 1.000;
+
+    model->trained_times = 1;
+    while(limit > model->finalWeights->limit){
+
+        if(received_signal == 1)
+            return -1;
+
+            // 1. Build predicts table
+        float* predicts = logistic_predict_proba_spars(model, spars, spars_size, dimensions, tags_size);
+
+            // 2. Calc weights
+                // 2.1 Build Missed Table
+        float b_grad = 0.0;
+        float* missed_by = malloc(tags_size*sizeof(float));
+        int i = 0;
+        while(i < tags_size){
+            if(received_signal == 1){
+                // FREE MEM
+                free(predicts);
+                free(missed_by);
+                return -1;
+            }
+
+            missed_by[i] = predicts[i] - (float) tags[i];
+            b_grad += missed_by[i];
+            // printf("my_pred: %.4f, target: %d\n", predicts[i], tags[i]);
+            i++;
+        }
+
+        b_grad /= (float) i;
+
+                // 2.2 Calc Grad - PER WEIGHT !!!
+        float* grad = malloc((dimensions+1)*sizeof(float));
+        grad[0] = b_grad;
+
+        int y = 0;
+        while(y < dimensions){
+            if(received_signal == 1){
+                // FREE MEM
+                free(predicts);
+                free(missed_by);
+                free(grad);
+                return -1;
+            }
+
+            int x = 0;
+            float magic_num = 0.0;
+            while(x < spars_size){
+                if(received_signal == 1){
+                    // FREE MEM
+                    free(predicts);
+                    free(missed_by);
+                    free(grad);
+                    return -1;
+                }
+
+                if(spars[x][1] == (float) y)
+                    magic_num += spars[x][2] * missed_by[(int)spars[x][0]];
+                x++;
+            }
+            grad[1+y] = magic_num;
+            y++;
+        }
+
+            // 3 Update Weights
+        weights_update(model->finalWeights, grad, dimensions);
+        limit = active_mean(missed_by, tags_size);
+        // printf("\t\t~~~~~~~~~~~~~~~~~~~~~~~~\n");
+        // printf("Time: %d\n", model->trained_times);
+        // printf("limit: %.4f\n", limit);
+        // weights_print(model->finalWeights);
+        
+
+        model->trained_times++;
+
+        // ΜAX ITERATIONS
+        if(model->trained_times > 1)
+            limit = 0.0;
+        
+
+        // FREE MEM
+        free(predicts);
+        free(missed_by);
+        free(grad);
+    }
+
+    if(received_signal == 1)
+        return -1;
+
+    // printf("limit: %.4f\n", limit);
+    // TESTS
+    // printf("FINISHED !!!\n");
+    // weights_print(model->finalWeights);
+    int* final_predicts = logistic_predict_spars(model, spars, spars_size, dimensions, tags_size);
+    printf("\tScore after train: %.4f\n", logistic_score(model, final_predicts, tags, tags_size));
     free(final_predicts);
 
     return 0;
@@ -186,6 +316,30 @@ float* logistic_predict_proba(logM* model, float** vector, int vector_rows, int 
     return predicts;
 }
 
+float* logistic_predict_proba_spars(logM* model, float** spars, int spars_size, int dimensions, int tags_size){
+    if(model->finalWeights == NULL){
+        printf("Error - Untrained model !!\n");
+        return NULL;
+    }
+
+    if(dimensions > model->weights_count){
+        printf("Error ~ Invalid Size Array !!");
+        return NULL;
+    }
+
+    float* predicts = malloc(tags_size*sizeof(float*));
+    int i = 0;
+    int temp = 0;
+    while(i < tags_size){
+        // printf("i: %d, size: %d\n", i, tags_size);
+        predicts[i] = calc_s_spars(model->finalWeights, spars, spars_size, i, &temp);
+        i++;
+    }
+
+    // printf("vgainei apo proba\n");
+    return predicts;
+}
+
 int* logistic_predict(logM* model, float** vector, int vector_rows, int vector_cols){
     float* probs = logistic_predict_proba(model, vector, vector_rows, vector_cols);
     
@@ -208,6 +362,31 @@ int* logistic_predict(logM* model, float** vector, int vector_rows, int vector_c
     return predicts;
 }
 
+// model, spars, spars_size, dimensions, tags_size
+int* logistic_predict_spars(logM* model, float** spars, int spars_size, int dimensions, int tags_size){
+    float* probs = logistic_predict_proba_spars(model, spars, spars_size, dimensions, tags_size);
+    
+    int* predicts = NULL;
+    if(probs != NULL){
+        predicts = malloc(tags_size*sizeof(int));
+        int i = 0;
+        while(i < tags_size){
+            // printf("probs[%d]: %.4f  ||  ", i, probs[i]);
+            if(probs[i] > model->finalWeights->threshold){
+                predicts[i] = 1;
+            }
+            else
+                predicts[i] = 0;
+            i++;
+        }
+    }
+
+    free(probs);
+    return predicts;
+}
+
+
+
 float logistic_score(logM* model, int* labels1, int* labels2, int size){
     float score = 0.0;
 
@@ -220,7 +399,7 @@ float logistic_score(logM* model, int* labels1, int* labels2, int size){
         i++;
     }
     
-    printf("corrects: %.f, total: %d\n", score, size);
+    printf("\tcorrects: %.f, total: %d\n", score, size);
     return score / (float) size;
 }
 
@@ -401,6 +580,28 @@ float calc_f(weights* myWeights, float* values){
     return sum;
 }
 
+float calc_f_spars(weights* myWeights, float** spars, int spars_size, int target, int *temp){
+    float sum = myWeights->b;
+    int i = 0;
+    
+   while(spars[*temp][0] != (float) target){
+        *temp = *temp + 1;
+    }
+    while(i < myWeights->entries){
+        if(*temp < (float)spars_size){
+            if(spars[*temp][0] == (float)target){
+                if(spars[*temp][1] == (float) i){
+                    sum += myWeights->weightsT[i] * spars[*temp][2];
+                    *temp = *temp + 1;
+                }
+            }
+        }
+        i++;
+    }
+
+    return sum;
+}
+
 float calc_s(weights* myWeights, float* values){
     float f = 0.0;
     f =  calc_f(myWeights, values);
@@ -411,14 +612,28 @@ float calc_s(weights* myWeights, float* values){
     float sum = 0.0;
     sum =  1.0000 / ( 1.0000+ (float)exp(fixed));
 
+   
+    return sum;
+}
+
+float calc_s_spars(weights* myWeights, float** spars, int spars_size, int target, int* temp){
+    float f = 0.0;
+    f =  calc_f_spars(myWeights, spars, spars_size, target, temp);
+
+    double fixed = 0.0;
+    fixed = -1.0000*( (double) f);
+
+    float sum = 0.0;
+    sum =  1.0000 / ( 1.0000+ (float)exp(fixed));
+//  printf("vgainei apo calc_s\n");
     return sum;
 }
 
 float calc_L_WB(weights* weights, float* values, int tag){
-    
+
     double L = 0;
     double p_x =  (double)calc_s(weights, values);
-    
+
     if(tag == 1){
         L = -1.0 * log(p_x);
     }
