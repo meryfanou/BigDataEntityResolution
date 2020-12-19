@@ -589,10 +589,11 @@ float calc_f(weights* myWeights, float* values){
 float calc_f_spars(weights* myWeights, float** spars, int spars_size, int target, int *temp){
     float sum = myWeights->b;
     int i = 0;
-    
-   while(spars[*temp][0] != (float) target){
-        *temp = *temp + 1;
-    }
+
+//    while(spars[*temp][0] != (float) target){
+//         *temp = *temp + 1;
+//     }
+
     while(i < myWeights->entries){
         if(*temp < (float)spars_size){
             if(spars[*temp][0] == (float)target){

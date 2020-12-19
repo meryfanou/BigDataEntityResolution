@@ -936,6 +936,10 @@ float** make_it_spars(mySpec** set, int set_size, BoWords* bow, int* spars_size,
     while(i<set_size){
         int z = i + 1;
         while(z < set_size){
+            if(all_spars[i] == NULL && all_spars[z] == NULL){
+                z++;
+                continue;           
+            }
             int tag = isPair(set[i], set[z]);
             if(tag != -1){
                 float** temp = spars_concat_col(all_spars[i], all_spars[z], all_spars_sizes[i], all_spars_sizes[z], bow->entries);
@@ -1120,12 +1124,12 @@ int train_per_spec_spars(mySpec** train_set, int set_size, BoWords* bow, logM* m
     int* labels = NULL;
     int labels_size;
 
-    printf("!1\n");
+    // printf("!1\n");
     spars = make_it_spars(train_set, set_size, bow, &spars_size, &labels, &labels_size);
     int size = spars_size;
     // printf("s0, %.4f, %.4f, %.4f\n", spars[0][0], spars[0][1], spars[0][2]);
     // print_spars(spars, spars_size);
-    printf("!2\n");
+    // printf("!2\n");
 
     if(received_signal == 1){
         //  FREE MEM;
@@ -1159,7 +1163,7 @@ int train_per_spec_spars(mySpec** train_set, int set_size, BoWords* bow, logM* m
     }
 
     // PRINT STATS FOR TESTING
-    printf("trained times: %d\n", model->trained_times);
+    printf("\ttrained times: %d\n", model->trained_times);
 
     //  FREE MEM
     while(size > 0){
@@ -1188,7 +1192,7 @@ void make_tests(BoWords* bow, logM* model, mySpec** test_set, int set_size){
     make_vectors(test_set, set_size, bow, &pairsVector, &all_vectors, &labels, &count_pairs, &vector_cols);
 
     int* predicts = logistic_predict(model, pairsVector, count_pairs, vector_cols);
-    printf("Accuracy at test_set: %.4f\n", logistic_score(model, predicts, labels, count_pairs));
+    printf("\tAccuracy at test_set: %.4f\n", logistic_score(model, predicts, labels, count_pairs));
 
         //  FREE MEM
     while(count_pairs > 0){
@@ -1220,7 +1224,7 @@ void make_tests_spars(BoWords* bow, logM* model, mySpec** test_set, int set_size
     int size = spars_size;
     int* predicts = logistic_predict_spars(model, spars, spars_size, 2*bow->entries, labels_size);
 
-    printf("Accuracy at test_set: %.4f\n", logistic_score(model, predicts, labels, labels_size));
+    printf("\tAccuracy at test_set: %.4f\n", logistic_score(model, predicts, labels, labels_size));
 
         //  FREE MEM
     while(size > 0){

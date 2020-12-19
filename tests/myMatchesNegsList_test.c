@@ -1,4 +1,4 @@
-/*MatchesList_test.c*/
+/*MatchesNegsList_test.c*/
 
 #define TEST_NO_MAIN
 

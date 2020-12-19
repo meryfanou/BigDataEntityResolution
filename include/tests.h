@@ -1,6 +1,7 @@
 #include "../include/mySpec.h"
 #include "../include/myMatches.h"
 #include "../include/myHash.h"
+#include "../include/logistic.h"
 
 void test_createHash(void);
 void test_addHash(void);
@@ -21,3 +22,5 @@ void test_createNegs(void);
 void test_addNegs(void);
 void test_remove_nlist(void);
 void test_seek_nlist(void);
+
+void test_logistic_create(void);

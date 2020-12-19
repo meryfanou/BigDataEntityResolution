@@ -5,7 +5,11 @@
 #include "../include/mySpec.h"
 #include "../include/myHash.h"
 #include "../include/acutest.h"
+#include "../include/logistic.h"
 #include "../include/tests.h"
+#include "../include/functs.h"
+#include "../include/boWords.h"
+#include "../include/mbh.h"
 
 void test_createHash(void){
 
@@ -229,5 +233,6 @@ TEST_LIST = {
 	{"test_addNegs", test_addNegs},
 	{"test_remove_nlist", test_remove_nlist},
 	{"test_seek_nlist", test_seek_nlist},
+	// {"test_logistic_create", test_logistic_create},
 	{NULL, NULL}
 };
