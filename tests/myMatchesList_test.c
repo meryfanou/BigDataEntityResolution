@@ -17,6 +17,8 @@ void test_createMatches(void){
 			// TEST CREATION
 	TEST_ASSERT(list != NULL);
 	TEST_ASSERT(node != NULL);
+	TEST_ASSERT(node->negs != NULL);
+
 			// TEST SIZE
 	TEST_ASSERT(list->entries == 0);
 

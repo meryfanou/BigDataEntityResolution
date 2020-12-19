@@ -225,5 +225,9 @@ TEST_LIST = {
 	{"test_specInit", test_specInit},
 	{"test_specCreate", test_specCreate},
     {"test_updateSpecMatches", test_updateSpecMatches},
+	{"test_createNegs", test_createNegs},
+	{"test_addNegs", test_addNegs},
+	{"test_remove_nlist", test_remove_nlist},
+	{"test_seek_nlist", test_seek_nlist},
 	{NULL, NULL}
 };

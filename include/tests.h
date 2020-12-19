@@ -16,3 +16,8 @@ void test_mergeMatches(void);
 void test_specInit(void);
 void test_specCreate(void);
 void test_updateSpecMatches(void);
+void test_createNegs(void);
+
+void test_addNegs(void);
+void test_remove_nlist(void);
+void test_seek_nlist(void);

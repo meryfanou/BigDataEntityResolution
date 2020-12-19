@@ -443,5 +443,6 @@ nNode* create_nNode(myMatches* match){
 }
 
 void destroy_nNode(nNode* myNode){
-	free(myNode);
+	if(myNode != NULL)
+		free(myNode);
 }
