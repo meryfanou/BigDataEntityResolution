@@ -20,9 +20,7 @@
 #define TRAIN_PERC 0.6
 #define TEST_PERC 0.2
 
-#define MOST_SIGN 100
-
-int received_signal = 0;
+#define MOST_SIGN 1000
 
 int main(int argc, char** argv){
 

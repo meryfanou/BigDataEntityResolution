@@ -10,6 +10,8 @@
 #include "../include/boWords.h"
 #include "../include/mbh.h"
 
+int received_signal = 0;
+
 // ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~ READ DATA ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 
 int readDataset(DIR *datasetX, char *path, hashTable **hashT, matchesInfo* allMatches){
