@@ -65,6 +65,11 @@ void bow_get_signWords(BoWords*, MBH*);					// Pass words to a min binary heap, 
 void bow_set_significance(BoWords*, char*);				// Mark a given word as significant in bow
 void bow_keep_signWords(BoWords*);						// Remove from bow all insignificant words
 
+			// Turn a set of texts to bow
+void spec_to_bow(mySpec*, BoWords*);	
+void sentence_to_bow(char*, mySpec*, BoWords*);			// Turn a sentence to bow
+char* checkWord(char*);									// Check if a word should be added in bow
+
 // ~~~~~~~~~~~~~~~~~~~~ BUCKET ~~~~~~~~~~~~~~~~~~~~
 
 Bucket* bow_bucket_create(int);

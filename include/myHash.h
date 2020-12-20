@@ -1,6 +1,8 @@
 #ifndef MYHASH_H
 #define MYHASH_H
 #include "mySpec.h"
+#include "boWords.h"
+// #include "functs.h"
 
 typedef struct hashTable hashTable;
 typedef struct bucket bucket;
@@ -47,4 +49,7 @@ void record_print(record* rec);
 mySpec* findRecord_byKey(hashTable*, char*);
 mySpec* findRecord_forSet(hashTable*, char*, char);		// Find a record for either the testing or the validation set
 														// Make sure each spec is added only once to a set
+void hash_to_bow(hashTable*, BoWords*);
+void hash_bucket_to_bow(bucket*, BoWords*);
+void hash_record_to_bow(record*, BoWords*);
 #endif

@@ -307,3 +307,31 @@ mySpec* findRecord_forSet(hashTable* table, char* key, char set){
 
 	return NULL;
 }
+
+
+void hash_to_bow(hashTable* hash, BoWords* bow){
+        // For each spec of the set (either training or testing)
+    int i = 0;
+	while(i < hash->tableSize){
+		bucket* buc = hash->myTable[i];
+		while(buc != NULL){
+			printf("hash %d\n",i);
+			hash_bucket_to_bow(buc, bow);
+			buc = buc->next;
+		}
+		i++;
+	}
+}
+
+void hash_bucket_to_bow(bucket* buc, BoWords* bow){
+	record* rec = buc->rec;
+	while(rec != NULL){
+		hash_record_to_bow(rec, bow);
+		rec = rec->next;
+	}
+}
+
+void hash_record_to_bow(record* rec, BoWords* bow){
+    spec_to_bow(rec->spec, bow);
+	bow->specsSum++;
+}

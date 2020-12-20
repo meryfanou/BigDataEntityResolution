@@ -29,10 +29,7 @@ mySpec** get_set(char*, hashTable*, int*, long int*, int, char);	// Used for cre
 
 // ~~~~~~~~~~~~~~ BAG OF WORDS ~~~~~~~~~~~~~~~
 
-void text_to_bow(mySpec**, int, BoWords**);				// Turn a set of texts to bow
-void spec_to_bow(mySpec*, BoWords*);					// Turn a text to bow
-void sentence_to_bow(char*, mySpec*, BoWords*);			// Turn a sentence to bow
-char* checkWord(char*);									// Check if a word should be added in bow
+void text_to_bow(mySpec**, int, BoWords**);					// Turn a text to bow
 
 void set_mostSignificantWords(BoWords*, int);			// Mark the most significant words in bow
 void keep_mostSignificantWords(BoWords*);				// Remove all insignificant words from bow
