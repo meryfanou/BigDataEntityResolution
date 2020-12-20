@@ -712,82 +712,6 @@ void text_to_bow(mySpec** set, int setSize, BoWords** boWords){
 }
 
 
-// // Turn a text to bow
-// void spec_to_bow(mySpec* spec, BoWords* boWords){
-//     char*   sentence = NULL;
-
-//     // For each property of the spec
-//     for(int i=0; i<(spec->propNum); i++){
-//         // Add key's words to bow hashtable
-//         sentence = strdup(spec->properties[i]->key);
-//         sentence_to_bow(sentence, spec, boWords);
-
-//         free(sentence);
-//         sentence = NULL;
-
-//         specValue*   currVal = spec->properties[i]->values;
-//         while(currVal != NULL){
-//             // Add each value's words to bow hashtable
-//             sentence = strdup(currVal->value);
-//             sentence_to_bow(sentence, spec, boWords);
-
-//             free(sentence);
-//             sentence = NULL;
-
-//             currVal = currVal->next;
-//         }
-//     }
-// }
-
-// // Turn a sentence to bow
-// void sentence_to_bow(char* sentence, mySpec* spec, BoWords* boWords){
-//     int     hash = 0;
-//     char*   word = NULL;
-
-//     // For each word in the sentence
-//     while((word = strtok_r(sentence," ",&sentence)) != NULL){
-//         // Check if the word should be used for the matching
-//         word = checkWord(word);
-//         // If it should, add it to bow hashtable
-//         if(word != NULL){
-//             hash = hash1(word);
-//             bow_add(boWords, word, spec, hash);
-//             // Increase the number of words found in current spec
-//             (spec->numofWords)++;
-
-//             free(word);
-//             word = NULL;
-//         }
-//     }
-// }
-
-// // // Check if a word should be added in bow
-// char* checkWord(char* word){
-
-//     char*   result = strdup(word);
-
-//     for(int i=0; i<strlen(word); i++){
-//         // If it is not a digit or a letter
-//         if(isalnum(word[i]) == 0){
-//             free(result);
-//             return NULL;
-//         }
-
-//         // Turn to lower case
-//         result[i] = (char)tolower(word[i]);
-//     }
-
-//     char stopwords[] = "a able about across after all almost also am among an and any are as at be because been but by can cannot could dear did do does either else ever every for from get got had has have he her hers him his how however i if in into is it its just least let like likely may me might most must my neither no nor not of off often on only or other our own rather said say says she should since so some than that the their them then there these they this tis to too twas us wants was we were what when where which while who whom why will with would yet you your";
-
-//     // If it is a stopword
-//     if(strstr(stopwords, result) != NULL){
-//         free(result);
-//         return NULL;
-//     }
-
-//     return result;
-// }
-
 // Mark the most significant words in bow
 void set_mostSignificantWords(BoWords* bow, int mostSign){
     char*   word = NULL;
@@ -832,15 +756,6 @@ logM** make_models_array(BoWords* bow, mySpec** set, matchesInfo* matches, int s
         i++;
         clique = clique->next;
 
-        // ABORT METHOD
-        // if(modelsT[i-1]->trained_times < 2){
-        //     printf("Aborting ..\n");
-        //     while(i > 0){
-        //         logistic_destroy(modelsT[--i]);
-        //     }
-        //     free(modelsT);
-        //     return NULL;
-        // }
     }
 
     printf("Trained for %d different Matches Groups !!\n", i);

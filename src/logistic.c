@@ -23,6 +23,8 @@ logM* logistic_create(){
     newModel->size_totrain = 0;
     newModel->weights_count = 0;
     newModel->trained_times = 0;
+    newModel->fit1 = 0;
+    newModel->fit0 = 0;
 
     newModel->finalWeights = weights_create();
 
@@ -195,6 +197,8 @@ int logistic_regression_spars(logM* model, float** spars, int spars_size, int* t
 
     float limit = 1.000;
 
+    logistic_overfit(model, tags, tags_size);
+
     model->trained_times = 1;
     while(limit > model->finalWeights->limit){
 
@@ -218,8 +222,10 @@ int logistic_regression_spars(logM* model, float** spars, int spars_size, int* t
             }
 
             missed_by[i] = predicts[i] - (float) tags[i];
-            b_grad += missed_by[i];
-            // printf("my_pred: %.4f, target: %d\n", predicts[i], tags[i]);
+            if(missed_by[i]> 0)
+                b_grad += missed_by[i];
+            else
+                b_grad += -1.0*missed_by[i];
             i++;
         }
 
@@ -447,6 +453,30 @@ void logistic_extract(logM* model){
 
     free(target);
 
+}
+
+
+void logistic_overfit(logM* model, int* tags, int tags_size){
+    int i = 0;
+    while(i < tags_size){
+        if(tags[i] == 1)
+            model->fit1++;
+        else
+            model->fit0++;
+        i++;
+    }
+
+    float rate = 0.0;
+    if(model->fit1 > model->fit0)
+        rate = (float)model->fit1 / (float)model->fit0;
+    else
+        rate = -1.0* (float)model->fit0 / (float)model->fit1;
+    
+    
+    model->finalWeights->threshold += (model->finalWeights->threshold/rate) * model->finalWeights->threshold;
+
+    printf("Overfit: %.4f\n", rate);
+    printf("new thrshold: %.4f\n", model->finalWeights->threshold);
 }
 
 // ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~

@@ -21,6 +21,9 @@ struct logistic_model{
 
     int trained_times;
 
+    int fit1;
+    int fit0; 
+
     weights* finalWeights;
 };
 
@@ -59,7 +62,7 @@ int logistic_regression(logM*, float**, int , int, int*);
 int logistic_regression_spars(logM*, float**, int, int*, int, int);
 
 float logistic_gradDescent();
-
+void logistic_overfit(logM*, int*, int);
 void logistic_extract(logM*);
 // ~~~~~~~~~~~~~~
 weights* weights_create();
