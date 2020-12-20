@@ -315,7 +315,6 @@ void hash_to_bow(hashTable* hash, BoWords* bow){
 	while(i < hash->tableSize){
 		bucket* buc = hash->myTable[i];
 		while(buc != NULL){
-			printf("hash %d\n",i);
 			hash_bucket_to_bow(buc, bow);
 			buc = buc->next;
 		}
