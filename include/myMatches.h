@@ -54,7 +54,7 @@ void combineNegativeLists(myMatches*, myMatches*);
 
 void printMatchesList(matchesInfo*); 		// TESTING
 void extractMatches(matchesInfo*, char*);
-
+void extractNegatives(matchesInfo*, char*);
 
 myMatches* myMatchesInit();
 void deleteMatches(matchesInfo*, myMatches*);

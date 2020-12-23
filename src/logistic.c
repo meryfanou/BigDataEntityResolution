@@ -25,6 +25,7 @@ logM* logistic_create(){
     newModel->trained_times = 0;
     newModel->fit1 = 0;
     newModel->fit0 = 0;
+    newModel->dataList = NULL;
 
     newModel->finalWeights = weights_create();
 
@@ -34,6 +35,8 @@ logM* logistic_create(){
 void logistic_destroy(logM* model){
     
     weights_destroy(model->finalWeights);
+    if(model->dataList != NULL)
+        dataI_destroy(model->dataList);
     free(model);
 
 }
@@ -62,6 +65,18 @@ int logistic_fit_spars(logM* model, int spars_size, float** spars, int* labels, 
         // train
     return logistic_regression_spars(model, spars, spars_size, labels, labels_size, dimensions);
 
+}
+
+int logistic_fit_dataList(logM* model, dataI* info){
+        // set model
+    model->size_totrain = info->all_pairs;
+        
+        // set weights
+    weights_set(model->finalWeights, info->dimensions);
+    model->weights_count = info->dimensions;
+    // printf("info->dim: %d, weights_count: %d\n", info->dimensions, model->finalWeights->entries);
+        // train
+    return logistic_regression_dataList(model, info);
 }
 
 int logistic_regression(logM* model, float** vector, int vector_rows, int vector_cols, int* tags){
@@ -193,8 +208,6 @@ int logistic_regression_spars(logM* model, float** spars, int spars_size, int* t
 	sigaddset(&block_mask,SIGINT);
 	sigaddset(&block_mask,SIGQUIT);
 
-    // printf("spars_rows: %d, dimensions: %d\n", spars_size, dimensions);
-
     float limit = 1.000;
 
     logistic_overfit(model, tags, tags_size);
@@ -256,8 +269,10 @@ int logistic_regression_spars(logM* model, float** spars, int spars_size, int* t
                     return -1;
                 }
 
-                if(spars[x][1] == (float) y)
+                if(spars[x][1] == (float) y){
                     magic_num += spars[x][2] * missed_by[(int)spars[x][0]];
+                    break;
+                }
                 x++;
             }
 
@@ -273,12 +288,6 @@ int logistic_regression_spars(logM* model, float** spars, int spars_size, int* t
             // 3 Update Weights
         weights_update(model->finalWeights, grad, dimensions);
         limit = active_mean(missed_by, tags_size);
-        // printf("\t\t~~~~~~~~~~~~~~~~~~~~~~~~\n");
-        // printf("Time: %d\n", model->trained_times);
-        // printf("limit: %.4f\n", limit);
-        // weights_print(model->finalWeights);
-        
-
         model->trained_times++;
 
         // ΜAX ITERATIONS
@@ -295,10 +304,11 @@ int logistic_regression_spars(logM* model, float** spars, int spars_size, int* t
     if(received_signal == 1)
         return -1;
 
-    // printf("limit: %.4f\n", limit);
     // TESTS
-    // printf("FINISHED !!!\n");
     // weights_print(model->finalWeights);
+   
+   weights_print(model->finalWeights);
+
     int* final_predicts = logistic_predict_spars(model, spars, spars_size, dimensions, tags_size);
     printf("\tScore after train: %.4f\n", logistic_score(model, final_predicts, tags, tags_size));
     free(final_predicts);
@@ -306,6 +316,128 @@ int logistic_regression_spars(logM* model, float** spars, int spars_size, int* t
     return 0;
 }
 
+int logistic_regression_dataList(logM* model, dataI* info){
+
+    // Signal handling
+    struct sigaction    act;
+    sigset_t            block_mask;
+    int                 received_signal = 0;
+    sigemptyset(&(act.sa_mask));
+	act.sa_flags = 0;
+    act.sa_handler = sig_int_quit_handler;
+    sigemptyset(&block_mask);
+	sigaddset(&block_mask,SIGINT);
+	sigaddset(&block_mask,SIGQUIT);
+
+    // printf("spars_rows: %d, dimensions: %d\n", spars_size, dimensions);
+
+    float limit = 1.000;
+
+    logistic_overfit_dataList(model, info);
+
+    model->trained_times = 1;
+    while(limit > model->finalWeights->limit){
+
+        if(received_signal == 1)
+            return -1;
+
+            // 1. Make Predicts
+        logistic_predict_proba_dataList(model, info);
+
+            // 2. Calc weights
+                // 2.1 Build Missed Table
+        float b_grad = 0.0;
+        float* missed_by = malloc(info->all_pairs*sizeof(float));
+        int i = 0;
+        while(i < info->all_pairs){
+            if(received_signal == 1){
+                // FREE MEM
+                free(missed_by);
+                return -1;
+            }
+
+            dataN* to_train = dataI_pop(info);
+
+            missed_by[i] = to_train->proba - to_train->label;
+            if(missed_by[i]> 0)
+                b_grad += missed_by[i];
+            else
+                b_grad += -1.0*missed_by[i];
+            i++;
+        }
+        dataI_rewind_pop(info);
+
+        b_grad /= (float) i;
+
+                // 2.2 Calc Grad - PER WEIGHT !!!
+        float* grad = malloc((info->dimensions+1)*sizeof(float));
+        grad[0] = b_grad;
+
+        int y = 0;
+        while(y < info->dimensions){
+            if(received_signal == 1){
+                // FREE MEM
+                free(missed_by);
+                free(grad);
+                return -1;
+            }
+
+            float magic_num = 0.0;
+
+            int count_trained = 0;
+            while(count_trained < info->all_pairs){
+                // SIGS
+                if(received_signal == 1){
+                    // FREE MEM
+                    free(missed_by);
+                    free(grad);
+                    return -1;
+                }
+                
+                dataN* to_train = dataI_pop(info);
+
+                int x = 0;
+                while(x < to_train->spars_size){
+                    if(to_train->spars[x][1] == (float) y){
+                        magic_num += to_train->spars[x][2] *missed_by[count_trained];
+                        break;
+                    }
+                    x++;
+                }
+
+                grad[1+y] = magic_num;
+                count_trained++;
+            }
+            y++;
+            dataI_rewind_pop(info);
+        }
+
+            // 3 Update Weights
+        weights_update(model->finalWeights, grad, info->dimensions);
+        limit = active_mean(missed_by, info->all_pairs);
+
+        model->trained_times++;
+
+        // ΜAX ITERATIONS
+        if(model->trained_times > 1)
+            limit = 0.0;
+        
+
+        // FREE MEM
+        free(missed_by);
+        free(grad);
+    }
+
+    if(received_signal == 1)
+        return -1;
+
+    // weights_print(model->finalWeights);
+
+    logistic_predict_proba_dataList(model, info);
+    printf("\tScore after train: %.4f\n", logistic_score_dataList(model, info));
+
+    return 0;
+}
 
 float* logistic_predict_proba(logM* model, float** vector, int vector_rows, int vector_cols){
     if(model->finalWeights == NULL){
@@ -314,7 +446,7 @@ float* logistic_predict_proba(logM* model, float** vector, int vector_rows, int 
     }
 
     if(vector_cols > model->weights_count){
-        printf("Error ~ Invalid Size Array !!");
+        printf("Error ~ Invalid Size Array !!\n");
         return NULL;
     }
 
@@ -350,6 +482,38 @@ float* logistic_predict_proba_spars(logM* model, float** spars, int spars_size, 
 
     // printf("vgainei apo proba\n");
     return predicts;
+}
+
+void logistic_predict_proba_dataList(logM* model, dataI* info){
+    if(model->finalWeights == NULL){
+        printf("Error - Untrained model !!\n");
+        return;
+    }
+
+    if(info->dimensions > model->weights_count){
+        printf("Error ~ Invalid Size Array !!\n");
+        return;
+    }
+
+    info->corrects = 0;
+
+    dataN* to_calc = dataI_pop(info);
+    while(to_calc != NULL){
+        calc_s_dataList(model->finalWeights, to_calc);
+        
+        if(to_calc->proba >= model->finalWeights->threshold)
+            to_calc->predict = 1;
+        else
+            to_calc->predict = 0;
+        if(to_calc->label == to_calc->predict)
+            info->corrects++;
+        to_calc = dataI_pop(info);
+    }
+    dataI_rewind_pop(info);
+
+    if(info->corrects != 0){
+        logistic_score_dataList(model, info);
+    }
 }
 
 int* logistic_predict(logM* model, float** vector, int vector_rows, int vector_cols){
@@ -397,8 +561,6 @@ int* logistic_predict_spars(logM* model, float** spars, int spars_size, int dime
     return predicts;
 }
 
-
-
 float logistic_score(logM* model, int* labels1, int* labels2, int size){
     float score = 0.0;
 
@@ -413,6 +575,11 @@ float logistic_score(logM* model, int* labels1, int* labels2, int size){
     
     printf("\tcorrects: %.f, total: %d\n", score, size);
     return score / (float) size;
+}
+
+float logistic_score_dataList(logM* model, dataI* info){
+   info->score = (float) info->corrects / (float) info->all_pairs;
+   return info->score;
 }
 
 void logistic_extract(logM* model){
@@ -455,7 +622,6 @@ void logistic_extract(logM* model){
 
 }
 
-
 void logistic_overfit(logM* model, int* tags, int tags_size){
     int i = 0;
     while(i < tags_size){
@@ -475,9 +641,86 @@ void logistic_overfit(logM* model, int* tags, int tags_size){
     
     model->finalWeights->threshold += (model->finalWeights->threshold/rate) * model->finalWeights->threshold;
 
-    printf("Overfit: %.4f\n", rate);
-    printf("new thrshold: %.4f\n", model->finalWeights->threshold);
+    printf("\tOverfit: %.4f\n", rate);
+    printf("\tnew thrshold: %.4f\n", model->finalWeights->threshold);
 }
+
+void logistic_overfit_dataList(logM* model, dataI* info){
+    dataN* node = info->head;
+    while(node != NULL){
+        if(node->label == 1)
+            model->fit1++;
+        else
+            model->fit0++;
+        node = node->next;
+    }
+
+    float rate = 0.0;
+    if(model->fit1 > model->fit0)
+        rate = (float)model->fit1 / (float)model->fit0;
+    else
+        rate = -1.0* (float)model->fit0 / (float)model->fit1;
+    
+    
+    model->finalWeights->threshold += (model->finalWeights->threshold/rate) * model->finalWeights->threshold;
+
+    printf("\tOverfit: %.4f\n", rate);
+    printf("\tnew thrshold: %.4f\n", model->finalWeights->threshold);
+
+}
+
+// void logistic_print_strong(logM* model, float* probs, int size){
+//     if(chdir(PATH) == -1){
+//         if(mkdir(PATH, S_IRWXU|S_IRWXG|S_IROTH)){ 
+//             error(EXIT_FAILURE, errno, "Failed to create directory");
+//         }
+//    	}
+//    	else{
+//    		chdir("..");
+//    	}
+    
+//     int len1 = strlen(PATH)+ strlen(FILE_OUT_POSITIVES) + 2;
+//     int len0 = strlen(PATH)+ strlen(FILE_OUT_NEGATIVES) + 2;
+//     char* target1 = malloc(len1);
+//     char* target0 = malloc(len0);
+
+//     memset(target1, 0, len1);
+//     memset(target0, 0, len0);
+
+//     strcat(target1, PATH);
+//     strcat(target1, "/");
+//     strcat(target1, FILE_OUT_POSITIVES);
+
+//     strcat(target0, PATH);
+//     strcat(target0, "/");
+//     strcat(target0, FILE_OUT_NEGATIVES);
+   
+//     FILE* fpout1 = NULL;
+//     FILE* fpout0 = NULL;
+
+//     fpout1 = fopen(target1, "w");
+//     fpout0 = fopen(target0, "w");
+
+//     if(fpout1 == NULL || fpout0 == NULL){
+//         printf("Error ~ Can't create Files .logistic_pint_strong\n");
+//         free(target1);
+//         free(target0);
+//         return;
+//     }
+
+//     float limit1 = 1.0 - ( (1.0 - model->finalWeights->threshold) / 3.0 );
+//     float limit0 = 0.0 + ( (0.0 + model->finalWeights->threshold) / 3.0 );
+
+//     int i = 0;
+//     while(i < size){
+//         if(probs[i] >= limit1)
+//             fprintf(fpout1, "")
+//     }
+
+
+//     fclose(fpout0);
+//     fclose(fpout1);
+// }
 
 // ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 // ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
@@ -635,7 +878,23 @@ float calc_f_spars(weights* myWeights, float** spars, int spars_size, int target
         }
         i++;
     }
+    return sum;
+}
 
+float calc_f_dataList(weights* myWeights, dataN* node){
+    int sum = myWeights->b;
+    int i = 0;
+    int count_d = 0;
+    while(i < myWeights->entries){
+        if(count_d < node->spars_size){
+            if(node->spars[count_d][1] == (float) i){
+                sum += myWeights->weightsT[i] * node->spars[count_d][2];
+                count_d++;
+            }
+        }
+        i++;
+    }
+    // printf(">>>f[]: %.4f\n", sum);
     return sum;
 }
 
@@ -664,6 +923,16 @@ float calc_s_spars(weights* myWeights, float** spars, int spars_size, int target
     sum =  1.0000 / ( 1.0000+ (float)exp(fixed));
 //  printf("vgainei apo calc_s\n");
     return sum;
+}
+
+void calc_s_dataList(weights* myWeights, dataN* node){
+    float f = 0.0;
+    f =  calc_f_dataList(myWeights, node);
+
+    double fixed = 0.0;
+    fixed = -1.0000*( (double) f);
+
+    node->proba =  1.0000 / ( 1.0000+ (float)exp(fixed));
 }
 
 float calc_L_WB(weights* weights, float* values, int tag){
@@ -698,4 +967,138 @@ float active_mean(float* vec, int size){
     // if(active == 0)
         // return 1;
     return m / (float) i;
+}
+
+
+/////////////// ANOTHER LIST /////////////////
+
+dataI* dataI_create(int dimensions){
+    dataI* newI = malloc(sizeof(dataI));
+
+    newI->all_pairs = 0;
+    newI->corrects = 0;
+    newI->score = 0.0;
+    newI->dimensions = dimensions;
+    newI->head = NULL;
+    newI->poped = NULL;
+    return newI;
+}
+
+void dataI_destroy(dataI* info){
+    while(info->head != NULL){
+        dataN_destroy(info, info->head);
+    }
+    free(info);
+}
+
+dataN* dataI_pop(dataI* info){
+    if(info->poped == NULL)
+        info->poped = info->head;
+    else if(info->poped->next == NULL)
+        return NULL;
+    else
+        info->poped = info->poped->next;
+
+    return info->poped;
+}
+
+
+void dataI_push(dataI* info, mySpec* spec1, mySpec* spec2, float** spars, int spars_size, int tag){
+    dataN* to_add = dataN_create();
+    to_add->label = tag;
+    to_add->spec1 = spec1;
+    to_add->spec2 = spec2;
+    to_add->spars = spars;
+    to_add->spars_size = spars_size;
+
+
+    if(info->head != NULL)
+        info->head->prev = to_add;
+
+    to_add->next = info->head;
+    info->head = to_add;
+    
+    info->all_pairs++;
+}
+
+void dataI_remove_weak(dataI* info , logM* model){
+    float limit1 = 1.0 - ( (1.0 - model->finalWeights->threshold) / 3.0 );
+    float limit0 = 0.0 + ( (0.0 + model->finalWeights->threshold) / 3.0 );
+
+    dataN* temp = info->head;
+    while(temp != NULL){
+        if(temp->proba >= model->finalWeights->threshold){
+            if(temp->proba < limit1){
+                dataN* keep  = temp->next;
+                dataN_destroy(info, temp);
+                temp = keep;
+                continue;
+            }       
+        }
+        else{
+            if(temp->proba > limit0){
+                dataN* keep = temp->next;
+                dataN_destroy(info, temp);
+                temp = keep;
+                continue;
+            }
+        }
+        temp = temp->next;
+    }
+
+}
+
+void dataI_rewind_pop(dataI* info){
+    info->poped = NULL;
+}
+
+dataN* dataN_create(){
+    dataN* newN = malloc(sizeof(dataN));
+    
+    newN->label = -1;
+    newN->predict = -1;
+    newN->proba = -1.0;
+
+    newN->next = NULL;
+    newN->prev = NULL;
+
+    newN->spars_size = 0;
+    newN->spars = NULL;
+
+    newN->spec1 = NULL;
+    newN->spec2 = NULL;
+
+    return newN;
+}
+
+void dataN_destroy(dataI* info, dataN* node){
+    if(node == NULL)
+        return;
+    if(node == info->head){
+        info->head = node->next;
+        if(node->next != NULL){
+            node->next->prev = NULL;
+            info->head = node->next;
+        }
+    }
+    else{
+        if(node->next != NULL){
+            node->next->prev = node->prev;
+            node->prev->next = node->next;
+        }
+        else{
+            node->prev->next = NULL;
+        }
+    }
+
+    if(node->spars_size > 0){
+        int i = 0;
+        while(i < node->spars_size){
+            free(node->spars[i++]);
+        }
+        free(node->spars);
+    }
+    free(node);
+
+    info->all_pairs--;
 }

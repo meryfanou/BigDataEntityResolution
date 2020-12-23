@@ -35,33 +35,38 @@ void set_mostSignificantWords(BoWords*, int);			// Mark the most significant wor
 void keep_mostSignificantWords(BoWords*);				// Remove all insignificant words from bow
 
 // ~~~~~~~~~~~~~~~~ TRAINING ~~~~~~~~~~~~~~~~
-
+	// !! vec
+logM* make_model_vec(BoWords*, mySpec**, int);
 float* vectorization(mySpec*, BoWords*, int*);
-float** make_it_spars(mySpec**, int, BoWords*, int*, int**, int*);
-void print_spars(float**, int);
-
-int train_per_spec_spars(mySpec**, int, BoWords*, logM*);
-float** spars_concat_col(float**, float**, int, int, int);
-void spars_concat_row(float***, float**, int*, int, int);
-
-int train_per_spec_vec(mySpec**, int, BoWords*, logM*);
 float* concat_specVectors(float*, float*, int);
 float** concat_pairsVectors(float**, float*, int);
 int* concat_tags(int*, int, int);
+int train_per_spec_vec(mySpec**, int, BoWords*, logM*);
+void make_vectors(mySpec**, int, BoWords*, float***, float***, int**, int*, int*);
+
+	//  !! spars
+float** make_it_spars(mySpec**, int, BoWords*, int*, int**, int*);
+void print_spars(float**, int);
+int train_per_spec_spars(mySpec**, int, BoWords*, logM*);
+float** spars_concat_col(float**, float**, int, int, int);
+void spars_concat_row(float***, float**, int*, int, int);
+logM* make_model_spars(BoWords*, mySpec**, int);
+
+	// !! spars list
+logM* make_model_spars_list(BoWords*, mySpec**, int);
+int train_per_spec_spars_list(mySpec**, int, BoWords*, logM*);
+void make_it_spars_list(mySpec**, int, BoWords*, dataI*);
 
 int isPair(mySpec*, mySpec*);
 
-logM* make_model_vec(BoWords*, mySpec**, int);
-logM* make_model_spars(BoWords*, mySpec**, int);
 
 
-void make_vectors(mySpec**, int, BoWords*, float***, float***, int**, int*, int*);
 
 /// ~~~~~~~~~~~~~~~~ TESTING ~~~~~~~~~~~~~~~~
 
 void make_tests(BoWords*, logM*, mySpec**, int);
 void make_tests_spars(BoWords*, logM*, mySpec**, int);
-
+void make_tests_spars_list(BoWords*, logM*, mySpec**, int);
 
 /* NOT USED */
 void train_per_clique(myMatches*, mySpec**, int, BoWords*, logM*);
@@ -73,15 +78,17 @@ void sig_int_quit_handler(int);
 
 // ~~~~~~~~~~~~~~~~ FREE MEM ~~~~~~~~~~~~~~~~
 
-#define FREE_MEM(pathX,pathW,outputFile,allMatches,hashT,trainSet,testSet,validSet,bow,model)   \
+#define FREE_MEM(pathX,pathW,outputFileMatches,outputFileNegs,allMatches,hashT,trainSet,testSet,validSet,bow,model)   \
 {																								\
 	if(pathX != NULL)																			\
 		free(pathX);																			\
 	if(pathW != NULL)																			\
 		free(pathW);																			\
 																								\
-	if(outputFile != NULL)																		\
-        free(outputFile);																		\
+	if(outputFileMatches != NULL)																\
+        free(outputFileMatches);																\
+	if(outputFileNegs != NULL)																	\
+		free(outputFileNegs);																	\
 																								\
 	if(allMatches != NULL)																		\
 		deleteInfo((matchesInfo*)allMatches);													\

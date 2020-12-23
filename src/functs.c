@@ -737,31 +737,7 @@ void keep_mostSignificantWords(BoWords* bow){
 
 // ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~ TRAINING ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 
-logM** make_models_array(BoWords* bow, mySpec** set, matchesInfo* matches, int set_size){
-    
-    // make array
-    logM** modelsT = malloc(matches->entries*sizeof(logM*));
-
-    // train_per_clique
-    myMatches* clique = matches->head;
-    int i = 0;
-    while(clique != NULL){
-
-        modelsT[i] = logistic_create();
-        // if(i < 500){
-            train_per_clique(clique, set, set_size, bow, modelsT[i]);
-            
-            printf("Clique %d trained Succefully %d times !!\n", i, modelsT[i]->trained_times);
-        // }
-        i++;
-        clique = clique->next;
-
-    }
-
-    printf("Trained for %d different Matches Groups !!\n", i);
-
-    return modelsT;
-}
+    // !!!! VECTORS !!!!
 
 logM* make_model_vec(BoWords* bow, mySpec** train_set, int set_size){
 
@@ -791,35 +767,6 @@ logM* make_model_vec(BoWords* bow, mySpec** train_set, int set_size){
     return model;
 }
 
-logM* make_model_spars(BoWords* bow, mySpec** train_set, int set_size){
-
-    // Signal handling
-    struct sigaction    act;
-    sigset_t            block_mask;
-    received_signal = 0;
-    sigemptyset(&(act.sa_mask));
-	act.sa_flags = 0;
-    act.sa_handler = sig_int_quit_handler;
-    sigemptyset(&block_mask);
-	sigaddset(&block_mask,SIGINT);
-	sigaddset(&block_mask,SIGQUIT);
-
-    // Create & init model
-    logM* model = logistic_create();
-
-    // Train_per_Spec
-    int check = train_per_spec_spars(train_set, set_size, bow, model);
-
-    // If a termination signal was recieved
-    if(received_signal == 1 || check == -1){
-        logistic_destroy(model);
-        return NULL;
-    }
-
-    return model;
-}
-
-
 float* vectorization(mySpec* spec, BoWords* bow, int* vectorSize){
 
     // printf("mpjhke\n");
@@ -830,78 +777,6 @@ float* vectorization(mySpec* spec, BoWords* bow, int* vectorSize){
     bow_vectorize(bow,&vector,vectorSize,spec);
 
     return vector;
-}
-
-float** make_it_spars(mySpec** set, int set_size, BoWords* bow, int* spars_size, int** labels, int* labels_size){
-    *spars_size = 0;
-    *labels_size = 0;
-    float** spars = NULL;
-    int row = 0;
-    int col = 0;
-
-    float*** all_spars = malloc(set_size*sizeof(float**));
-    int* all_spars_sizes = malloc(set_size*sizeof(int));
-    int i = 0;
-    while(i < set_size){
-        col = 0;
-        all_spars[i] = NULL;
-        all_spars_sizes[i] = 0;
-        bow_to_spars(bow, &all_spars[i], &all_spars_sizes[i], &row, &col, set[i]);
-        i++;
-    }
-
-    i = 0;
-    while(i<set_size){
-        int z = i + 1;
-        while(z < set_size){
-            if(all_spars[i] == NULL && all_spars[z] == NULL){
-                z++;
-                continue;           
-            }
-            int tag = isPair(set[i], set[z]);
-            if(tag != -1){
-                float** temp = spars_concat_col(all_spars[i], all_spars[z], all_spars_sizes[i], all_spars_sizes[z], bow->entries);
-                int temp_size = all_spars_sizes[z] + all_spars_sizes[i];
-                spars_concat_row(&spars, temp, spars_size, temp_size, row);
-
-                (*labels) = realloc((*labels), ((*labels_size)+1)*sizeof(int));
-                (*labels)[*labels_size] = tag;
-                (*labels_size) = (*labels_size) + 1;
-
-                row++;
-                while(temp_size > 0){
-                    free(temp[--temp_size]);
-                }
-                free(temp);
-            }
-            z++;
-        }
-        i++;
-    }
-    // printf("spars_size: %d\n", *spars_size);
-    // printf("s0 %.4f, %.4f, %.4f\n", spars[0][0], spars[0][1], spars[0][2]);
-    
-    int i1 = 0;
-    while(i1 < set_size){
-        int i2 = 0;
-        while(i2 < all_spars_sizes[i1]){
-            free(all_spars[i1][i2++]);
-        }
-        free(all_spars[i1++]);
-    }
-    free(all_spars);
-    free(all_spars_sizes);
-
-    return spars;
-}
-
-void print_spars(float** spars, int size){
-    int i = 0;
-    printf("spars_size: %d\n", size);
-    while(i < size){
-        printf("s%d [0]: %.4f, [1]: %.4f, [2]: %.4f\n", i, spars[i][0], spars[i][1], spars[i][2]);
-        i++;
-    }
 }
 
 int train_per_spec_vec(mySpec** train_set, int set_size, BoWords* bow, logM* model){
@@ -982,6 +857,223 @@ int train_per_spec_vec(mySpec** train_set, int set_size, BoWords* bow, logM* mod
     free(labels);
 
     return 0;
+}
+
+void make_vectors(mySpec** set, int set_size, BoWords* bow, float*** pairsVector, float*** all_vectors, int** labels, int* count_pairs, int* vector_cols){
+        //  INIT PASSED VALUES IN CASE THEY ARE NOT !
+    *vector_cols = 0;
+    *pairsVector = NULL;
+    *labels = NULL;
+    *count_pairs = 0;
+    *all_vectors = NULL;
+
+        // Create vectors for all specs to be passed
+    *all_vectors = malloc(set_size*sizeof(float*));
+    int make_vectors = 0;
+    while(make_vectors < set_size){
+        (*all_vectors)[make_vectors] = vectorization(set[make_vectors], bow, vector_cols);
+        make_vectors++;
+    }
+
+
+        // Pass all specs by pairs (All with All (no doubles) )
+
+    int tag = -1;
+
+    int passed_specs = 0;
+    while(passed_specs < set_size){
+
+        int check_specs = passed_specs + 1;
+        while(check_specs < set_size){
+
+            tag = isPair(set[passed_specs], set[check_specs]);
+            if(tag != -1){
+                float* combined = concat_specVectors((*all_vectors)[passed_specs], (*all_vectors)[check_specs], *vector_cols);
+                *pairsVector = concat_pairsVectors(*pairsVector, combined, *count_pairs);
+                
+                *labels = concat_tags(*labels, tag, *count_pairs);
+                
+                (*count_pairs) += 1;
+            }
+            check_specs++;
+        }
+        passed_specs++;
+    }
+}
+
+float* concat_specVectors(float* vec1, float* vec2, int size){
+        // find which is bigger
+    float sum1 = 0.0;
+    float sum2 = 0.0;
+    
+    int i = 0;
+    while(i < size){
+        sum1 += vec1[i];
+        sum2 += vec2[i];
+        i++;
+    }
+
+    int place1 = 0;
+    int place2 = size;
+
+    if(sum1 < sum2){    //swap
+        place1 = size;
+        place2 = 0;
+    }
+
+    float* newVec = malloc(2*size*sizeof(float));
+
+    memcpy(&newVec[place1], vec1, size*sizeof(float));
+    memcpy(&newVec[place2], vec2, size*sizeof(float));
+
+    return newVec;
+}
+
+float** concat_pairsVectors(float** main_vec, float* to_add, int size){
+    main_vec = realloc(main_vec, (size+1)*sizeof(float*));
+    main_vec[size] = to_add;
+
+    return main_vec;
+}
+
+int* concat_tags(int* table, int tag, int size){
+    table = realloc(table, (size+1)*sizeof(int));
+    table[size] = tag;
+    return table;
+}
+
+void make_tests(BoWords* bow, logM* model, mySpec** test_set, int set_size){
+
+            //  Init values to pass
+    int vector_cols = 0;
+    int count_pairs = 0;
+
+    float** all_vectors = NULL;
+    float** pairsVector = NULL;
+    int* labels = NULL;
+
+    make_vectors(test_set, set_size, bow, &pairsVector, &all_vectors, &labels, &count_pairs, &vector_cols);
+
+    int* predicts = logistic_predict(model, pairsVector, count_pairs, vector_cols);
+    printf("\tAccuracy at test_set: %.4f\n", logistic_score(model, predicts, labels, count_pairs));
+
+        //  FREE MEM
+    while(count_pairs > 0){
+        free(pairsVector[--count_pairs]);
+    }
+
+    free(pairsVector);
+
+    int i = 0;
+    while(i < set_size){
+        free(all_vectors[i++]);
+    }
+    free(all_vectors);
+
+    free(predicts);
+    free(labels);
+}
+
+
+    // !!!! SPARS !!!!
+logM* make_model_spars(BoWords* bow, mySpec** train_set, int set_size){
+
+    // Signal handling
+    struct sigaction    act;
+    sigset_t            block_mask;
+    received_signal = 0;
+    sigemptyset(&(act.sa_mask));
+	act.sa_flags = 0;
+    act.sa_handler = sig_int_quit_handler;
+    sigemptyset(&block_mask);
+	sigaddset(&block_mask,SIGINT);
+	sigaddset(&block_mask,SIGQUIT);
+
+    // Create & init model
+    logM* model = logistic_create();
+
+    // Train_per_Spec
+    int check = train_per_spec_spars(train_set, set_size, bow, model);
+
+    // If a termination signal was recieved
+    if(received_signal == 1 || check == -1){
+        logistic_destroy(model);
+        return NULL;
+    }
+
+    return model;
+}
+
+float** make_it_spars(mySpec** set, int set_size, BoWords* bow, int* spars_size, int** labels, int* labels_size){
+    *spars_size = 0;
+    *labels_size = 0;
+    float** spars = NULL;
+    int row = 0;
+    int col = 0;
+
+    float*** all_spars = malloc(set_size*sizeof(float**));
+    int* all_spars_sizes = malloc(set_size*sizeof(int));
+    int i = 0;
+    while(i < set_size){
+        col = 0;
+        all_spars[i] = NULL;
+        all_spars_sizes[i] = 0;
+        bow_to_spars(bow, &all_spars[i], &all_spars_sizes[i], &row, &col, set[i]);
+        i++;
+    }
+
+    i = 0;
+    while(i<set_size){
+        int z = i + 1;
+        while(z < set_size){
+            if(all_spars[i] == NULL && all_spars[z] == NULL){
+                z++;
+                continue;           
+            }
+            int tag = isPair(set[i], set[z]);
+            if(tag != -1){
+                float** temp = spars_concat_col(all_spars[i], all_spars[z], all_spars_sizes[i], all_spars_sizes[z], bow->entries);
+                int temp_size = all_spars_sizes[z] + all_spars_sizes[i];
+                spars_concat_row(&spars, temp, spars_size, temp_size, row);
+
+                (*labels) = realloc((*labels), ((*labels_size)+1)*sizeof(int));
+                (*labels)[*labels_size] = tag;
+                (*labels_size) = (*labels_size) + 1;
+
+                row++;
+                while(temp_size > 0){
+                    free(temp[--temp_size]);
+                }
+                free(temp);
+            }
+            z++;
+        }
+        i++;
+    }
+    // printf("spars_size: %d\n", *spars_size);
+    // printf("s0 %.4f, %.4f, %.4f\n", spars[0][0], spars[0][1], spars[0][2]);
+    
+    int i1 = 0;
+    while(i1 < set_size){
+        int i2 = 0;
+        while(i2 < all_spars_sizes[i1]){
+            free(all_spars[i1][i2++]);
+        }
+        free(all_spars[i1++]);
+    }
+    free(all_spars);
+    free(all_spars_sizes);
+
+    return spars;
+}
+
+void print_spars(float** spars, int size){
+    int i = 0;
+    printf("spars_size: %d\n", size);
+    while(i < size){
+        printf("s%d [0]: %.4f, [1]: %.4f, [2]: %.4f\n", i, spars[i][0], spars[i][1], spars[i][2]);
+        i++;
+    }
 }
 
 float** spars_concat_col(float** spar1, float** spar2, int size1, int size2, int to_add){
@@ -1097,38 +1189,6 @@ int train_per_spec_spars(mySpec** train_set, int set_size, BoWords* bow, logM* m
 }
 
 
-void make_tests(BoWords* bow, logM* model, mySpec** test_set, int set_size){
-
-            //  Init values to pass
-    int vector_cols = 0;
-    int count_pairs = 0;
-
-    float** all_vectors = NULL;
-    float** pairsVector = NULL;
-    int* labels = NULL;
-
-    make_vectors(test_set, set_size, bow, &pairsVector, &all_vectors, &labels, &count_pairs, &vector_cols);
-
-    int* predicts = logistic_predict(model, pairsVector, count_pairs, vector_cols);
-    printf("\tAccuracy at test_set: %.4f\n", logistic_score(model, predicts, labels, count_pairs));
-
-        //  FREE MEM
-    while(count_pairs > 0){
-        free(pairsVector[--count_pairs]);
-    }
-
-    free(pairsVector);
-
-    int i = 0;
-    while(i < set_size){
-        free(all_vectors[i++]);
-    }
-    free(all_vectors);
-
-    free(predicts);
-    free(labels);
-}
-
 void make_tests_spars(BoWords* bow, logM* model, mySpec** test_set, int set_size){
 
         //  Init values to pass
@@ -1157,47 +1217,6 @@ void make_tests_spars(BoWords* bow, logM* model, mySpec** test_set, int set_size
     free(predicts);
 }
 
-void make_vectors(mySpec** set, int set_size, BoWords* bow, float*** pairsVector, float*** all_vectors, int** labels, int* count_pairs, int* vector_cols){
-        //  INIT PASSED VALUES IN CASE THEY ARE NOT !
-    *vector_cols = 0;
-    *pairsVector = NULL;
-    *labels = NULL;
-    *count_pairs = 0;
-    *all_vectors = NULL;
-
-        // Create vectors for all specs to be passed
-    *all_vectors = malloc(set_size*sizeof(float*));
-    int make_vectors = 0;
-    while(make_vectors < set_size){
-        (*all_vectors)[make_vectors] = vectorization(set[make_vectors], bow, vector_cols);
-        make_vectors++;
-    }
-
-
-        // Pass all specs by pairs (All with All (no doubles) )
-
-    int tag = -1;
-
-    int passed_specs = 0;
-    while(passed_specs < set_size){
-
-        int check_specs = passed_specs + 1;
-        while(check_specs < set_size){
-
-            tag = isPair(set[passed_specs], set[check_specs]);
-            if(tag != -1){
-                float* combined = concat_specVectors((*all_vectors)[passed_specs], (*all_vectors)[check_specs], *vector_cols);
-                *pairsVector = concat_pairsVectors(*pairsVector, combined, *count_pairs);
-                
-                *labels = concat_tags(*labels, tag, *count_pairs);
-                
-                (*count_pairs) += 1;
-            }
-            check_specs++;
-        }
-        passed_specs++;
-    }
-}
 
 int isPair(mySpec* spec1, mySpec* spec2){
             // CHECK IF THEY ARE IN THE SAME MATCH > RETURN 1
@@ -1227,45 +1246,187 @@ int isPair(mySpec* spec1, mySpec* spec2){
     return -1;
 }
 
-int* concat_tags(int* table, int tag, int size){
-    table = realloc(table, (size+1)*sizeof(int));
-    table[size] = tag;
-    return table;
+    // !!!! DATA_LIST !!!!
+logM* make_model_spars_list(BoWords* bow, mySpec** train_set, int set_size){
+
+    // Signal handling
+    struct sigaction    act;
+    sigset_t            block_mask;
+    received_signal = 0;
+    sigemptyset(&(act.sa_mask));
+	act.sa_flags = 0;
+    act.sa_handler = sig_int_quit_handler;
+    sigemptyset(&block_mask);
+	sigaddset(&block_mask,SIGINT);
+	sigaddset(&block_mask,SIGQUIT);
+
+    // Create & init model
+    logM* model = logistic_create();
+
+    // Train_per_Spec
+    int check = train_per_spec_spars_list(train_set, set_size, bow, model);
+
+    // If a termination signal was recieved
+    if(received_signal == 1 || check == -1){
+        logistic_destroy(model);
+        return NULL;
+    }
+
+    return model;
 }
 
-float* concat_specVectors(float* vec1, float* vec2, int size){
-        // find which is bigger
-    float sum1 = 0.0;
-    float sum2 = 0.0;
-    
+int train_per_spec_spars_list(mySpec** train_set, int set_size, BoWords* bow, logM* model){
+        // Signal handling
+    struct sigaction    act;
+    sigset_t            block_mask;
+    received_signal = 0;
+    sigemptyset(&(act.sa_mask));
+	act.sa_flags = 0;
+    act.sa_handler = sig_int_quit_handler;
+    sigemptyset(&block_mask);
+	sigaddset(&block_mask,SIGINT);
+	sigaddset(&block_mask,SIGQUIT);
+
+        //  Init values to pass
+    dataI* info_list = dataI_create(2*bow->entries);
+
+    make_it_spars_list(train_set, set_size, bow, info_list);
+
+    if(received_signal == 1){
+        //  FREE MEM;
+        dataI_destroy(info_list);
+        return -1;
+    }
+
+    // TRAIN MODEL
+    int check = logistic_fit_dataList(model, info_list);
+
+    if(received_signal == 1 || check == -1){
+        //  FREE MEM;
+        dataI_destroy(info_list);
+        return -1;
+    }
+
+    // PRINT STATS FOR TESTING
+    printf("\ttrained times: %d\n", model->trained_times);
+
+    //  FREE MEM
+    dataI_destroy(info_list);
+
+    return 0;
+}
+
+void make_it_spars_list(mySpec** set, int set_size, BoWords* bow, dataI* info_list){
+    int row = 0;
+    int col = 0;
+
+    float*** all_spars = malloc(set_size*sizeof(float**));
+    int* all_spars_sizes = malloc(set_size*sizeof(int));
+
+    // MAKE SPARS FOR EVERY SPEC
     int i = 0;
-    while(i < size){
-        sum1 += vec1[i];
-        sum2 += vec2[i];
+    while(i < set_size){
+        col = 0;
+        all_spars[i] = NULL;
+        all_spars_sizes[i] = 0;
+        bow_to_spars(bow, &all_spars[i], &all_spars_sizes[i], &row, &col, set[i]);
         i++;
     }
 
-    int place1 = 0;
-    int place2 = size;
-
-    if(sum1 < sum2){    //swap
-        place1 = size;
-        place2 = 0;
+    // FIND PAIRS AND CONCAT THEIR SPARS
+    i = 0;
+    while(i<set_size){
+        int z = i + 1;
+        while(z < set_size){
+            if(all_spars[i] == NULL && all_spars[z] == NULL){
+                z++;
+                continue;
+            }
+            int tag = isPair(set[i], set[z]);
+            if(tag != -1){
+                float** temp = spars_concat_col(all_spars[i], all_spars[z], all_spars_sizes[i], all_spars_sizes[z], bow->entries);
+                int temp_size = all_spars_sizes[z] + all_spars_sizes[i];
+                dataI_push(info_list, set[i], set[z], temp, temp_size, tag);
+            }
+            z++;
+        }
+        i++;
     }
+    // printf("spars_size: %d\n", *spars_size);
+    // printf("s0 %.4f, %.4f, %.4f\n", spars[0][0], spars[0][1], spars[0][2]);
+    
+    int i1 = 0;
+    while(i1 < set_size){
+        int i2 = 0;
+        while(i2 < all_spars_sizes[i1]){
+            free(all_spars[i1][i2++]);
+        }
+        free(all_spars[i1++]);
+    }
+    free(all_spars);
+    free(all_spars_sizes);
 
-    float* newVec = malloc(2*size*sizeof(float));
-
-    memcpy(&newVec[place1], vec1, size*sizeof(float));
-    memcpy(&newVec[place2], vec2, size*sizeof(float));
-
-    return newVec;
 }
 
-float** concat_pairsVectors(float** main_vec, float* to_add, int size){
-    main_vec = realloc(main_vec, (size+1)*sizeof(float*));
-    main_vec[size] = to_add;
+void make_tests_spars_list(BoWords* bow, logM* model, mySpec** test_set, int set_size){
+         // Signal handling
+    struct sigaction    act;
+    sigset_t            block_mask;
+    received_signal = 0;
+    sigemptyset(&(act.sa_mask));
+	act.sa_flags = 0;
+    act.sa_handler = sig_int_quit_handler;
+    sigemptyset(&block_mask);
+	sigaddset(&block_mask,SIGINT);
+	sigaddset(&block_mask,SIGQUIT);
 
-    return main_vec;
+        //  Init values to pass
+    dataI* info_list = dataI_create(2*bow->entries);
+
+    make_it_spars_list(test_set, set_size, bow, info_list);
+
+    if(received_signal == 1){
+        //  FREE MEM;
+        dataI_destroy(info_list);
+        return;
+    }
+
+    logistic_predict_proba_dataList(model, info_list);
+
+    // PRINT STATS FOR TESTING
+    printf("\tAccuracy at test_set: %.4f\n", logistic_score_dataList(model, info_list));
+
+    //  FREE MEM
+    dataI_destroy(info_list);
+
+}
+
+    // !!!! TRAIN_PER_CLIQUE
+
+logM** make_models_array(BoWords* bow, mySpec** set, matchesInfo* matches, int set_size){
+    
+    // make array
+    logM** modelsT = malloc(matches->entries*sizeof(logM*));
+
+    // train_per_clique
+    myMatches* clique = matches->head;
+    int i = 0;
+    while(clique != NULL){
+
+        modelsT[i] = logistic_create();
+        // if(i < 500){
+            train_per_clique(clique, set, set_size, bow, modelsT[i]);
+            
+            printf("Clique %d trained Succefully %d times !!\n", i, modelsT[i]->trained_times);
+        // }
+        i++;
+        clique = clique->next;
+
+    }
+
+    printf("Trained for %d different Matches Groups !!\n", i);
+
+    return modelsT;
 }
 
 void train_per_clique(myMatches* clique, mySpec** trainSet, int trainSize, BoWords* bow, logM* model){

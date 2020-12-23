@@ -329,6 +329,82 @@ void extractMatches(matchesInfo* allMatches, char* fname){
 
 }
 
+void extractNegatives(matchesInfo* allMatches, char* fname){
+
+	// int totalPairs = 0;		// count total pairs (just for fun)
+	int flag = 0;
+
+	// CHECK IF FNAME == NULL
+	// CASE 1: CREATE DIR AND FILE -> PRINT TO FILE
+	// CASE 2: PRINT TO STDOUT
+
+
+	FILE* fpout;
+	if(fname != NULL){
+		flag = 1;
+
+		int len = strlen(PATH) + 1 + strlen(fname) + 1;
+
+			// CHECK IF DIR ALREADY EXISTS - CREATE IT IF IT DOESNT
+			// !!!!! DIRS NAME IS DEFINED AT PATH !!
+
+		if(chdir(PATH) == -1){
+			if(mkdir(PATH, S_IRWXU|S_IRWXG|S_IROTH)){ 
+	    	  error(EXIT_FAILURE, errno, "Failed to create directory");
+	   		}
+	   	}
+	   	else{
+	   		chdir("..");
+	   	}
+
+		char* target = malloc(len);
+		memset(target, 0 , len);
+
+		strcat(target, PATH);
+		strcat(target, "/");
+		strcat(target, fname);
+
+			// CREATE FILE WITH NAME: FNAME INT TARGET DIR
+		fpout = fopen(target, "w+");
+
+		free(target);
+	}	
+	else{
+		fpout = stdout;
+	}
+		
+		// start printing
+
+	myMatches* tempMatches = allMatches->head;
+
+	while(tempMatches != NULL){
+		int printed = 0;
+		while(printed < tempMatches->specsCount){
+			nNode* neg = tempMatches->negs->head;
+			while(neg != NULL){
+				int neg_printed = 0;
+				while (neg_printed < neg->matchptr->specsCount){
+					fprintf(fpout, "%s, %s, 0\n", tempMatches->specsTable[printed]->specID, neg->matchptr->specsTable[neg_printed]->specID);
+					neg_printed++;
+				}
+				neg = neg->next;
+			}
+			printed++;
+		}
+		tempMatches = tempMatches->next;
+	}
+
+			// STATS PRINTS (EXTRA) - COMMENT IF U LIKE
+	// fprintf(fpout, "\t~ ~ ~ ~ ~ ~ ~ ~ ~ ~ ~ ~ ~ ~ ~ ~\n");
+	// fprintf(fpout, "Total Matches (Groups): %d\n", allMatches->entries);
+	// fprintf(fpout, "Total Pairs: %d\n", totalPairs);
+
+	if(flag == 1)
+		fclose(fpout);
+
+}
+
+
 void printMatchNeg(matchesInfo* info){
 	myMatches* temp = info->head;
 	int count = 0;

@@ -30,13 +30,18 @@ int main(int argc, char** argv){
     char*   path_W = strdup(DATASET_W);
 
     // ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~ READ ARGUMENTS
-    char* outputFile = NULL;
+    char* outputFileMatches = NULL;
+    char* outputFileNegs = NULL;
     if(argc != 0){
         int i = 0;
         while(i < argc){
             if(strcmp(argv[i], "-o") == 0){
                 if(argv[i+1] != NULL)
-                    outputFile = strdup(argv[i+1]);
+                    outputFileMatches = strdup(argv[i+1]);
+            }
+            else if(strcmp(argv[i], "-n") == 0){
+                if(argv[i+1] != NULL)
+                    outputFileNegs = strdup(argv[i+1]);
             }
             else if(strcmp(argv[i], "-labels") == 0 || strcmp(argv[i], "-l") == 0){
                 if(strcmp(argv[i+1], "medium") == 0 || strcmp(argv[i+1], "m") == 0){
@@ -88,7 +93,7 @@ int main(int argc, char** argv){
         printf("\nCleaning Memory ...\n");
 
         int* null = NULL;
-        FREE_MEM(path_X,path_W,outputFile,allMatches,hashT,null,null,null,null,null);
+        FREE_MEM(path_X,path_W,outputFileMatches,outputFileNegs,allMatches,hashT,null,null,null,null,null);
 
         printf("Exiting after receiving termination signal..\n");
         exit(-2);
@@ -100,7 +105,7 @@ int main(int argc, char** argv){
         printf("\nCleaning Memory ...\n");
 
         int* null = NULL;
-        FREE_MEM(path_X,path_W,outputFile,allMatches,hashT,null,null,null,null,null);
+        FREE_MEM(path_X,path_W,outputFileMatches,outputFileNegs,allMatches,hashT,null,null,null,null,null);
         exit(-3);
     }
 
@@ -112,7 +117,7 @@ int main(int argc, char** argv){
         printf("\nCleaning Memory ...\n");
 
         int* null = NULL;
-        FREE_MEM(path_X,path_W,outputFile,allMatches,hashT,null,null,null,null,null);
+        FREE_MEM(path_X,path_W,outputFileMatches,outputFileNegs,allMatches,hashT,null,null,null,null,null);
 
         closedir(datasetX);
 
@@ -135,7 +140,7 @@ int main(int argc, char** argv){
         printf("\nCleaning Memory ...\n");
 
         int* null = NULL;
-        FREE_MEM(path_X,path_W,outputFile,allMatches,hashT,null,null,null,null,null);
+        FREE_MEM(path_X,path_W,outputFileMatches,outputFileNegs,allMatches,hashT,null,null,null,null,null);
 
         if(check == 1)
             printf("Exiting after receiving termination signal..\n");
@@ -147,7 +152,8 @@ int main(int argc, char** argv){
     printf("       \t\t.. DONE !!\n");
 
     //~~~~~~~~~~~~~~~~~~~~~~ EXTARCT PAIRS
-    extractMatches(allMatches, outputFile);
+    extractMatches(allMatches, outputFileMatches);
+    extractNegatives(allMatches, outputFileNegs);
 
 // ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 // ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
@@ -172,7 +178,7 @@ int main(int argc, char** argv){
         printf("\nCleaning Memory ...\n");
 
         int* null = NULL;
-        FREE_MEM(path_X,path_W,outputFile,allMatches,hashT,trainSet,testSet,validSet,null,null);
+        FREE_MEM(path_X,path_W,outputFileMatches,outputFileNegs,allMatches,hashT,trainSet,testSet,validSet,null,null);
 
         if(received_signal == 1)
             printf("Exiting after receiving termination signal..\n");
@@ -203,7 +209,7 @@ int main(int argc, char** argv){
         printf("\nCleaning Memory ...\n");
 
         int* null = NULL;
-        FREE_MEM(path_X,path_W,outputFile,allMatches,hashT,trainSet,testSet,validSet,bow,null);
+        FREE_MEM(path_X,path_W,outputFileMatches,outputFileNegs,allMatches,hashT,trainSet,testSet,validSet,bow,null);
 
         printf("Exiting after receiving termination signal..\n");
         exit(-2);
@@ -214,7 +220,7 @@ int main(int argc, char** argv){
 // ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 // ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 
-    //~~~~~~~~~~~~~~~~~~~~~~ TEST TF-IDF
+    //~~~~~~~~~~~~~~~~~~~~~~ TF-IDF
     printf("\nApplying TF-IDF..\n");
     tfidf* mytf = tfidf_create();
     tfidf_set(mytf, -1, -1);    // (model, maxTexts, maxWords to scan)
@@ -226,7 +232,7 @@ int main(int argc, char** argv){
         printf("\nCleaning Memory ...\n");
 
         int* null = NULL;
-        FREE_MEM(path_X,path_W,outputFile,allMatches,hashT,trainSet,testSet,validSet,bow,null);
+        FREE_MEM(path_X,path_W,outputFileMatches,outputFileNegs,allMatches,hashT,trainSet,testSet,validSet,bow,null);
 
         printf("Exiting after receiving termination signal..\n");
         exit(-2);
@@ -247,7 +253,7 @@ int main(int argc, char** argv){
         printf("\nCleaning Memory ...\n");
 
         int* null = NULL;
-        FREE_MEM(path_X,path_W,outputFile,allMatches,hashT,trainSet,testSet,validSet,bow,null);
+        FREE_MEM(path_X,path_W,outputFileMatches,outputFileNegs,allMatches,hashT,trainSet,testSet,validSet,bow,null);
 
         printf("Exiting after receiving termination signal..\n");
         exit(-2);
@@ -262,13 +268,14 @@ int main(int argc, char** argv){
     printf("\nTraining Logistic Model ..\n");
     // logM** modelsT = make_models_array(bow, *trainSet, allMatches, trainSize);
     // logM* model = make_model_vec(bow, *trainSet, trainSize);
-    logM* model = make_model_spars(bow, trainSet, trainSize);
+    // logM* model = make_model_spars(bow, trainSet, trainSize);
+    logM* model = make_model_spars_list(bow, trainSet, trainSize);
 
     // Check for termination signal
     if(received_signal == 1 || model == NULL){
         printf("\nCleaning Memory ...\n");
 
-        FREE_MEM(path_X,path_W,outputFile,allMatches,hashT,trainSet,testSet,validSet,bow,model);
+        FREE_MEM(path_X,path_W,outputFileMatches,outputFileNegs,allMatches,hashT,trainSet,testSet,validSet,bow,model);
 
         printf("Exiting after receiving termination signal..\n");
         exit(-2);
@@ -283,13 +290,14 @@ int main(int argc, char** argv){
     printf("\nTesting Logistic Model ..\n");
 
     // make_tests(bow, model, *testSet, testSize);
-    make_tests_spars(bow, model, testSet, testSize);
+    // make_tests_spars(bow, model, testSet, testSize);
+    make_tests_spars_list(bow, model, testSet, testSize);
 
     // Check for termination signal
     if(received_signal == 1){
         printf("\nCleaning Memory ...\n");
 
-        FREE_MEM(path_X,path_W,outputFile,allMatches,hashT,trainSet,testSet,validSet,bow,model);
+        FREE_MEM(path_X,path_W,outputFileMatches,outputFileNegs,allMatches,hashT,trainSet,testSet,validSet,bow,model);
 
         printf("Exiting after receiving termination signal..\n");
         exit(-2);
@@ -325,7 +333,7 @@ printf("All matches: %d\n", allMatches->entries);
     //~~~~~~~~~~~~~~~~~~~~~~ FREE MEM
     printf("\nCleaning Memory...\n");
 
-    FREE_MEM(path_X,path_W,outputFile,allMatches,hashT,trainSet,testSet,validSet,bow,model);
+    FREE_MEM(path_X,path_W,outputFileMatches,outputFileNegs,allMatches,hashT,trainSet,testSet,validSet,bow,model);
 
     printf("       \t\t.. DONE !!\n\n");
 
