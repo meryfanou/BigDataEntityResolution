@@ -11,8 +11,8 @@
 #include "../include/boWords.h"
 #include "../include/logistic.h"
 
-#define DATASET_X "../camera_specs/2013_camera_specs/"
-#define DATASET_W "../sigmod_large_labelled_dataset.csv"
+#define DATASET_X "../small_specs/2013_camera_specs/"
+#define DATASET_W "../sigmod_medium_labelled_dataset.csv"
 
 #define HASH_SIZE 200
 #define BUC_SIZE 100
@@ -268,8 +268,8 @@ int main(int argc, char** argv){
     printf("\nTraining Logistic Model ..\n");
     // logM** modelsT = make_models_array(bow, *trainSet, allMatches, trainSize);
     // logM* model = make_model_vec(bow, *trainSet, trainSize);
-    // logM* model = make_model_spars(bow, trainSet, trainSize);
-    logM* model = make_model_spars_list(bow, trainSet, trainSize);
+    logM* model = make_model_spars(bow, trainSet, trainSize);
+    // logM* model = make_model_spars_list(bow, trainSet, trainSize);
 
     // Check for termination signal
     if(received_signal == 1 || model == NULL){
@@ -290,8 +290,8 @@ int main(int argc, char** argv){
     printf("\nTesting Logistic Model ..\n");
 
     // make_tests(bow, model, *testSet, testSize);
-    // make_tests_spars(bow, model, testSet, testSize);
-    make_tests_spars_list(bow, model, testSet, testSize);
+    make_tests_spars(bow, model, testSet, testSize);
+    // make_tests_spars_list(bow, model, testSet, testSize);
 
     // Check for termination signal
     if(received_signal == 1){
@@ -313,6 +313,8 @@ int main(int argc, char** argv){
 
 // ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 // ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+
+    all_with_all_gamwtokeratomoumesa(hashT, model, bow);
 
 
 // ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~

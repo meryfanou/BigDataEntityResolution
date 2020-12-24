@@ -55,7 +55,7 @@ logM* make_model_spars(BoWords*, mySpec**, int);
 	// !! spars list
 logM* make_model_spars_list(BoWords*, mySpec**, int);
 int train_per_spec_spars_list(mySpec**, int, BoWords*, logM*);
-void make_it_spars_list(mySpec**, int, BoWords*, dataI*);
+void make_it_spars_list(mySpec**, int, BoWords*, dataI*, int);
 
 int isPair(mySpec*, mySpec*);
 
@@ -71,6 +71,10 @@ void make_tests_spars_list(BoWords*, logM*, mySpec**, int);
 /* NOT USED */
 void train_per_clique(myMatches*, mySpec**, int, BoWords*, logM*);
 logM** make_models_array(BoWords*, mySpec**, matchesInfo*, int);
+
+
+void all_with_all_gamwtokeratomoumesa(hashTable*, logM*, BoWords*);
+record* get_me_next(hashTable*, int, bucket*, record*);
 
 // ~~~~~~~~~~~~~~~~ SIGNALS ~~~~~~~~~~~~~~~~
 

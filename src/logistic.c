@@ -220,6 +220,7 @@ int logistic_regression_spars(logM* model, float** spars, int spars_size, int* t
 
             // 1. Build predicts table
         float* predicts = logistic_predict_proba_spars(model, spars, spars_size, dimensions, tags_size);
+        printf("PREDICTS ..\n");
 
             // 2. Calc weights
                 // 2.1 Build Missed Table
@@ -233,7 +234,6 @@ int logistic_regression_spars(logM* model, float** spars, int spars_size, int* t
                 free(missed_by);
                 return -1;
             }
-
             missed_by[i] = predicts[i] - (float) tags[i];
             if(missed_by[i]> 0)
                 b_grad += missed_by[i];
@@ -241,10 +241,11 @@ int logistic_regression_spars(logM* model, float** spars, int spars_size, int* t
                 b_grad += -1.0*missed_by[i];
             i++;
         }
-
+        printf("MISSED ..\n");
         b_grad /= (float) i;
 
                 // 2.2 Calc Grad - PER WEIGHT !!!
+                int mytime = 0;
         float* grad = malloc((dimensions+1)*sizeof(float));
         grad[0] = b_grad;
 
@@ -268,10 +269,10 @@ int logistic_regression_spars(logM* model, float** spars, int spars_size, int* t
                     free(grad);
                     return -1;
                 }
-
+                mytime++;
                 if(spars[x][1] == (float) y){
                     magic_num += spars[x][2] * missed_by[(int)spars[x][0]];
-                    break;
+                    // break;
                 }
                 x++;
             }
@@ -284,12 +285,12 @@ int logistic_regression_spars(logM* model, float** spars, int spars_size, int* t
             grad[1+y] = magic_num;
             y++;
         }
-
+        printf("GRADS .. time: %d\n", mytime);
             // 3 Update Weights
         weights_update(model->finalWeights, grad, dimensions);
         limit = active_mean(missed_by, tags_size);
         model->trained_times++;
-
+        printf("WEIGHTS ..\n");
         // ΜAX ITERATIONS
         if(model->trained_times > 1)
             limit = 0.0;
@@ -307,7 +308,7 @@ int logistic_regression_spars(logM* model, float** spars, int spars_size, int* t
     // TESTS
     // weights_print(model->finalWeights);
    
-   weights_print(model->finalWeights);
+//    weights_print(model->finalWeights);
 
     int* final_predicts = logistic_predict_spars(model, spars, spars_size, dimensions, tags_size);
     printf("\tScore after train: %.4f\n", logistic_score(model, final_predicts, tags, tags_size));
@@ -343,7 +344,7 @@ int logistic_regression_dataList(logM* model, dataI* info){
 
             // 1. Make Predicts
         logistic_predict_proba_dataList(model, info);
-
+        // printf("PREDICTS ..\n");
             // 2. Calc weights
                 // 2.1 Build Missed Table
         float b_grad = 0.0;
@@ -366,9 +367,10 @@ int logistic_regression_dataList(logM* model, dataI* info){
             i++;
         }
         dataI_rewind_pop(info);
-
+        // printf("MISSED ..\n");
         b_grad /= (float) i;
 
+        int mytime = 0;
                 // 2.2 Calc Grad - PER WEIGHT !!!
         float* grad = malloc((info->dimensions+1)*sizeof(float));
         grad[0] = b_grad;
@@ -398,6 +400,7 @@ int logistic_regression_dataList(logM* model, dataI* info){
 
                 int x = 0;
                 while(x < to_train->spars_size){
+                    mytime++;
                     if(to_train->spars[x][1] == (float) y){
                         magic_num += to_train->spars[x][2] *missed_by[count_trained];
                         break;
@@ -411,11 +414,11 @@ int logistic_regression_dataList(logM* model, dataI* info){
             y++;
             dataI_rewind_pop(info);
         }
-
+        // printf("GRDAS .. time: %d\n", mytime);
             // 3 Update Weights
         weights_update(model->finalWeights, grad, info->dimensions);
         limit = active_mean(missed_by, info->all_pairs);
-
+        // printf("WEIGHTS ..\n");
         model->trained_times++;
 
         // ΜAX ITERATIONS
@@ -668,59 +671,6 @@ void logistic_overfit_dataList(logM* model, dataI* info){
     printf("\tnew thrshold: %.4f\n", model->finalWeights->threshold);
 
 }
-
-// void logistic_print_strong(logM* model, float* probs, int size){
-//     if(chdir(PATH) == -1){
-//         if(mkdir(PATH, S_IRWXU|S_IRWXG|S_IROTH)){ 
-//             error(EXIT_FAILURE, errno, "Failed to create directory");
-//         }
-//    	}
-//    	else{
-//    		chdir("..");
-//    	}
-    
-//     int len1 = strlen(PATH)+ strlen(FILE_OUT_POSITIVES) + 2;
-//     int len0 = strlen(PATH)+ strlen(FILE_OUT_NEGATIVES) + 2;
-//     char* target1 = malloc(len1);
-//     char* target0 = malloc(len0);
-
-//     memset(target1, 0, len1);
-//     memset(target0, 0, len0);
-
-//     strcat(target1, PATH);
-//     strcat(target1, "/");
-//     strcat(target1, FILE_OUT_POSITIVES);
-
-//     strcat(target0, PATH);
-//     strcat(target0, "/");
-//     strcat(target0, FILE_OUT_NEGATIVES);
-   
-//     FILE* fpout1 = NULL;
-//     FILE* fpout0 = NULL;
-
-//     fpout1 = fopen(target1, "w");
-//     fpout0 = fopen(target0, "w");
-
-//     if(fpout1 == NULL || fpout0 == NULL){
-//         printf("Error ~ Can't create Files .logistic_pint_strong\n");
-//         free(target1);
-//         free(target0);
-//         return;
-//     }
-
-//     float limit1 = 1.0 - ( (1.0 - model->finalWeights->threshold) / 3.0 );
-//     float limit0 = 0.0 + ( (0.0 + model->finalWeights->threshold) / 3.0 );
-
-//     int i = 0;
-//     while(i < size){
-//         if(probs[i] >= limit1)
-//             fprintf(fpout1, "")
-//     }
-
-
-//     fclose(fpout0);
-//     fclose(fpout1);
-// }
 
 // ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 // ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~

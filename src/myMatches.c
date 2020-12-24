@@ -307,22 +307,22 @@ void extractMatches(matchesInfo* allMatches, char* fname){
 
 				int inside = printed + 1;
 				while(inside < tempMatches->specsCount){
-					fprintf(fpout, "%s, %s\n", tempMatches->specsTable[printed]->specID, tempMatches->specsTable[inside]->specID);
+					fprintf(fpout, "%s, %s, 1\n", tempMatches->specsTable[printed]->specID, tempMatches->specsTable[inside]->specID);
 
 					inside++;
 					totalPairs++;
 				}
 				printed++;
 			}
-			fprintf(fpout, "\n\t~ ~ ~ ~ ~ ~ ~ ~ ~ ~ ~ ~ ~ ~ ~ ~\n\n");
+			// fprintf(fpout, "\n\t~ ~ ~ ~ ~ ~ ~ ~ ~ ~ ~ ~ ~ ~ ~ ~\n\n");
 		}
 		tempMatches = tempMatches->next;
 	}
 
 			// STATS PRINTS (EXTRA) - COMMENT IF U LIKE
-	fprintf(fpout, "\t~ ~ ~ ~ ~ ~ ~ ~ ~ ~ ~ ~ ~ ~ ~ ~\n");
-	fprintf(fpout, "Total Matches (Groups): %d\n", allMatches->entries);
-	fprintf(fpout, "Total Pairs: %d\n", totalPairs);
+	// fprintf(fpout, "\t~ ~ ~ ~ ~ ~ ~ ~ ~ ~ ~ ~ ~ ~ ~ ~\n");
+	// fprintf(fpout, "Total Matches (Groups): %d\n", allMatches->entries);
+	// fprintf(fpout, "Total Pairs: %d\n", totalPairs);
 
 	if(flag == 1)
 		fclose(fpout);

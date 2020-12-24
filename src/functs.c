@@ -4,11 +4,17 @@
 #include <dirent.h>
 #include <signal.h>
 #include <ctype.h>
+#include <sys/stat.h>
+#include <errno.h>
+#include <error.h>
+#include <unistd.h>
 #include "../include/functs.h"
 #include "../include/mySpec.h"
 #include "../include/myHash.h"
 #include "../include/boWords.h"
 #include "../include/mbh.h"
+
+#define PATH "./Outputs"
 
 int received_signal = 0;
 
@@ -1290,7 +1296,7 @@ int train_per_spec_spars_list(mySpec** train_set, int set_size, BoWords* bow, lo
         //  Init values to pass
     dataI* info_list = dataI_create(2*bow->entries);
 
-    make_it_spars_list(train_set, set_size, bow, info_list);
+    make_it_spars_list(train_set, set_size, bow, info_list, 1);
 
     if(received_signal == 1){
         //  FREE MEM;
@@ -1316,7 +1322,7 @@ int train_per_spec_spars_list(mySpec** train_set, int set_size, BoWords* bow, lo
     return 0;
 }
 
-void make_it_spars_list(mySpec** set, int set_size, BoWords* bow, dataI* info_list){
+void make_it_spars_list(mySpec** set, int set_size, BoWords* bow, dataI* info_list, int use_tag){
     int row = 0;
     int col = 0;
 
@@ -1343,7 +1349,8 @@ void make_it_spars_list(mySpec** set, int set_size, BoWords* bow, dataI* info_li
                 continue;
             }
             int tag = isPair(set[i], set[z]);
-            if(tag != -1){
+            if((use_tag == 1 && tag != -1 ) || use_tag == -1){
+
                 float** temp = spars_concat_col(all_spars[i], all_spars[z], all_spars_sizes[i], all_spars_sizes[z], bow->entries);
                 int temp_size = all_spars_sizes[z] + all_spars_sizes[i];
                 dataI_push(info_list, set[i], set[z], temp, temp_size, tag);
@@ -1383,7 +1390,7 @@ void make_tests_spars_list(BoWords* bow, logM* model, mySpec** test_set, int set
         //  Init values to pass
     dataI* info_list = dataI_create(2*bow->entries);
 
-    make_it_spars_list(test_set, set_size, bow, info_list);
+    make_it_spars_list(test_set, set_size, bow, info_list, 1);
 
     if(received_signal == 1){
         //  FREE MEM;
@@ -1480,6 +1487,127 @@ void train_per_clique(myMatches* clique, mySpec** trainSet, int trainSize, BoWor
     free(labels);
 
 }
+
+
+void all_with_all_gamwtokeratomoumesa(hashTable* hashT, logM* model, BoWords* bow){
+             // Signal handling
+    struct sigaction    act;
+    sigset_t            block_mask;
+    received_signal = 0;
+    sigemptyset(&(act.sa_mask));
+	act.sa_flags = 0;
+    act.sa_handler = sig_int_quit_handler;
+    sigemptyset(&block_mask);
+	sigaddset(&block_mask,SIGINT);
+	sigaddset(&block_mask,SIGQUIT);
+    
+    dataI* info_list = dataI_create(2*bow->entries);
+
+    FILE* fpout = NULL;
+
+    int len = strlen(PATH) + 1 + strlen("strong_matches_DEF") + 1;
+
+			// CHECK IF DIR ALREADY EXISTS - CREATE IT IF IT DOESNT
+			// !!!!! DIRS NAME IS DEFINED AT PATH !!
+
+    if(chdir(PATH) == -1){
+        if(mkdir(PATH, S_IRWXU|S_IRWXG|S_IROTH)){ 
+            error(EXIT_FAILURE, errno, "Failed to create directory");
+        }
+    }
+    else{
+        chdir("..");
+    }
+
+    char* target = malloc(len);
+    memset(target, 0 , len);
+
+    strcat(target, PATH);
+    strcat(target, "/");
+    strcat(target, "strong_matches_DEF");
+
+        // CREATE FILE WITH NAME: FNAME INT TARGET DIR
+    fpout = fopen(target, "w+");
+
+    free(target);
+
+    mySpec** specA = malloc(2*sizeof(mySpec));
+    int cur_i = 0;
+    while(cur_i < hashT->tableSize){
+        printf("cur_cell: %d from: %d\n", cur_i , hashT->tableSize);
+        if(received_signal == 1){
+            free(specA);
+            fclose(fpout);
+        }
+        bucket* tempBuc = hashT->myTable[cur_i];
+
+        while(tempBuc != NULL){
+            if(received_signal == 1){
+                free(specA);
+                fclose(fpout);
+            }
+            record* tempRec = tempBuc->rec;
+            record* keep_next_rec = NULL;
+            bucket* keep_next_buc = NULL;
+            
+            while(tempRec != NULL){
+                if(received_signal == 1){
+                    free(specA);
+                    fclose(fpout);
+                }
+                specA[0] = tempRec->spec;
+                keep_next = get_me_next(hashT, cur_i, tempBuc, tempRec);
+                while(keep_next != NULL){
+                    specA[1] = keep_next->spec;
+                    if(received_signal == 1){
+                        free(specA);
+                        fclose(fpout);
+                    }
+                    make_it_spars_list(specA, 2, bow, info_list, -1);
+                    logistic_predict_proba_dataList(model, info_list);
+
+                    // printf("Entries: %d\n", info_list->all_pairs);
+
+                    if(info_list->head->predict == 0){
+                        if(info_list->head->proba - info_list->head->predict <= 0.03)
+                            fprintf(fpout, "%s, %s, %d\n", specA[0]->specID, specA[1]->specID, info_list->head->predict);
+                    }
+                    else{
+                        if(info_list->head->predict - info_list->head->proba >= 0.07)
+                            fprintf(fpout, "%s, %s, %d\n", specA[0]->specID, specA[1]->specID, info_list->head->predict);
+                    }
+
+                    keep_next = get_me_next(hashT, cur_i, tempBuc, keep_next);
+                    dataN_destroy(info_list, info_list->head);
+
+                    // free(specA);
+                    // fclose(fpout);
+
+                    // return;
+                }
+                tempRec = tempRec->next;
+            }
+            tempBuc = tempBuc->next;
+        }
+        cur_i++;
+    }
+    free(specA);
+    fclose(fpout);
+}
+
+record* get_me_next(hashTable* hashT, int cur_buc, bucket* buc, record* rec){
+    if(rec->next != NULL){
+        return rec->next;
+    }
+    else if(buc->next != NULL){
+        return buc->next->rec;
+    }
+    else if(cur_buc < hashT->tableSize-1){
+        return hashT->myTable[cur_buc+1]->rec;
+    }
+    return NULL;
+}
+
 
 // ~~~~~~~~~~~~~~~~~~~~~~~~ SIGNALS ~~~~~~~~~~~~~~~~~~~~~~~~~~
 
