@@ -268,8 +268,8 @@ int main(int argc, char** argv){
     printf("\nTraining Logistic Model ..\n");
     // logM** modelsT = make_models_array(bow, *trainSet, allMatches, trainSize);
     // logM* model = make_model_vec(bow, *trainSet, trainSize);
-    logM* model = make_model_spars(bow, trainSet, trainSize);
-    // logM* model = make_model_spars_list(bow, trainSet, trainSize);
+    // logM* model = make_model_spars(bow, trainSet, trainSize);
+    logM* model = make_model_spars_list(bow, trainSet, trainSize);
 
     // Check for termination signal
     if(received_signal == 1 || model == NULL){
@@ -314,7 +314,7 @@ int main(int argc, char** argv){
 // ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 // ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 
-    // all_with_all_gamwtokeratomoumesa(hashT, model, bow);
+    all_with_all_gamwtokeratomoumesa(hashT, model, bow);
 
 
 // ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~

@@ -74,7 +74,7 @@ logM** make_models_array(BoWords*, mySpec**, matchesInfo*, int);
 
 
 void all_with_all_gamwtokeratomoumesa(hashTable*, logM*, BoWords*);
-record* get_me_next(hashTable*, int, bucket*, record*);
+record* get_me_next(hashTable*, int*, bucket**, record**);
 
 // ~~~~~~~~~~~~~~~~ SIGNALS ~~~~~~~~~~~~~~~~
 

@@ -1507,9 +1507,6 @@ void all_with_all_gamwtokeratomoumesa(hashTable* hashT, logM* model, BoWords* bo
 
     int len = strlen(PATH) + 1 + strlen("strong_matches_DEF") + 1;
 
-			// CHECK IF DIR ALREADY EXISTS - CREATE IT IF IT DOESNT
-			// !!!!! DIRS NAME IS DEFINED AT PATH !!
-
     if(chdir(PATH) == -1){
         if(mkdir(PATH, S_IRWXU|S_IRWXG|S_IROTH)){ 
             error(EXIT_FAILURE, errno, "Failed to create directory");
@@ -1538,6 +1535,7 @@ void all_with_all_gamwtokeratomoumesa(hashTable* hashT, logM* model, BoWords* bo
         if(received_signal == 1){
             free(specA);
             fclose(fpout);
+            return;
         }
         bucket* tempBuc = hashT->myTable[cur_i];
 
@@ -1545,23 +1543,30 @@ void all_with_all_gamwtokeratomoumesa(hashTable* hashT, logM* model, BoWords* bo
             if(received_signal == 1){
                 free(specA);
                 fclose(fpout);
+                return;
             }
             record* tempRec = tempBuc->rec;
-            record* keep_next_rec = NULL;
-            bucket* keep_next_buc = NULL;
+
             
             while(tempRec != NULL){
                 if(received_signal == 1){
                     free(specA);
                     fclose(fpout);
+                    return;
                 }
+
+                record* keep_next_rec = tempRec;
+                bucket* keep_next_buc = tempBuc;
+                int keep_next_i = cur_i;
+
                 specA[0] = tempRec->spec;
-                keep_next = get_me_next(hashT, cur_i, tempBuc, tempRec);
-                while(keep_next != NULL){
-                    specA[1] = keep_next->spec;
+                keep_next_rec = get_me_next(hashT, &keep_next_i, &keep_next_buc, &keep_next_rec);
+                while(keep_next_rec != NULL){
+                    specA[1] = keep_next_rec->spec;
                     if(received_signal == 1){
                         free(specA);
                         fclose(fpout);
+                        return;
                     }
                     make_it_spars_list(specA, 2, bow, info_list, -1);
                     logistic_predict_proba_dataList(model, info_list);
@@ -1577,7 +1582,7 @@ void all_with_all_gamwtokeratomoumesa(hashTable* hashT, logM* model, BoWords* bo
                             fprintf(fpout, "%s, %s, %d\n", specA[0]->specID, specA[1]->specID, info_list->head->predict);
                     }
 
-                    keep_next = get_me_next(hashT, cur_i, tempBuc, keep_next);
+                    keep_next_rec = get_me_next(hashT, &keep_next_i, &keep_next_buc, &keep_next_rec);
                     dataN_destroy(info_list, info_list->head);
 
                     // free(specA);
@@ -1595,19 +1600,26 @@ void all_with_all_gamwtokeratomoumesa(hashTable* hashT, logM* model, BoWords* bo
     fclose(fpout);
 }
 
-record* get_me_next(hashTable* hashT, int cur_buc, bucket* buc, record* rec){
-    if(rec->next != NULL){
-        return rec->next;
+record* get_me_next(hashTable* hashT, int* cur_buc, bucket** buc, record** rec){
+    if((*rec)->next != NULL){
+        return (*rec)->next;
     }
-    else if(buc->next != NULL){
-        return buc->next->rec;
+    else if((*buc)->next != NULL){
+        (*buc) = (*buc)->next;
+        return (*buc)->rec;
     }
-    else if(cur_buc < hashT->tableSize-1){
-        return hashT->myTable[cur_buc+1]->rec;
+    else if(*cur_buc < hashT->tableSize-1){
+        (*cur_buc) += 1;
+        (*buc) = hashT->myTable[(*cur_buc)];
+        while((*buc) == NULL && (*cur_buc) < hashT->tableSize-1){
+            (*cur_buc) += 1;
+            (*buc) = hashT->myTable[(*cur_buc)];
+        }
+        // printf("entries: %d\n", hashT->myTable[(*cur_buc)]->cur);
+        return hashT->myTable[(*cur_buc)]->rec;
     }
     return NULL;
 }
-
 
 // ~~~~~~~~~~~~~~~~~~~~~~~~ SIGNALS ~~~~~~~~~~~~~~~~~~~~~~~~~~
 
