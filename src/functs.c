@@ -1593,6 +1593,14 @@ void one_with_all(hashTable* hashT, logM* model, BoWords* bow, record* rec, buck
     int keep_next_i = cur_cell;
 
     FILE* fpout = fopen(target, "a");
+    if(fpout == NULL){
+        printf("Error !! Cant Open Output File ~ one_with_all\n");
+        return;
+    }
+
+    // pthread_mutex_lock(&mtx_print);
+    // printf("cell: %d\n", cur_cell);
+    // pthread_mutex_unlock(&mtx_print);
 
     dataI* info_list = dataI_create(2*bow->entries);
     mySpec** specA = malloc(2*sizeof(mySpec*));
@@ -1608,10 +1616,19 @@ void one_with_all(hashTable* hashT, logM* model, BoWords* bow, record* rec, buck
         make_it_spars_list(specA, 2, bow, info_list, -1);
         logistic_predict_proba_dataList(model, info_list);
 
+        if(info_list->all_pairs == 0){
+            // pthread_mutex_lock(&mtx_print);
+            // printf("SKATA\n");
+            // pthread_mutex_unlock(&mtx_print);
+            keep_next_rec = get_me_next(hashT, &keep_next_i, &keep_next_buc, &keep_next_rec);
+            continue;
+        }
+
         // printf("Entries: %d\n", info_list->all_pairs);
 
         if(info_list->head->predict == 0){
             if(info_list->head->proba - info_list->head->predict <= 0.1){
+                // printf("ekana print\n");
                 pthread_mutex_lock(&mtx_print);
                 fseek(fpout, 0, SEEK_END);
                 fprintf(fpout, "%s, %s, %d\n", specA[0]->specID, specA[1]->specID, info_list->head->predict);
@@ -1620,6 +1637,7 @@ void one_with_all(hashTable* hashT, logM* model, BoWords* bow, record* rec, buck
         }
         else{
             if(info_list->head->predict - info_list->head->proba <= 0.1){
+                // printf("ekana print\n");
                 pthread_mutex_lock(&mtx_print);
                 fseek(fpout, 0, SEEK_END);
                 fprintf(fpout, "%s, %s, %d\n", specA[0]->specID, specA[1]->specID, info_list->head->predict);
