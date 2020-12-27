@@ -659,11 +659,18 @@ void logistic_overfit_dataList(logM* model, dataI* info){
     }
 
     float rate = 0.0;
-    if(model->fit1 > model->fit0)
-        rate = (float)model->fit1 / (float)model->fit0;
-    else
-        rate = -1.0* (float)model->fit0 / (float)model->fit1;
-    
+    if(model->fit1 > model->fit0){
+        if(model->fit0 == 0)
+            rate = 100.0;
+        else
+            rate = (float)model->fit1 / (float)model->fit0;
+    }
+    else{
+        if(model->fit1 == 0)
+            rate = -100.0;
+        else
+            rate = -1.0* (float)model->fit0 / (float)model->fit1;
+    }
     
     model->finalWeights->threshold += (model->finalWeights->threshold/rate) * model->finalWeights->threshold;
 

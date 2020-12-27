@@ -1533,7 +1533,7 @@ void all_with_all_gamwtokeratomoumesa(hashTable* hashT, logM* model, BoWords* bo
     while(cur_i < hashT->tableSize){
         // printf("cur_cell: %d from: %d\n", cur_i , hashT->tableSize);
         if(received_signal == 1)
-            return;
+            break;
 
         t_Info* myInfo = malloc(sizeof(t_Info));
         myInfo->bow = bow;
@@ -1544,6 +1544,7 @@ void all_with_all_gamwtokeratomoumesa(hashTable* hashT, logM* model, BoWords* bo
 
         // FOR EVERY CELL OF THE HASH_TABLE CREATE A THREAD
         pthread_create(&threads->t_Nums[cur_i], NULL, &all_with_all_ThreadsStart, myInfo);
+        threads->active++;
         // pthread_detach(threads->t_Nums[cur_i]);
 
         cur_i++;
@@ -1551,6 +1552,7 @@ void all_with_all_gamwtokeratomoumesa(hashTable* hashT, logM* model, BoWords* bo
 
     // sleep(5);
     myThreads_Destroy(threads);
+    pthread_mutex_destroy(&mtx_print);
     free(target);
 }
 
@@ -1611,13 +1613,15 @@ void one_with_all(hashTable* hashT, logM* model, BoWords* bow, record* rec, buck
         if(info_list->head->predict == 0){
             if(info_list->head->proba - info_list->head->predict <= 0.1){
                 pthread_mutex_lock(&mtx_print);
+                fseek(fpout, 0, SEEK_END);
                 fprintf(fpout, "%s, %s, %d\n", specA[0]->specID, specA[1]->specID, info_list->head->predict);
                 pthread_mutex_unlock(&mtx_print);
             }
         }
         else{
-            if(info_list->head->predict - info_list->head->proba <= 0.5){
+            if(info_list->head->predict - info_list->head->proba <= 0.1){
                 pthread_mutex_lock(&mtx_print);
+                fseek(fpout, 0, SEEK_END);
                 fprintf(fpout, "%s, %s, %d\n", specA[0]->specID, specA[1]->specID, info_list->head->predict);
                 pthread_mutex_unlock(&mtx_print);
            

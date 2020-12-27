@@ -24,7 +24,7 @@ myThreads* myThreads_Init(int tNum){
 	myThreads* newT = malloc(sizeof(myThreads));
 	
 	newT->t_Nums = malloc(tNum*sizeof(pthread_t));
-	newT->count = 0;
+	newT->active = 0;
 	newT->size = tNum;
 
 	return newT;
@@ -32,22 +32,18 @@ myThreads* myThreads_Init(int tNum){
 
 void myThreads_Destroy(myThreads* threads){
 	void* res;
-	// int i = 0;
-
-	// // while(i < threads->count){
-	// // 	printf("mphkes\n");
-	// // 	pthread_join(threads->t_Nums[i++],NULL);
-	// // }
 
 	int i = 0;
-	while(threads->size > 0){
-		i = threads->size-1;
+	while(threads->active > 0){
+		i = threads->active-1;
 		if(pthread_join(threads->t_Nums[i], &res) == 0){
+
 			// printf("joined: %d\n", i);
 			// pthread_detach(threads->t_Nums[i]);
 			// pthread_cancel(threads->t_Nums[i]);
+
 			free(res);
-			threads->size--;
+			threads->active--;
 		}
 	}
 
@@ -63,11 +59,11 @@ void myThreads_MASSACRE(myThreads* threads){
 	int i = 0;
 
 	i = 0;
-	while(threads->count > 0){
-		i = threads->count-1;
+	while(threads->active > 0){
+		i = threads->active-1;
 
 		pthread_cancel(threads->t_Nums[i]);
-		threads->count--;
+		threads->active--;
 		
 	}
 

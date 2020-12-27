@@ -10,7 +10,7 @@ typedef struct t_Info t_Info;
 
 struct myThreads{
 	pthread_t* t_Nums;
-	int count;
+	int active;
 	int size;
 };
 
