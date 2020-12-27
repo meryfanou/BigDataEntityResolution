@@ -14,7 +14,7 @@
 #define DATASET_X "../camera_specs/2013_camera_specs/"
 #define DATASET_W "../sigmod_large_labelled_dataset.csv"
 
-#define HASH_SIZE 200
+#define HASH_SIZE 500
 #define BUC_SIZE 100
 
 #define TRAIN_PERC 0.6
@@ -357,7 +357,11 @@ int main(int argc, char** argv){
 // ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 // ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 
-    // all_with_all_gamwtokeratomoumesa(hashT, model, bow);
+    // ΔΟΚΙΜΑΣΕ ΜΕ ΑΥΤΑ ΑΝ ΚΑΝΕΙΣ ΣΟΧΛΙΑ ΤΑ ΑΠΟ ΠΑΝΩ !!!!!!!!!
+    // logM* model = logistic_create();
+    // weights_set(model->finalWeights, 2*bow->entries);
+    // model->weights_count = 2*bow->entries;
+    all_with_all_gamwtokeratomoumesa(hashT, model, bow);
 
 // ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 // ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~

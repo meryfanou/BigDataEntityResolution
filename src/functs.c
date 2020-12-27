@@ -8,6 +8,7 @@
 #include <errno.h>
 #include <error.h>
 #include <unistd.h>
+#include <pthread.h>
 #include "../include/functs.h"
 #include "../include/mySpec.h"
 #include "../include/myHash.h"
@@ -17,6 +18,8 @@
 #define PATH "./Outputs"
 
 int received_signal = 0;
+
+pthread_mutex_t mtx_print = PTHREAD_MUTEX_INITIALIZER;
 
 // ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~ READ DATA ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 
@@ -1566,10 +1569,6 @@ void all_with_all_gamwtokeratomoumesa(hashTable* hashT, logM* model, BoWords* bo
     sigemptyset(&block_mask);
 	sigaddset(&block_mask,SIGINT);
 	sigaddset(&block_mask,SIGQUIT);
-    
-    dataI* info_list = dataI_create(2*bow->entries);
-
-    FILE* fpout = NULL;
 
     int len = strlen(PATH) + 1 + strlen("strong_matches_DEF") + 1;
 
@@ -1590,83 +1589,122 @@ void all_with_all_gamwtokeratomoumesa(hashTable* hashT, logM* model, BoWords* bo
     strcat(target, "strong_matches_DEF");
 
         // CREATE FILE WITH NAME: FNAME INT TARGET DIR
-    fpout = fopen(target, "w+");
+    FILE* fpout = NULL;
+    fpout = fopen(target, "w");
+    fclose(fpout);
+    
+    myThreads* threads = myThreads_Init(hashT->tableSize);
 
-    free(target);
-
-    mySpec** specA = malloc(2*sizeof(mySpec));
     int cur_i = 0;
     while(cur_i < hashT->tableSize){
-        printf("cur_cell: %d from: %d\n", cur_i , hashT->tableSize);
-        if(received_signal == 1){
-            free(specA);
-            fclose(fpout);
-            return;
-        }
-        bucket* tempBuc = hashT->myTable[cur_i];
+        // printf("cur_cell: %d from: %d\n", cur_i , hashT->tableSize);
+        if(received_signal == 1)
+            break;
 
-        while(tempBuc != NULL){
-            if(received_signal == 1){
-                free(specA);
-                fclose(fpout);
-                return;
-            }
-            record* tempRec = tempBuc->rec;
+        t_Info* myInfo = malloc(sizeof(t_Info));
+        myInfo->bow = bow;
+        myInfo->cell = cur_i;
+        myInfo->hashT = hashT;
+        myInfo->model = model;
+        myInfo->target = strdup(target);
 
-            
-            while(tempRec != NULL){
-                if(received_signal == 1){
-                    free(specA);
-                    fclose(fpout);
-                    return;
-                }
+        // FOR EVERY CELL OF THE HASH_TABLE CREATE A THREAD
+        pthread_create(&threads->t_Nums[cur_i], NULL, &all_with_all_ThreadsStart, myInfo);
+        threads->active++;
+        // pthread_detach(threads->t_Nums[cur_i]);
 
-                record* keep_next_rec = tempRec;
-                bucket* keep_next_buc = tempBuc;
-                int keep_next_i = cur_i;
-
-                specA[0] = tempRec->spec;
-                keep_next_rec = get_me_next(hashT, &keep_next_i, &keep_next_buc, &keep_next_rec);
-                while(keep_next_rec != NULL){
-                    specA[1] = keep_next_rec->spec;
-                    if(received_signal == 1){
-                        free(specA);
-                        fclose(fpout);
-                        return;
-                    }
-                    make_it_spars_list(specA, 2, bow, info_list, -1);
-                    logistic_predict_proba_dataList(model, info_list);
-
-                    // printf("Entries: %d\n", info_list->all_pairs);
-
-                    if(info_list->head->predict == 0){
-                        if(info_list->head->proba - info_list->head->predict <= 0.03)
-                            fprintf(fpout, "%s, %s, %d\n", specA[0]->specID, specA[1]->specID, info_list->head->predict);
-                    }
-                    else{
-                        if(info_list->head->predict - info_list->head->proba >= 0.07)
-                            fprintf(fpout, "%s, %s, %d\n", specA[0]->specID, specA[1]->specID, info_list->head->predict);
-                    }
-
-                    keep_next_rec = get_me_next(hashT, &keep_next_i, &keep_next_buc, &keep_next_rec);
-                    dataN_destroy(info_list, info_list->head);
-
-                    // free(specA);
-                    // fclose(fpout);
-
-                    // return;
-                }
-                tempRec = tempRec->next;
-            }
-            tempBuc = tempBuc->next;
-        }
         cur_i++;
     }
-    free(specA);
+
+    // sleep(5);
+    myThreads_Destroy(threads);
+    pthread_mutex_destroy(&mtx_print);
+    free(target);
+}
+
+void* all_with_all_ThreadsStart(void* info){
+
+    t_Info* myInfo = (t_Info*) info;
+
+    // printf("mpla: %d\n", myInfo->cell);
+
+    bucket* tempBuc = myInfo->hashT->myTable[myInfo->cell];
+
+    while(tempBuc != NULL){
+        if(received_signal == 1)
+            break;
+        
+        record* tempRec = tempBuc->rec;
+
+        while(tempRec != NULL){
+            if(received_signal == 1)
+                break;
+
+            // FOR EVERY RECORD INSIDE THIS CELL IN HASH_TABLE FIND ALL MATCHES
+            one_with_all(myInfo->hashT, myInfo->model, myInfo->bow, tempRec, tempBuc, myInfo->cell, myInfo->target);
+
+            tempRec = tempRec->next;
+        }
+        tempBuc = tempBuc->next;
+    }
+
+    free(myInfo->target);
+    free(myInfo);
+    pthread_exit(NULL);
+}
+
+void one_with_all(hashTable* hashT, logM* model, BoWords* bow, record* rec, bucket* buc, int cur_cell, char* target){
+    record* keep_next_rec = rec;
+    bucket* keep_next_buc = buc;
+    int keep_next_i = cur_cell;
+
+    FILE* fpout = fopen(target, "a");
+
+    dataI* info_list = dataI_create(2*bow->entries);
+    mySpec** specA = malloc(2*sizeof(mySpec*));
+
+    // GET ALL NEXT RECORDS
+    specA[0] = rec->spec;
+    keep_next_rec = get_me_next(hashT, &keep_next_i, &keep_next_buc, &keep_next_rec);
+    while(keep_next_rec != NULL){
+        specA[1] = keep_next_rec->spec;
+        if(received_signal == 1)
+            break;
+
+        make_it_spars_list(specA, 2, bow, info_list, -1);
+        logistic_predict_proba_dataList(model, info_list);
+
+        // printf("Entries: %d\n", info_list->all_pairs);
+
+        if(info_list->head->predict == 0){
+            if(info_list->head->proba - info_list->head->predict <= 0.1){
+                pthread_mutex_lock(&mtx_print);
+                fseek(fpout, 0, SEEK_END);
+                fprintf(fpout, "%s, %s, %d\n", specA[0]->specID, specA[1]->specID, info_list->head->predict);
+                pthread_mutex_unlock(&mtx_print);
+            }
+        }
+        else{
+            if(info_list->head->predict - info_list->head->proba <= 0.1){
+                pthread_mutex_lock(&mtx_print);
+                fseek(fpout, 0, SEEK_END);
+                fprintf(fpout, "%s, %s, %d\n", specA[0]->specID, specA[1]->specID, info_list->head->predict);
+                pthread_mutex_unlock(&mtx_print);
+           
+            }
+        }
+
+        keep_next_rec = get_me_next(hashT, &keep_next_i, &keep_next_buc, &keep_next_rec);
+        dataN_destroy(info_list, info_list->head);
+    }
+
     fclose(fpout);
+    free(specA);
+    dataI_destroy(info_list);
 }
 
 record* get_me_next(hashTable* hashT, int* cur_buc, bucket** buc, record** rec){
+    // printf("cur buc: %d\n", *cur_buc);
     if((*rec)->next != NULL){
         return (*rec)->next;
     }
@@ -1676,15 +1714,19 @@ record* get_me_next(hashTable* hashT, int* cur_buc, bucket** buc, record** rec){
     }
     else if(*cur_buc < hashT->tableSize-1){
         (*cur_buc) += 1;
-        (*buc) = hashT->myTable[(*cur_buc)];
-        while((*buc) == NULL && (*cur_buc) < hashT->tableSize-1){
-            (*cur_buc) += 1;
+        while((*cur_buc) < hashT->tableSize){
             (*buc) = hashT->myTable[(*cur_buc)];
+            if((*buc) != NULL){
+               return hashT->myTable[(*cur_buc)]->rec;
+            }
+            (*cur_buc) += 1;
         }
-        // printf("entries: %d\n", hashT->myTable[(*cur_buc)]->cur);
-        return hashT->myTable[(*cur_buc)]->rec;
     }
     return NULL;
+}
+
+void create_threads(myThreads* threadsT){
+
 }
 
 // ~~~~~~~~~~~~~~~~~~~~~~~~ SIGNALS ~~~~~~~~~~~~~~~~~~~~~~~~~~
