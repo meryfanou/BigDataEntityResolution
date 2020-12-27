@@ -18,14 +18,16 @@ int readDataset(DIR*, char*, hashTable**, matchesInfo*);	// reads from dataset a
 
 specInfo** readFile(FILE*, int*, specInfo**);				// called by readDataset on each inner file
 
+char* shuffleCSV(char*);
+
 int readCSV(char* , hashTable* , matchesInfo*, float, long int*);	//reads part of csv (for the training set), creates matches at hash values
 
 // ~~~~~~~~~~~~~~ SETS OF SPECS ~~~~~~~~~~~~~~
 
 mySpec** get_trainSet(matchesInfo*, int*);							// Create the training set from the given cliques
-mySpec** get_testSet(char*, hashTable*, int*, long int*, int);		// Create the testing set (distinct) while reading the csv
-mySpec** get_validationSet(char*, hashTable*, int*, long int*, int);	// Create the validation set (distinct) while reading the csv
-mySpec** get_set(char*, hashTable*, int*, long int*, int, char);	// Used for creating the testing + validation sets
+mySpec** get_testSet(char*, hashTable*, int*, long int*, int, matchesInfo*);		// Create the testing set (distinct) while reading the csv
+mySpec** get_validationSet(char*, hashTable*, int*, long int*, int, matchesInfo*);	// Create the validation set (distinct) while reading the csv
+mySpec** get_set(char*, hashTable*, int*, long int*, int, char, matchesInfo*);		// Used for creating the testing + validation sets
 
 // ~~~~~~~~~~~~~~ BAG OF WORDS ~~~~~~~~~~~~~~~
 

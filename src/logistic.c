@@ -92,7 +92,7 @@ int logistic_regression(logM* model, float** vector, int vector_rows, int vector
 	sigaddset(&block_mask,SIGINT);
 	sigaddset(&block_mask,SIGQUIT);
 
-    printf("vector_rows: %d, vector_cols: %d\n", vector_rows, vector_cols);
+    // printf("vector_rows: %d, vector_cols: %d\n", vector_rows, vector_cols);
 
     float limit = 1.000;
 
@@ -161,9 +161,9 @@ int logistic_regression(logM* model, float** vector, int vector_rows, int vector
             // 3 Update Weights
         weights_update(model->finalWeights, grad, vector_cols);
         limit = active_mean(missed_by, vector_rows);
-        printf("\t\t~~~~~~~~~~~~~~~~~~~~~~~~\n");
-        printf("Time: %d\n", model->trained_times);
-        printf("limit: %.4f\n", limit);
+        // printf("\t\t~~~~~~~~~~~~~~~~~~~~~~~~\n");
+        // printf("Time: %d\n", model->trained_times);
+        // printf("limit: %.4f\n", limit);
         // weights_print(model->finalWeights);
         
 

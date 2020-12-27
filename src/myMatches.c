@@ -431,12 +431,10 @@ void add_nlist(nlist* mylist, myMatches* match1){
 	nNode* to_add = create_nNode(match1);
 
 	if(mylist->entries == 0){
-		// printf("\n\n!!!! EKANA GAMIDI ADD STO HEAD !!!!\n\n");
 		mylist->head = to_add;
 		mylist->tail = mylist->head;
 	}
 	else{
-		// printf("entries: %d\n", mylist->entries);
 		mylist->tail->next = to_add;
 		mylist->tail->next->prev = mylist->tail;
 		mylist->tail = mylist->tail->next;

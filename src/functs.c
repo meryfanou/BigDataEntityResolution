@@ -478,6 +478,34 @@ specInfo** readFile(FILE *specFd, int *propNum, specInfo **properties){
     return properties;
 }
 
+char* shuffleCSV(char* path){
+    char extension[5];
+    char* shuffled_name = malloc(strlen(path) + strlen("_shuffled") + 1);
+
+    strcpy(shuffled_name, path);
+    for(int i=4; i>=0; i--)
+        extension[4-i] = shuffled_name[strlen(shuffled_name)-i];
+    shuffled_name[strlen(shuffled_name)-4] = '\0';
+    strcat(shuffled_name, "_shuffled");
+    strcat(shuffled_name, extension);
+
+    char* command = malloc(strlen("shuf ") + strlen(path) + strlen(" > ") + strlen(shuffled_name) + 1);
+    strcpy(command, "shuf ");
+    strcat(command, path);
+    strcat(command, " > ");
+    strcat(command, shuffled_name);
+
+    if(system(command) == -1){
+        perror("system");
+        free(shuffled_name);
+        free(command);
+        return NULL;
+    }
+
+    free(command);
+
+    return shuffled_name;
+}
 
 int readCSV(char* fName, hashTable* hashT, matchesInfo* allMatches, float percentage, long int* offset){
     // ~~~~~~~~~~~~~~~~~~ READ CSV FILE + FILL MATCHES STRUCT
@@ -497,7 +525,7 @@ int readCSV(char* fName, hashTable* hashT, matchesInfo* allMatches, float percen
     sigemptyset(&block_mask);
 	sigaddset(&block_mask,SIGINT);
 	sigaddset(&block_mask,SIGQUIT);
-    
+
         //~~~~~~~~~~~~~~~~~~ OPEN FILE
     FILE* fpin = NULL;
     fpin = fopen(fName, "r+");
@@ -569,7 +597,7 @@ int readCSV(char* fName, hashTable* hashT, matchesInfo* allMatches, float percen
         // printf("\tspec1: %s counts: %d, spec2: %s counts: %d\n", spec1->specID, spec1->matches->specsCount, spec2->specID, spec2->matches->specsCount);
 
                     //~~~~~~~~~ MERGE MATCHES + FIX POINTERS
-        if(strcmp(isMatch, "1") == 0){  //case keys r match
+        if(strcmp(isMatch, "1") == 0){  //case keys match
 
             if(spec2->matches == spec1->matches){
                 // MATCHES ALREADY TOGETHER -> NO NEED TO MERGE
@@ -591,7 +619,6 @@ int readCSV(char* fName, hashTable* hashT, matchesInfo* allMatches, float percen
             // printf("~~~ spec_1: %s, spec_2: %s ~~~\n", spec1->specID, spec2->specID);
             updateNegativeMatches(spec1->matches, spec2->matches);
         }
-
         else{
             skipped++;
         }
@@ -645,15 +672,15 @@ mySpec** get_trainSet(matchesInfo* allMatches, int* trainSize){
     return trainSet;
 }
 
-mySpec** get_testSet(char* path, hashTable* hashT, int* testSize, long int* offset, int lines){
-    return get_set(path, hashT, testSize, offset, lines, 't');
+mySpec** get_testSet(char* path, hashTable* hashT, int* testSize, long int* offset, int lines, matchesInfo* allMatches){
+    return get_set(path, hashT, testSize, offset, lines, 't', allMatches);
 }
 
-mySpec** get_validationSet(char* path, hashTable* hashT, int* testSize, long int* offset, int lines){
-    return get_set(path, hashT, testSize, offset, lines, 'v');
+mySpec** get_validationSet(char* path, hashTable* hashT, int* testSize, long int* offset, int lines, matchesInfo* allMatches){
+    return get_set(path, hashT, testSize, offset, lines, 'v', allMatches);
 }
 
-mySpec** get_set(char* path, hashTable* hashT, int* size, long int* offset, int lines, char setType){
+mySpec** get_set(char* path, hashTable* hashT, int* size, long int* offset, int lines, char setType, matchesInfo* allMatches){
 
     FILE*   fp = fopen(path, "r");
     if(fp == NULL){
@@ -661,14 +688,19 @@ mySpec** get_set(char* path, hashTable* hashT, int* size, long int* offset, int 
         return NULL;
     }
 
-    mySpec* spec = NULL;
+    mySpec* spec1 = NULL;
+    mySpec* spec2 = NULL;
     mySpec** set = NULL;
     *size = 0;
 
     // Start reading from where it stopped before
     fseek(fp, *offset, SEEK_SET);
 
-    char    line[100];
+    int count = 0;
+    int failed = 0;
+    int passed = 0;
+    int skipped = 0;
+    char line[100];
     // Until expected number of lines is read or end of file is reached
     while(lines > 0 && fgets(line, sizeof(line), fp) != NULL){
         // If it is the testing set, read the expected number of lines
@@ -679,30 +711,64 @@ mySpec** get_set(char* path, hashTable* hashT, int* size, long int* offset, int 
         // Get csv info-keys
         char* key1 = strtok(line, ",\n");
         char* key2 = strtok(NULL, ",\n");
+        char* isMatch = strtok(NULL, ",\n");
 
         // Find spec with key1 in hash table, return it only if it has not been already used in the set
-        spec = findRecord_forSet(hashT, key1, setType);
+        spec1 = findRecord_forSet(hashT, key1, setType);
         // If the spec was found, add it to the set
-        if(spec != NULL){
-            (*size)++;
+        if(spec1 != NULL){
+           (*size)++;
             set = realloc(set, (*size)*sizeof(mySpec*));
-            set[*size - 1] = spec;
+            set[*size - 1] = spec1;
         }
 
         // Find spec with key2 in hash table, return it only if it has not been already used in the set
-        spec = findRecord_forSet(hashT, key2, setType);
+        spec2 = findRecord_forSet(hashT, key2, setType);
         // If the spec was found, add it to the set
-        if(spec != NULL){
+        if(spec2 != NULL){
             (*size)++;
             set = realloc(set, (*size)*sizeof(mySpec*));
-            set[*size - 1] = spec;
+            set[*size - 1] = spec2;
         }
+
+        if(spec1 == NULL || spec2 == NULL){
+            failed++;
+            count++;
+            continue;
+        }
+
+                    //~~~~~~~~~ MERGE MATCHES + FIX POINTERS
+        if(strcmp(isMatch, "1") == 0){  //case keys match
+            if(spec2->matches == spec1->matches){
+                // MATCHES ALREADY TOGETHER -> NO NEED TO MERGE
+                memset(line, 0, 100);
+                count++;
+                continue;
+            }
+            else{       //~~~~~~~~ !!! FIX POINTERS SPECS -> MATCHES
+                if(swapSpecsMatches(spec1, spec2)){ // ~~~~ MERGE MATCHES ARRAYS
+                    mergeMatches(allMatches, spec1->matches, spec2->matches);
+                    spec2->matches = spec1->matches;
+                    passed++;
+                }
+                else
+                    failed++;
+            }
+        }
+        else if(strcmp(isMatch, "0") == 0){
+            // printf("~~~ spec_1: %s, spec_2: %s ~~~\n", spec1->specID, spec2->specID);
+            updateNegativeMatches(spec1->matches, spec2->matches);
+        }
+        else{
+            skipped++;
+        }
+
+        count++;
     }
 
     // Keep the point in file where the reading stopped
     *offset = ftell(fp);
     fclose(fp);
-
     return set;
 }
 
