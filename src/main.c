@@ -11,10 +11,10 @@
 #include "../include/boWords.h"
 #include "../include/logistic.h"
 
-#define DATASET_X "../camera_specs/2013_camera_specs/"
-#define DATASET_W "../sigmod_large_labelled_dataset.csv"
+#define DATASET_X "../small_specs/2013_camera_specs/"
+#define DATASET_W "../sigmod_medium_labelled_dataset.csv"
 
-#define HASH_SIZE 200
+#define HASH_SIZE 5000
 #define BUC_SIZE 100
 
 #define TRAIN_PERC 0.6

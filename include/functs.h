@@ -9,6 +9,7 @@
 #include "boWords.h"
 #include "math.h"
 #include "logistic.h"
+#include "myThreads.h"
 
 extern int received_signal;
 
@@ -74,8 +75,10 @@ logM** make_models_array(BoWords*, mySpec**, matchesInfo*, int);
 
 
 void all_with_all_gamwtokeratomoumesa(hashTable*, logM*, BoWords*);
+void one_with_all(hashTable*, logM*, BoWords*, record*, bucket*, int, char*);
 record* get_me_next(hashTable*, int*, bucket**, record**);
-
+void create_threads(myThreads*);
+void* all_with_all_ThreadsStart(void*);
 // ~~~~~~~~~~~~~~~~ SIGNALS ~~~~~~~~~~~~~~~~
 
 void sig_int_quit_handler(int);
@@ -114,7 +117,6 @@ void sig_int_quit_handler(int);
 	if(model != NULL)																			\
 		logistic_destroy((logM*)model);															\
 }
-
 
 
 #endif

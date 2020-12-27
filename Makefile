@@ -1,6 +1,6 @@
 .PHONY: clean
 CC = gcc
-CCFLAGS = -Wall -g3
+CCFLAGS = -Wall -g3 -pthread
 LIBS = -lm
 RM = rm -f
 
@@ -29,7 +29,7 @@ all: dirs clean tests main run
 
 #-------------------------------------------------------------------------#
 
-main: $(ODIR)/main.o $(ODIR)/mySpec.o $(ODIR)/myHash.o $(ODIR)/myMatches.o $(ODIR)/functs.o $(ODIR)/boWords.o $(ODIR)/mbh.o $(ODIR)/logistic.o
+main: $(ODIR)/main.o $(ODIR)/mySpec.o $(ODIR)/myHash.o $(ODIR)/myMatches.o $(ODIR)/functs.o $(ODIR)/boWords.o $(ODIR)/mbh.o $(ODIR)/logistic.o $(ODIR)/myThreads.o
 		@echo "\nCreating main"
 		$(CC) $(CCFLAGS) -o $(BDIR)/$@ $^ $(LIBS)
 
@@ -41,11 +41,11 @@ run:	bin/main
         endif
 
 valgrind: main
-		  valgrind --leak-check=full ./bin/main -o matches_log_DEF
+		  valgrind --tool=memcheck --leak-check=full ./bin/main -o matches_log_DEF -n negs_matches_log_DEF
 
 #-------------------------------------------------------------------------#
 
-all_tests:  $(ODIR)/myHash_test.o  $(ODIR)/myMatchesList_test.o $(ODIR)/myMatchesNegsList_test.o $(ODIR)/mySpec_test.o $(ODIR)/myMatches.o $(ODIR)/mySpec.o  $(ODIR)/myHash.o $(ODIR)/logistic_test.o $(ODIR)/logistic_data_list_test.o $(ODIR)/logistic.o $(ODIR)/functs.o $(ODIR)/boWords.o $(ODIR)/mbh.o
+all_tests:  $(ODIR)/myHash_test.o  $(ODIR)/myMatchesList_test.o $(ODIR)/myMatchesNegsList_test.o $(ODIR)/mySpec_test.o $(ODIR)/myMatches.o $(ODIR)/mySpec.o  $(ODIR)/myHash.o $(ODIR)/logistic_test.o $(ODIR)/logistic_data_list_test.o $(ODIR)/logistic.o $(ODIR)/functs.o $(ODIR)/boWords.o $(ODIR)/mbh.o $(ODIR)/myThreads.o
 			@echo "\nCreating Unit Testing Files"
 			$(CC) $(CCFLAGS) -o $(BDIR)/$@ $^ $(LIBS)
 
