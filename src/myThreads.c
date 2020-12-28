@@ -31,17 +31,13 @@ myThreads* myThreads_Init(int tNum){
 }
 
 void myThreads_Destroy(myThreads* threads){
+	// wait for all threads to end and free mem
 	void* res;
 
 	int i = 0;
 	while(threads->active > 0){
 		i = threads->active-1;
 		if(pthread_join(threads->t_Nums[i], &res) == 0){
-
-			// printf("joined: %d\n", i);
-			// pthread_detach(threads->t_Nums[i]);
-			// pthread_cancel(threads->t_Nums[i]);
-
 			free(res);
 			threads->active--;
 		}

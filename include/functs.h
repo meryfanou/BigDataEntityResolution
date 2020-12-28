@@ -58,9 +58,11 @@ logM* make_model_spars_list(BoWords*, mySpec**, int);
 int train_per_spec_spars_list(mySpec**, int, BoWords*, logM*);
 void make_it_spars_list(mySpec**, int, BoWords*, dataI*, int);
 
+int train_per_spec_spars_list_one_by_one(mySpec**, int, BoWords*, logM*);
+void make_it_spars_list_plus_train(logM*, mySpec**, int, BoWords*, dataI*, int);
+
+
 int isPair(mySpec*, mySpec*);
-
-
 
 
 /// ~~~~~~~~~~~~~~~~ TESTING ~~~~~~~~~~~~~~~~
@@ -74,7 +76,7 @@ void train_per_clique(myMatches*, mySpec**, int, BoWords*, logM*);
 logM** make_models_array(BoWords*, mySpec**, matchesInfo*, int);
 
 
-void all_with_all_gamwtokeratomoumesa(hashTable*, logM*, BoWords*);
+void all_with_all(hashTable*, logM*, BoWords*);
 void one_with_all(hashTable*, logM*, BoWords*, record*, bucket*, int, char*);
 record* get_me_next(hashTable*, int*, bucket**, record**);
 void create_threads(myThreads*);

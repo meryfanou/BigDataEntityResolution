@@ -710,8 +710,7 @@ mySpec** get_set(char* path, hashTable* hashT, int* size, long int* offset, int 
 }
 
 // ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~ BAG OF WORDS ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
-
-// Turn a set of texts to bow
+                        // Turn a set of texts to bow
 void text_to_bow(mySpec** set, int setSize, BoWords** boWords){
     // For each spec of the set (either training or testing)
     for(int i=0; i<setSize; i++){
@@ -720,8 +719,7 @@ void text_to_bow(mySpec** set, int setSize, BoWords** boWords){
     (*boWords)->specsSum = setSize;
 }
 
-
-// Mark the most significant words in bow
+                        // Mark the most significant words in bow
 void set_mostSignificantWords(BoWords* bow, int mostSign){
     char*   word = NULL;
     MBH*    heap = NULL;
@@ -738,7 +736,7 @@ void set_mostSignificantWords(BoWords* bow, int mostSign){
     mbh_delete(&heap);
 }
 
-// Remove all insignificant words from bow
+                        // Remove all insignificant words from bow
 void keep_mostSignificantWords(BoWords* bow){
 
     bow_keep_signWords(bow);
@@ -746,8 +744,7 @@ void keep_mostSignificantWords(BoWords* bow){
 
 // ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~ TRAINING ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 
-    // !!!! VECTORS !!!!
-
+// ~~~~~~~~~~~~~~~~~~~~~~~~~~~ VECTORS METHOD ~~~~~~~~~~~~~~~~~~~~~~~~~~~
 logM* make_model_vec(BoWords* bow, mySpec** train_set, int set_size){
 
     // Signal handling
@@ -984,7 +981,8 @@ void make_tests(BoWords* bow, logM* model, mySpec** test_set, int set_size){
 }
 
 
-    // !!!! SPARS !!!!
+// ~~~~~~~~~~~~~~~~~~~~~~~~ SPARS METHOD ~~~~~~~~~~~~~~~~~~~~~~~~~
+
 logM* make_model_spars(BoWords* bow, mySpec** train_set, int set_size){
 
     // Signal handling
@@ -1226,7 +1224,6 @@ void make_tests_spars(BoWords* bow, logM* model, mySpec** test_set, int set_size
     free(predicts);
 }
 
-
 int isPair(mySpec* spec1, mySpec* spec2){
             // CHECK IF THEY ARE IN THE SAME MATCH > RETURN 1
     myMatches* match = spec1->matches;
@@ -1255,7 +1252,9 @@ int isPair(mySpec* spec1, mySpec* spec2){
     return -1;
 }
 
-    // !!!! DATA_LIST !!!!
+
+// ~~~~~~~~~~~~~~~~~~~~~~~ DATA_LIST METHOD ~~~~~~~~~~~~~~~~~~~~~~
+
 logM* make_model_spars_list(BoWords* bow, mySpec** train_set, int set_size){
 
     // Signal handling
@@ -1273,7 +1272,16 @@ logM* make_model_spars_list(BoWords* bow, mySpec** train_set, int set_size){
     logM* model = logistic_create();
 
     // Train_per_Spec
-    int check = train_per_spec_spars_list(train_set, set_size, bow, model);
+    // int check = train_per_spec_spars_list(train_set, set_size, bow, model);
+    int check = train_per_spec_spars_list_one_by_one(train_set, set_size, bow, model);
+
+
+    printf("\tThrshold: %.4f\n", model->finalWeights->threshold);
+    printf("\tModel trained Times: %d\n", model->trained_times);
+    printf("\tModel trained Size: %d\n", model->size_totrain);
+    printf("\t\tof whom \"0\": %d\n", model->fit0);
+    printf("\t\tof whom \"1\": %d\n", model->fit1);
+    
 
     // If a termination signal was recieved
     if(received_signal == 1 || check == -1){
@@ -1362,9 +1370,8 @@ void make_it_spars_list(mySpec** set, int set_size, BoWords* bow, dataI* info_li
         }
         i++;
     }
-    // printf("spars_size: %d\n", *spars_size);
-    // printf("s0 %.4f, %.4f, %.4f\n", spars[0][0], spars[0][1], spars[0][2]);
-    
+
+        // free mem
     int i1 = 0;
     while(i1 < set_size){
         int i2 = 0;
@@ -1411,7 +1418,106 @@ void make_tests_spars_list(BoWords* bow, logM* model, mySpec** test_set, int set
 
 }
 
-    // !!!! TRAIN_PER_CLIQUE
+
+int train_per_spec_spars_list_one_by_one(mySpec** train_set, int set_size, BoWords* bow, logM* model){
+        // Signal handling
+    struct sigaction    act;
+    sigset_t            block_mask;
+    received_signal = 0;
+    sigemptyset(&(act.sa_mask));
+	act.sa_flags = 0;
+    act.sa_handler = sig_int_quit_handler;
+    sigemptyset(&block_mask);
+	sigaddset(&block_mask,SIGINT);
+	sigaddset(&block_mask,SIGQUIT);
+
+        //  Init values to pass
+    dataI* info_list = dataI_create(2*bow->entries);
+
+    make_it_spars_list_plus_train(model, train_set, set_size, bow, info_list, 1);
+
+    if(received_signal == 1){
+        //  FREE MEM;
+        dataI_destroy(info_list);
+        return -1;
+    }
+
+    // PRINT STATS FOR TESTING
+    // printf("\ttrained times: %d\n", model->trained_times);
+
+    //  FREE MEM
+    dataI_destroy(info_list);
+
+    return 0;
+}
+
+void make_it_spars_list_plus_train(logM* model, mySpec** set, int set_size, BoWords* bow, dataI* info_list, int use_tag){
+    int row = 0;
+    int col = 0;
+
+    float*** all_spars = malloc(set_size*sizeof(float**));
+    int* all_spars_sizes = malloc(set_size*sizeof(int));
+
+    // MAKE SPARS FOR EVERY SPEC
+    int i = 0;
+    while(i < set_size){
+        col = 0;
+        all_spars[i] = NULL;
+        all_spars_sizes[i] = 0;
+        bow_to_spars(bow, &all_spars[i], &all_spars_sizes[i], &row, &col, set[i]);
+        i++;
+    }
+
+    // FIND PAIRS AND CONCAT THEIR SPARS
+    i = 0;
+    while(i<set_size){
+        int z = i + 1;
+        while(z < set_size){
+            if(all_spars[i] == NULL && all_spars[z] == NULL){
+                z++;
+                continue;
+            }
+            int tag = isPair(set[i], set[z]);
+            if((use_tag == 1 && tag != -1 ) || use_tag == -1){
+
+                float** temp = spars_concat_col(all_spars[i], all_spars[z], all_spars_sizes[i], all_spars_sizes[z], bow->entries);
+                int temp_size = all_spars_sizes[z] + all_spars_sizes[i];
+                dataI_push(info_list, set[i], set[z], temp, temp_size, tag);
+
+
+                // train one by one
+                if(model->trained_times == 0){
+                    logistic_fit_dataList(model, info_list);
+                }
+                else{
+                    logistic_refit_dataList(model, info_list);
+                }
+
+                // empty list
+                dataN_destroy(info_list, info_list->head);
+            }
+            z++;
+        }
+        i++;
+    }
+
+        // free mem
+    int i1 = 0;
+    while(i1 < set_size){
+        int i2 = 0;
+        while(i2 < all_spars_sizes[i1]){
+            free(all_spars[i1][i2++]);
+        }
+        free(all_spars[i1++]);
+    }
+    free(all_spars);
+    free(all_spars_sizes);
+
+}
+
+
+
+// ~~~~~~~~~~~~~~~~~~~~~~~~ TRAIN_PER_CLIQUE ~~~~~~~~~~~~~~~~~~~~~
 
 logM** make_models_array(BoWords* bow, mySpec** set, matchesInfo* matches, int set_size){
     
@@ -1492,7 +1598,9 @@ void train_per_clique(myMatches* clique, mySpec** trainSet, int trainSize, BoWor
 }
 
 
-void all_with_all_gamwtokeratomoumesa(hashTable* hashT, logM* model, BoWords* bow){
+// ~~~~~~~~~~~~~~~~~~~~~~~ ALL WITH ALL FUNCTS ~~~~~~~~~~~~~~~~~~~
+
+void all_with_all(hashTable* hashT, logM* model, BoWords* bow){
              // Signal handling
     struct sigaction    act;
     sigset_t            block_mask;
@@ -1531,10 +1639,10 @@ void all_with_all_gamwtokeratomoumesa(hashTable* hashT, logM* model, BoWords* bo
 
     int cur_i = 0;
     while(cur_i < hashT->tableSize){
-        // printf("cur_cell: %d from: %d\n", cur_i , hashT->tableSize);
         if(received_signal == 1)
             break;
 
+            // Fill struct for each thread
         t_Info* myInfo = malloc(sizeof(t_Info));
         myInfo->bow = bow;
         myInfo->cell = cur_i;
@@ -1542,10 +1650,9 @@ void all_with_all_gamwtokeratomoumesa(hashTable* hashT, logM* model, BoWords* bo
         myInfo->model = model;
         myInfo->target = strdup(target);
 
-        // FOR EVERY CELL OF THE HASH_TABLE CREATE A THREAD
+            // FOR EVERY CELL OF THE HASH_TABLE CREATE A THREAD
         pthread_create(&threads->t_Nums[cur_i], NULL, &all_with_all_ThreadsStart, myInfo);
         threads->active++;
-        // pthread_detach(threads->t_Nums[cur_i]);
 
         cur_i++;
     }
@@ -1557,7 +1664,7 @@ void all_with_all_gamwtokeratomoumesa(hashTable* hashT, logM* model, BoWords* bo
 }
 
 void* all_with_all_ThreadsStart(void* info){
-
+    // Start of all printing threads
     t_Info* myInfo = (t_Info*) info;
 
     // printf("mpla: %d\n", myInfo->cell);
@@ -1598,10 +1705,6 @@ void one_with_all(hashTable* hashT, logM* model, BoWords* bow, record* rec, buck
         return;
     }
 
-    // pthread_mutex_lock(&mtx_print);
-    // printf("cell: %d\n", cur_cell);
-    // pthread_mutex_unlock(&mtx_print);
-
     dataI* info_list = dataI_create(2*bow->entries);
     mySpec** specA = malloc(2*sizeof(mySpec*));
 
@@ -1616,19 +1719,15 @@ void one_with_all(hashTable* hashT, logM* model, BoWords* bow, record* rec, buck
         make_it_spars_list(specA, 2, bow, info_list, -1);
         logistic_predict_proba_dataList(model, info_list);
 
+                // Check if specs created a match (only reason not is 2 empty spars !!)
         if(info_list->all_pairs == 0){
-            // pthread_mutex_lock(&mtx_print);
-            // printf("SKATA\n");
-            // pthread_mutex_unlock(&mtx_print);
             keep_next_rec = get_me_next(hashT, &keep_next_i, &keep_next_buc, &keep_next_rec);
             continue;
         }
 
-        // printf("Entries: %d\n", info_list->all_pairs);
-
+                // Check if their match is strong and print them at the file
         if(info_list->head->predict == 0){
             if(info_list->head->proba - info_list->head->predict <= 0.1){
-                // printf("ekana print\n");
                 pthread_mutex_lock(&mtx_print);
                 fseek(fpout, 0, SEEK_END);
                 fprintf(fpout, "%s, %s, %d\n", specA[0]->specID, specA[1]->specID, info_list->head->predict);
@@ -1637,7 +1736,6 @@ void one_with_all(hashTable* hashT, logM* model, BoWords* bow, record* rec, buck
         }
         else{
             if(info_list->head->predict - info_list->head->proba <= 0.1){
-                // printf("ekana print\n");
                 pthread_mutex_lock(&mtx_print);
                 fseek(fpout, 0, SEEK_END);
                 fprintf(fpout, "%s, %s, %d\n", specA[0]->specID, specA[1]->specID, info_list->head->predict);
@@ -1656,17 +1754,19 @@ void one_with_all(hashTable* hashT, logM* model, BoWords* bow, record* rec, buck
 }
 
 record* get_me_next(hashTable* hashT, int* cur_buc, bucket** buc, record** rec){
-    // printf("cur buc: %d\n", *cur_buc);
+        // get next rec if exist
     if((*rec)->next != NULL){
         return (*rec)->next;
     }
+        // change buc if needed
     else if((*buc)->next != NULL){
         (*buc) = (*buc)->next;
         return (*buc)->rec;
     }
+        // change hash cell if needed
     else if(*cur_buc < hashT->tableSize-1){
         (*cur_buc) += 1;
-        while((*cur_buc) < hashT->tableSize){
+        while((*cur_buc) < hashT->tableSize){   // skip empty cells
             (*buc) = hashT->myTable[(*cur_buc)];
             if((*buc) != NULL){
                return hashT->myTable[(*cur_buc)]->rec;
@@ -1677,11 +1777,8 @@ record* get_me_next(hashTable* hashT, int* cur_buc, bucket** buc, record** rec){
     return NULL;
 }
 
-void create_threads(myThreads* threadsT){
 
-}
-
-// ~~~~~~~~~~~~~~~~~~~~~~~~ SIGNALS ~~~~~~~~~~~~~~~~~~~~~~~~~~
+// ~~~~~~~~~~~~~~~~~~~~~~~~~~~ SIGNALS ~~~~~~~~~~~~~~~~~~~~~~~~~~
 
 void sig_int_quit_handler(int signo)
 {
