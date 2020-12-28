@@ -41,6 +41,8 @@ void logistic_destroy(logM* model){
 
 }
 
+// ~~~~~ LOGISTIC_FIT
+
 int logistic_fit(logM* model, int vector_rows, int vector_cols, float** vector , int* labels){
         // set model
     model->size_totrain = vector_rows;
@@ -79,6 +81,14 @@ int logistic_fit_dataList(logM* model, dataI* info){
     return logistic_regression_dataList(model, info);
 }
 
+int logistic_refit_dataList(logM* model, dataI* info){
+    model->size_totrain += info->all_pairs;
+    return logistic_regression_dataList(model, info);
+}
+
+
+// ~~~~~ LOGISTIC_REGRESSION
+
 int logistic_regression(logM* model, float** vector, int vector_rows, int vector_cols, int* tags){
 
     // Signal handling
@@ -96,7 +106,7 @@ int logistic_regression(logM* model, float** vector, int vector_rows, int vector
 
     float limit = 1.000;
 
-    model->trained_times = 1;
+
     while(limit > model->finalWeights->limit){
 
         if(received_signal == 1)
@@ -194,7 +204,6 @@ int logistic_regression(logM* model, float** vector, int vector_rows, int vector
     return 0;
 }
 
-
 int logistic_regression_spars(logM* model, float** spars, int spars_size, int* tags, int tags_size, int dimensions){
 
     // Signal handling
@@ -212,7 +221,7 @@ int logistic_regression_spars(logM* model, float** spars, int spars_size, int* t
 
     logistic_overfit(model, tags, tags_size);
 
-    model->trained_times = 1;
+
     while(limit > model->finalWeights->limit){
 
         if(received_signal == 1)
@@ -336,7 +345,7 @@ int logistic_regression_dataList(logM* model, dataI* info){
 
     logistic_overfit_dataList(model, info);
 
-    model->trained_times = 1;
+
     while(limit > model->finalWeights->limit){
 
         if(received_signal == 1)
@@ -344,15 +353,15 @@ int logistic_regression_dataList(logM* model, dataI* info){
 
             // 1. Make Predicts
         logistic_predict_proba_dataList(model, info);
-        // printf("PREDICTS ..\n");
+        
             // 2. Calc weights
                 // 2.1 Build Missed Table
         float b_grad = 0.0;
         float* missed_by = malloc(info->all_pairs*sizeof(float));
         int i = 0;
         while(i < info->all_pairs){
+                        // check for signal
             if(received_signal == 1){
-                // FREE MEM
                 free(missed_by);
                 return -1;
             }
@@ -367,7 +376,6 @@ int logistic_regression_dataList(logM* model, dataI* info){
             i++;
         }
         dataI_rewind_pop(info);
-        // printf("MISSED ..\n");
         b_grad /= (float) i;
 
         int mytime = 0;
@@ -377,8 +385,8 @@ int logistic_regression_dataList(logM* model, dataI* info){
 
         int y = 0;
         while(y < info->dimensions){
+                        // check for signal
             if(received_signal == 1){
-                // FREE MEM
                 free(missed_by);
                 free(grad);
                 return -1;
@@ -407,18 +415,16 @@ int logistic_regression_dataList(logM* model, dataI* info){
                     }
                     x++;
                 }
-
                 grad[1+y] = magic_num;
                 count_trained++;
             }
             y++;
             dataI_rewind_pop(info);
         }
-        // printf("GRDAS .. time: %d\n", mytime);
+        
             // 3 Update Weights
         weights_update(model->finalWeights, grad, info->dimensions);
         limit = active_mean(missed_by, info->all_pairs);
-        // printf("WEIGHTS ..\n");
         model->trained_times++;
 
         // ΜAX ITERATIONS
@@ -437,10 +443,13 @@ int logistic_regression_dataList(logM* model, dataI* info){
     // weights_print(model->finalWeights);
 
     logistic_predict_proba_dataList(model, info);
-    printf("\tScore after train: %.4f\n", logistic_score_dataList(model, info));
+    // printf("\tScore after train: %.4f\n", logistic_score_dataList(model, info));
 
     return 0;
 }
+
+
+// ~~~~~ LOGISTIC_PREDICT / PREDICT_PROBA
 
 float* logistic_predict_proba(logM* model, float** vector, int vector_rows, int vector_cols){
     if(model->finalWeights == NULL){
@@ -541,7 +550,6 @@ int* logistic_predict(logM* model, float** vector, int vector_rows, int vector_c
     return predicts;
 }
 
-// model, spars, spars_size, dimensions, tags_size
 int* logistic_predict_spars(logM* model, float** spars, int spars_size, int dimensions, int tags_size){
     float* probs = logistic_predict_proba_spars(model, spars, spars_size, dimensions, tags_size);
     
@@ -564,6 +572,9 @@ int* logistic_predict_spars(logM* model, float** spars, int spars_size, int dime
     return predicts;
 }
 
+
+// ~~~~~ LOGGISTIC_SCORE
+
 float logistic_score(logM* model, int* labels1, int* labels2, int size){
     float score = 0.0;
 
@@ -584,6 +595,9 @@ float logistic_score_dataList(logM* model, dataI* info){
    info->score = (float) info->corrects / (float) info->all_pairs;
    return info->score;
 }
+
+
+// ~~~~~ EXTRACT MODEL METHOD
 
 void logistic_extract(logM* model){
     if(chdir(PATH) == -1){
@@ -624,6 +638,9 @@ void logistic_extract(logM* model){
     free(target);
 
 }
+
+
+// ~~~~~ BALANCE OVERFIT METHODS
 
 void logistic_overfit(logM* model, int* tags, int tags_size){
     int i = 0;
@@ -674,13 +691,15 @@ void logistic_overfit_dataList(logM* model, dataI* info){
     
     model->finalWeights->threshold += (model->finalWeights->threshold/rate) * model->finalWeights->threshold;
 
-    printf("\tOverfit: %.4f\n", rate);
-    printf("\tnew thrshold: %.4f\n", model->finalWeights->threshold);
+    // printf("\tOverfit: %.4f\n", rate);
+    // printf("\tnew thrshold: %.4f\n", model->finalWeights->threshold);
 
 }
 
 // ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 // ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+
+// ~~~~~~ WEIGHTS STRUCT
 
 weights* weights_create(){
     weights* newWeight = malloc(sizeof(weights));
@@ -802,6 +821,8 @@ void weights_extract(weights* myWeights){
 
 // ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 // ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+
+// ~~~~~ CALCULATION_FUNCTIONS
 
 float calc_f(weights* myWeights, float* values){
     float sum = myWeights->b;

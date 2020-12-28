@@ -95,6 +95,7 @@ void logistic_overfit(logM*, int*, int);
 
 // LOGISTIC DATA LIST
 int logistic_fit_dataList(logM*, dataI*);
+int logistic_refit_dataList(logM*, dataI*);
 void logistic_predict_proba_dataList(logM*, dataI*);
 int logistic_regression_dataList(logM*, dataI*);
 void logistic_overfit_dataList(logM*, dataI*);

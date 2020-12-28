@@ -33,6 +33,7 @@ int main(int argc, char** argv){
     char    choose_model = 's';
 
     // ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~ READ ARGUMENTS
+
     char* outputFileMatches = NULL;
     char* outputFileNegs = NULL;
     if(argc != 0){
@@ -72,10 +73,11 @@ int main(int argc, char** argv){
 
     printf("path: %s\n", path_X);
 
-    DIR                 *datasetX = NULL;
+
+    // ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~ SET SIGNALS
+
     struct sigaction    act;
     sigset_t            block_mask;
-
 
     sigemptyset(&(act.sa_mask));
 	act.sa_flags = 0;
@@ -91,11 +93,22 @@ int main(int argc, char** argv){
 	sigaddset(&block_mask,SIGINT);
 	sigaddset(&block_mask,SIGQUIT);
 
+/*
+    ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+    PART 1:
+            > CREATE HASH
+            > READ CSV
+            > CREATE NEGATIVES AND POSITVES MACTHES
+    ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+*/
+
+        // ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~ CREATE HASH - INIT MATCHES_LIST
+
     printf("\nBuilding Hash ...\n");
     hashTable* hashT = hash_create(HASH_SIZE, BUC_SIZE);
     matchesInfo* allMatches = matchesInfoInit();
 
-    // Check for termination signal
+                // Check for termination signal
     if(received_signal == 1){
         printf("\nCleaning Memory ...\n");
 
@@ -106,7 +119,8 @@ int main(int argc, char** argv){
         exit(-2);
     }
 
-    // Open datasetX
+                // Open datasetX
+    DIR                 *datasetX = NULL;
     if((datasetX = opendir(path_X)) == NULL){
         perror("opendir");
         printf("\nCleaning Memory ...\n");
@@ -116,18 +130,16 @@ int main(int argc, char** argv){
         exit(-3);
     }
 
-    // Read specs from dataset X and store them using hashT
-    // If a termination signal was received, return 1. If an error occured, return negative value. Otherwise return 0
+                // Read specs from dataset X and store them using hashT
+                // If a termination signal was received, return 1. If an error occured, return negative value. Otherwise return 0
     int check = readDataset(datasetX, path_X, &hashT, allMatches);
 
+                // Check for signals
     if(received_signal == 1 || check != 0){
         printf("\nCleaning Memory ...\n");
-
         int* null = NULL;
         FREE_MEM(path_X,path_W,outputFileMatches,outputFileNegs,allMatches,hashT,null,null,null,null,null);
-
         closedir(datasetX);
-
         if(check == 1)
             printf("Exiting after receiving termination signal..\n");
 
@@ -137,6 +149,8 @@ int main(int argc, char** argv){
     closedir(datasetX);
 
     printf("       \t\t.. DONE !!\n");
+
+        // ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~ SHUFFLE CSV
 
     char* shuffled = shuffleCSV(path_W);
     if(shuffled == NULL){
@@ -149,8 +163,11 @@ int main(int argc, char** argv){
         exit(-5);
     }
 
+        // ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~ READ CSV
+
     printf("Reading CSV ...\n");
-    // If a termination signal was received, return 1. If an error occured, return negative value. Otherwise return number of lines read
+
+                // If a termination signal was received, return 1. If an error occured, return negative value. Otherwise return number of lines read
     long int offset = 0;
     check = readCSV(shuffled, hashT, allMatches, TRAIN_PERC, &offset);
 
@@ -167,6 +184,7 @@ int main(int argc, char** argv){
 
     free(shuffled);
 
+                // check for signal
     if(received_signal == 1 || check < 0){
         printf("\nCleaning Memory ...\n");
 
@@ -182,10 +200,18 @@ int main(int argc, char** argv){
     int train_lines = check;
     printf("       \t\t.. DONE !!\n");
 
-// ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
-// ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 
-    //~~~~~~~~~~~~~~~~ SEPERATE SPECS TO TRAINING, TESTING AND VALIDATION SETS
+/*
+    ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+    PART 2:
+            > CREATE TRAINING, TESTING & VAL SETS
+            > BUILD BOW, APPLY TF-IDF, KEEP N MOOST SIGNIFFICANT WORDS
+            > CREATE AND TRAIN MODEL
+            > ALL_WITH_ALL METHOD
+    ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+*/
+
+        //~~~~~~~~~~~~~~~~~ SEPERATE SPECS TO TRAINING, TESTING AND VALIDATION SETS
     mySpec** trainSet = NULL;
 	mySpec** testSet = NULL;
 	mySpec** validSet = NULL;
@@ -202,37 +228,28 @@ int main(int argc, char** argv){
     // Get validation set and update allMatches with the its specs
     validSet = get_validationSet(path_W, hashT, &validSize, &offset, valid_lines, allMatches);
 
-    // Check for termination signal or other errors
+                // Check for termination signal or other errors
     if(received_signal == 1 || trainSet == NULL || testSet == NULL || validSet == NULL){
         printf("\nCleaning Memory ...\n");
 
         int* null = NULL;
         FREE_MEM(path_X,path_W,outputFileMatches,outputFileNegs,allMatches,hashT,trainSet,testSet,validSet,null,null);
-
         if(received_signal == 1)
             printf("Exiting after receiving termination signal..\n");
         exit(-2);
     }
 
-    // printf("%d\n",trainSize);
-    // printf("%d\n",testSize);
-    // printf("%d\n",validSize);
-
     printf("       \t\t.. DONE !!\n\n");
 
-// ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
-// ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 
-    //~~~~~~~~~~~~~~~~~~~~~~ EXTARCT PAIRS
+        //~~~~~~~~~~~~~~~~~~~~~~ EXTARCT PAIRS
     printf("Extracting positive & negative matches..\n");
     extractMatches(allMatches, outputFileMatches);
     extractNegatives(allMatches, outputFileNegs);
     printf("       \t\t.. DONE !!\n\n");
 
-// ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
-// ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 
-    //~~~~~~~~~~~~~~~~~~~~~~ PREPARE THE INPUT FOR THE MODEL
+        //~~~~~~~~~~~~~~~~~~~~~~ PREPARE THE INPUT FOR THE MODELS
     printf("\nBuilding BoW..\n");
     BoWords*    bow = bow_create(HASH_SIZE, BUC_SIZE);
 
@@ -255,17 +272,15 @@ int main(int argc, char** argv){
 
     printf("       \t\t.. DONE !!\n\n");
 
-// ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
-// ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 
-    //~~~~~~~~~~~~~~~~~~~~~~ TF-IDF
+        //~~~~~~~~~~~~~~~~~~~~~~ APPLY TF-IDF
     printf("\nApplying TF-IDF..\n");
     tfidf* mytf = tfidf_create();
     tfidf_set(mytf, -1, -1);    // (model, maxTexts, maxWords to scan)
     tfidf_apply(mytf, bow);
     tfidf_destroy(mytf);
 
-    // Check for termination signal
+                // Check for termination signal
     if(received_signal == 1){
         printf("\nCleaning Memory ...\n");
 
@@ -278,15 +293,13 @@ int main(int argc, char** argv){
 
     printf("       \t\t.. DONE !!\n\n");
 
-// ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
-// ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 
-    //~~~~~~~~~~~~~~~~~~~~~~ Mark the most significant words and remove the rest from bow
+        //~~~~~~~~~~~~~~~~~~~~~~ Mark most significant words and remove the rest from bow
     printf("\nChoosing %d most significant words..\n",MOST_SIGN);
     set_mostSignificantWords(bow, MOST_SIGN);
     keep_mostSignificantWords(bow);
 
-    // Check for termination signal
+                    // Check for termination signal
     if(received_signal == 1){
         printf("\nCleaning Memory ...\n");
 
@@ -296,14 +309,14 @@ int main(int argc, char** argv){
         printf("Exiting after receiving termination signal..\n");
         exit(-2);
     }
-
     printf("       \t\t.. DONE !!\n\n");
 
-// ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
-// ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 
-    //~~~~~~~~~~~~~~~~~~~~~~ CREATE & TRAIN LOGISTIC MODEL >
+        //~~~~~~~~~~~~~~~~~~~~~~ CREATE & TRAIN LOGISTIC MODEL >
     printf("\nTraining Logistic Model ..\n");
+    
+            // Uncomment to choose method of train
+
     // logM** modelsT = make_models_array(bow, *trainSet, allMatches, trainSize);
     logM* model = NULL;
     if(choose_model == 'v')
@@ -312,7 +325,7 @@ int main(int argc, char** argv){
         model = make_model_spars_list(bow, trainSet, trainSize);
         // model = make_model_spars(bow, trainSet, trainSize);
 
-    // Check for termination signal
+            // Check for termination signal
     if(received_signal == 1 || model == NULL){
         printf("\nCleaning Memory ...\n");
 
@@ -321,13 +334,10 @@ int main(int argc, char** argv){
         printf("Exiting after receiving termination signal..\n");
         exit(-2);
     }
-
     printf("       \t\t.. DONE !!\n\n");
 
-// ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
-// ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 
-    //~~~~~~~~~~~~~~~~~~~~~ USE TEST_SET FOR PREDICTIONS
+        //~~~~~~~~~~~~~~~~~~~~~ USE TEST_SET FOR PREDICTIONS
     printf("\nTesting Logistic Model ..\n");
 
     if(choose_model == 'v')
@@ -336,7 +346,7 @@ int main(int argc, char** argv){
         make_tests_spars_list(bow, model, testSet, testSize);
         // make_tests_spars(bow, model, testSet, testSize);
 
-    // Check for termination signal
+                // Check for termination signal
     if(received_signal == 1){
         printf("\nCleaning Memory ...\n");
 
@@ -345,44 +355,26 @@ int main(int argc, char** argv){
         printf("Exiting after receiving termination signal..\n");
         exit(-2);
     }
-
     printf("       \t\t.. DONE !!\n\n");
 
-// ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
-// ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+
+        // ~~~~~~~~~~~~~~~~~~~ EXTRACT MODEL_VALUES
     printf("Extract ..\n");
     logistic_extract(model);
     printf("       \t\t.. DONE !!\n\n");
 
-// ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
-// ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 
-    // ΔΟΚΙΜΑΣΕ ΜΕ ΑΥΤΑ ΑΝ ΚΑΝΕΙΣ ΣΟΧΛΙΑ ΤΑ ΑΠΟ ΠΑΝΩ !!!!!!!!!
-    // logM* model = logistic_create();
-    // weights_set(model->finalWeights, 2*bow->entries);
-    // model->weights_count = 2*bow->entries;
-    all_with_all_gamwtokeratomoumesa(hashT, model, bow);
-
-// ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
-// ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+        // ~~~~~~~~~~~~~~~~~~~ ALL_WITH_ALL_METHOD !!!!!!! VERY SLOW !!!!
+    // all_with_all(hashT, model, bow);
 
 
-printf("All Specs: %d\n", hashT->entries);
-myMatches* gamw = allMatches->head;
-int mpla = 0;
-while(gamw!=NULL){
-    mpla += gamw->specsCount;
-    gamw = gamw->next;
-}
-printf("Specs in Matches: %d\n", mpla);
-printf("TrainSize: %d\n", trainSize);
-printf("All matches: %d\n", allMatches->entries);
+    // PRINT STATS
+    printf("TrainSize: %d\n", trainSize);
+    printf("All matches: %d\n", allMatches->entries);
 
     //~~~~~~~~~~~~~~~~~~~~~~ FREE MEM
     printf("\nCleaning Memory...\n");
-
     FREE_MEM(path_X,path_W,outputFileMatches,outputFileNegs,allMatches,hashT,trainSet,testSet,validSet,bow,model);
-
     printf("       \t\t.. DONE !!\n\n");
 
     return 0;
