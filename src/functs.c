@@ -1676,8 +1676,13 @@ void one_with_all(hashTable* hashT, logM* model, BoWords* bow, record* rec, buck
 
         // printf("Entries: %d\n", info_list->all_pairs);
 
+        if(info_list->all_pairs == 0){
+            keep_next_rec = get_me_next(hashT, &keep_next_i, &keep_next_buc, &keep_next_rec);
+            continue;
+        }
+
         if(info_list->head->predict == 0){
-            if(info_list->head->proba - info_list->head->predict <= 0.1){
+            if(info_list->head->proba - info_list->head->predict <= 0.01){
                 pthread_mutex_lock(&mtx_print);
                 fseek(fpout, 0, SEEK_END);
                 fprintf(fpout, "%s, %s, %d\n", specA[0]->specID, specA[1]->specID, info_list->head->predict);
@@ -1685,7 +1690,7 @@ void one_with_all(hashTable* hashT, logM* model, BoWords* bow, record* rec, buck
             }
         }
         else{
-            if(info_list->head->predict - info_list->head->proba <= 0.1){
+            if(info_list->head->predict - info_list->head->proba <= 0.01){
                 pthread_mutex_lock(&mtx_print);
                 fseek(fpout, 0, SEEK_END);
                 fprintf(fpout, "%s, %s, %d\n", specA[0]->specID, specA[1]->specID, info_list->head->predict);
