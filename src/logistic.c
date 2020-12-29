@@ -70,13 +70,17 @@ int logistic_fit_spars(logM* model, int spars_size, float** spars, int* labels, 
 }
 
 int logistic_fit_dataList(logM* model, dataI* info){
+    if(info == NULL || info->all_pairs == 0){
+        // printf("Can't Train ~ Empty list\n");
+        return 0;
+    }
         // set model
     model->size_totrain = info->all_pairs;
         
         // set weights
     weights_set(model->finalWeights, info->dimensions);
     model->weights_count = info->dimensions;
-    // printf("info->dim: %d, weights_count: %d\n", info->dimensions, model->finalWeights->entries);
+    
         // train
     return logistic_regression_dataList(model, info);
 }
@@ -349,7 +353,7 @@ int logistic_regression_dataList(logM* model, dataI* info){
     while(limit > model->finalWeights->limit){
 
         if(received_signal == 1)
-            return -1;
+            return 0;
 
             // 1. Make Predicts
         logistic_predict_proba_dataList(model, info);
@@ -970,6 +974,8 @@ void dataI_destroy(dataI* info){
 }
 
 dataN* dataI_pop(dataI* info){
+    if(info == NULL)
+        return NULL;
     if(info->poped == NULL)
         info->poped = info->head;
     else if(info->poped->next == NULL)

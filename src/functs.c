@@ -1014,7 +1014,7 @@ int* concat_tags(int* table, int tag, int size){
     return table;
 }
 
-void make_tests(BoWords* bow, logM* model, mySpec** test_set, int set_size){
+float make_tests(BoWords* bow, logM* model, mySpec** test_set, int set_size){
 
             //  Init values to pass
     int vector_cols = 0;
@@ -1027,7 +1027,9 @@ void make_tests(BoWords* bow, logM* model, mySpec** test_set, int set_size){
     make_vectors(test_set, set_size, bow, &pairsVector, &all_vectors, &labels, &count_pairs, &vector_cols);
 
     int* predicts = logistic_predict(model, pairsVector, count_pairs, vector_cols);
-    printf("\tAccuracy at test_set: %.4f\n", logistic_score(model, predicts, labels, count_pairs));
+    // printf("\tAccuracy at test_set: %.4f\n", logistic_score(model, predicts, labels, count_pairs));
+    float acc =  logistic_score(model, predicts, labels, count_pairs);
+
 
         //  FREE MEM
     while(count_pairs > 0){
@@ -1044,6 +1046,8 @@ void make_tests(BoWords* bow, logM* model, mySpec** test_set, int set_size){
 
     free(predicts);
     free(labels);
+
+    return acc;
 }
 
 
@@ -1246,7 +1250,7 @@ int train_per_spec_spars(mySpec** train_set, int set_size, BoWords* bow, logM* m
     }
 
     // PRINT STATS FOR TESTING
-    printf("\ttrained times: %d\n", model->trained_times);
+    // printf("\ttrained times: %d\n", model->trained_times);
 
     //  FREE MEM
     while(size > 0){
@@ -1262,7 +1266,7 @@ int train_per_spec_spars(mySpec** train_set, int set_size, BoWords* bow, logM* m
 }
 
 
-void make_tests_spars(BoWords* bow, logM* model, mySpec** test_set, int set_size){
+float make_tests_spars(BoWords* bow, logM* model, mySpec** test_set, int set_size){
 
         //  Init values to pass
     float** spars = NULL;
@@ -1275,7 +1279,8 @@ void make_tests_spars(BoWords* bow, logM* model, mySpec** test_set, int set_size
     int size = spars_size;
     int* predicts = logistic_predict_spars(model, spars, spars_size, 2*bow->entries, labels_size);
 
-    printf("\tAccuracy at test_set: %.4f\n", logistic_score(model, predicts, labels, labels_size));
+    // printf("\tAccuracy at test_set: %.4f\n", logistic_score(model, predicts, labels, labels_size));
+    float acc = logistic_score(model, predicts, labels, labels_size);
 
         //  FREE MEM
     while(size > 0){
@@ -1288,6 +1293,8 @@ void make_tests_spars(BoWords* bow, logM* model, mySpec** test_set, int set_size
     free(labels);
 
     free(predicts);
+
+    return acc;
 }
 
 int isPair(mySpec* spec1, mySpec* spec2){
@@ -1342,11 +1349,11 @@ logM* make_model_spars_list(BoWords* bow, mySpec** train_set, int set_size){
     int check = train_per_spec_spars_list_one_by_one(train_set, set_size, bow, model);
 
 
-    printf("\tThrshold: %.4f\n", model->finalWeights->threshold);
-    printf("\tModel trained Times: %d\n", model->trained_times);
-    printf("\tModel trained Size: %d\n", model->size_totrain);
-    printf("\t\tof whom \"0\": %d\n", model->fit0);
-    printf("\t\tof whom \"1\": %d\n", model->fit1);
+    // printf("\tThrshold: %.4f\n", model->finalWeights->threshold);
+    // printf("\tModel trained Times: %d\n", model->trained_times);
+    // printf("\tModel trained Size: %d\n", model->size_totrain);
+    // printf("\t\tof whom \"0\": %d\n", model->fit0);
+    // printf("\t\tof whom \"1\": %d\n", model->fit1);
     
 
     // If a termination signal was recieved
@@ -1451,7 +1458,7 @@ void make_it_spars_list(mySpec** set, int set_size, BoWords* bow, dataI* info_li
 
 }
 
-void make_tests_spars_list(BoWords* bow, logM* model, mySpec** test_set, int set_size){
+float make_tests_spars_list(BoWords* bow, logM* model, mySpec** test_set, int set_size){
          // Signal handling
     struct sigaction    act;
     sigset_t            block_mask;
@@ -1471,17 +1478,20 @@ void make_tests_spars_list(BoWords* bow, logM* model, mySpec** test_set, int set
     if(received_signal == 1){
         //  FREE MEM;
         dataI_destroy(info_list);
-        return;
+        return 0;
     }
 
     logistic_predict_proba_dataList(model, info_list);
 
     // PRINT STATS FOR TESTING
-    printf("\tAccuracy at test_set: %.4f\n", logistic_score_dataList(model, info_list));
+    // printf("\tAccuracy at test_set: %.4f\n", logistic_score_dataList(model, info_list));
+
+    float acc = logistic_score_dataList(model, info_list);
 
     //  FREE MEM
     dataI_destroy(info_list);
 
+    return acc;
 }
 
 
@@ -1537,8 +1547,12 @@ void make_it_spars_list_plus_train(logM* model, mySpec** set, int set_size, BoWo
     // FIND PAIRS AND CONCAT THEIR SPARS
     i = 0;
     while(i<set_size){
+        if(received_signal == 1)
+            break;
         int z = i + 1;
         while(z < set_size){
+            if(received_signal == 1)
+                break;
             if(all_spars[i] == NULL && all_spars[z] == NULL){
                 z++;
                 continue;

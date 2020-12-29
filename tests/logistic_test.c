@@ -13,10 +13,21 @@ void test_logistic_create(void){
     TEST_ASSERT(model->finalWeights != NULL);
     TEST_ASSERT(model->size_totrain == 0);
     TEST_ASSERT(model->weights_count == 0);
+    TEST_ASSERT(model->fit1 == 0);
+    TEST_ASSERT(model->fit0 == 0);
+    TEST_ASSERT(model->dataList == NULL);
 
     logistic_destroy(model);
 }
 
+void test_logistic_fit_dataList(void){
+    logM* model = logistic_create();
+
+    dataI* list = dataI_create(0);
+    TEST_ASSERT(logistic_fit_dataList(model, list) == 0);
+
+
+}
 // void test_logistic_destroy(void){
 
 // }

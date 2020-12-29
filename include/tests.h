@@ -24,7 +24,10 @@ void test_remove_nlist(void);
 void test_seek_nlist(void);
 
 void test_logistic_create(void);
+void test_logistic_fit_dataList(void);
 
 void test_create_dataList(void);
 void test_push_dataList(void);
 void test_delete_dataList(void);
+void test_pop_dataList(void);
+

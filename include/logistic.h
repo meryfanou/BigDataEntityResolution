@@ -104,7 +104,7 @@ float logistic_score_dataList(logM*, dataI*);
 
 float logistic_score(logM*, int*, int*, int);
 void logistic_extract(logM*);
-void logistic_print_strongs(logM*, float*, int);
+// void logistic_print_strongs(logM*, float*, int);
 
 // ~~~~~~~~~~~~~~
 weights* weights_create();

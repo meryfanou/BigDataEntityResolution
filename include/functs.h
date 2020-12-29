@@ -69,9 +69,9 @@ int isPair(mySpec*, mySpec*);
 
 /// ~~~~~~~~~~~~~~~~ TESTING ~~~~~~~~~~~~~~~~
 
-void make_tests(BoWords*, logM*, mySpec**, int);
-void make_tests_spars(BoWords*, logM*, mySpec**, int);
-void make_tests_spars_list(BoWords*, logM*, mySpec**, int);
+float make_tests(BoWords*, logM*, mySpec**, int);
+float make_tests_spars(BoWords*, logM*, mySpec**, int);
+float make_tests_spars_list(BoWords*, logM*, mySpec**, int);
 
 /* NOT USED */
 void train_per_clique(myMatches*, mySpec**, int, BoWords*, logM*);
@@ -83,9 +83,12 @@ void one_with_all(hashTable*, logM*, BoWords*, record*, bucket*, int, char*);
 record* get_me_next(hashTable*, int*, bucket**, record**);
 void create_threads(myThreads*);
 void* all_with_all_ThreadsStart(void*);
+
+
 // ~~~~~~~~~~~~~~~~ SIGNALS ~~~~~~~~~~~~~~~~
 
 void sig_int_quit_handler(int);
+
 
 // ~~~~~~~~~~~~~~~~ FREE MEM ~~~~~~~~~~~~~~~~
 

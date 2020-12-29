@@ -68,6 +68,42 @@ void test_push_dataList(void){
 	free(array);
 }
 
+void test_pop_dataList(void){
+    dataI* list = dataI_create(0);
+    dataN* node = NULL;
+
+    // TEST POP EMPTY
+    node = dataI_pop(list);
+    TEST_ASSERT(node == NULL);
+
+    int N = 100;
+    mySpec* array = malloc(N*sizeof(mySpec));
+    int i = 0;
+    while(i < N){
+        dataI_push(list, &array[i++], NULL, NULL, 0, 0);
+    }
+    TEST_ASSERT(list->all_pairs == N);
+
+    // TEST POPS
+    i = N;
+    while(i > 0){
+        node = dataI_pop(list);
+        TEST_ASSERT(node->spec1 == &array[--i]);
+        if(i == N-1)
+            TEST_ASSERT(node == list->head);
+    }
+
+    // TEST LAST POP
+    node = dataI_pop(list);
+    TEST_ASSERT(node == NULL);
+
+    // TEST REWIND_POP
+    dataI_rewind_pop(list);
+    node = dataI_pop(list);
+    TEST_ASSERT(node == list->head);
+
+}
+
 void test_delete_dataList(void){
     int N  = 100;
     mySpec* array = malloc(N*sizeof(mySpec));
