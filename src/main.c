@@ -159,6 +159,7 @@ int main(int argc, char** argv){
     // ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~ Check for signals
 
     if(received_signal == 1 || check != 0){
+        printf("\b\b");
         ppa_add_line_left(pp, "Cleaning Mem..");
         
         int* null = NULL;
@@ -226,6 +227,7 @@ int main(int argc, char** argv){
     // ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~ Check for signals
 
     if(received_signal == 1 || check < 0){
+        printf("\b\b");
         ppa_add_line_left(pp, "Cleaning Mem..");
 
 
@@ -283,6 +285,7 @@ int main(int argc, char** argv){
     // ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~ Check for signals or other errors
 
     if(received_signal == 1 || trainSet == NULL || testSet == NULL || validSet == NULL){
+        printf("\b\b");
         ppa_add_line_left(pp, "Cleaning Memory ..");
 
         int* null = NULL;
@@ -317,7 +320,7 @@ int main(int argc, char** argv){
     // ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~ Check for signals
 
     if(received_signal == 1){
-        
+        printf("\b\b");
         ppa_add_line_right(pp, "Error", RED);
         ppa_add_line_left(pp, "Cleaning Memory");
 
@@ -346,6 +349,7 @@ int main(int argc, char** argv){
     // ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~ Check for signals
 
     if(received_signal == 1){
+        printf("\b\b");
         ppa_add_line_right(pp, "Error", RED);
         ppa_add_line_left(pp, "Cleaning Memory ..");
 
@@ -373,6 +377,7 @@ int main(int argc, char** argv){
     // ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~ Check for signals
 
     if(received_signal == 1){
+        printf("\b\b");
         ppa_add_line_right(pp, "Error", RED);
         ppa_add_line_left(pp, "Cleaning Memory ..");
 
@@ -409,6 +414,7 @@ int main(int argc, char** argv){
     // ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~ Check for signals
 
     if(received_signal == 1 || model == NULL){
+        printf("\b\b");
         ppa_add_line_right(pp, "Error", RED);
         ppa_add_line_left(pp, "Cleaning Memory ..");
 
@@ -465,6 +471,7 @@ int main(int argc, char** argv){
     // ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~ Check for signals
 
     if(received_signal == 1){
+        printf("\b\b");
         ppa_add_line_left(pp, "Cleaning Memory ..");
 
 
@@ -504,7 +511,7 @@ int main(int argc, char** argv){
     FREE_MEM(path_X,path_W,outputFileMatches,outputFileNegs,allMatches,hashT,trainSet,testSet,validSet,bow,model);
     ppa_add_line_right(pp, "DONE", GRN);
 
-    ppa_print_end(pp, "PROJECT_2 ~~ ALL DONE");
+    ppa_print_end(pp, "PROJECT_2 <> ALL DONE");
     ppa_destroy(pp);
 
     return 0;
