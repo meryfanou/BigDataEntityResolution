@@ -403,7 +403,7 @@ int main(int argc, char** argv){
 
     ppa_add_line_left(pp, "Training Logistic Model ..");
     
-            // !! Uncomment to choose method of train
+            // !! Uncomment to choose method for training
 
     logM* model = NULL;
     if(choose_model == 'v'){
