@@ -25,7 +25,7 @@
 
  /*     
   !!  RUN COMMAND:
-  !! ./main (-o (file_name)) (-l medium or -l <path_to_W>) (-p <path_to_X>)
+  !! ./main (-o (file_name)) (-n (file_name)) (-l medium or -l <path_to_W>) (-p <path_to_X>) (-m model)
 */
 
 
