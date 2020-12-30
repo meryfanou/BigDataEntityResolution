@@ -87,7 +87,7 @@ void delete_mbh_node(MBH* heap, MBHNode* heapNode, int heapify){
 		int			isLeft = 0;
 		MBHNode*	parent = heap->max->parent;
 
-		// If max is also the root => only on node in heap
+		// If max is also the root => only one node in heap
 		if(parent == NULL){
 			// Max should be the only node in heap
 			if(heapNode != heap->max)

@@ -28,6 +28,3 @@ void test_logistic_fit_dataList(void){
 
 
 }
-// void test_logistic_destroy(void){
-
-// }

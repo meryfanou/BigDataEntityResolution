@@ -10,7 +10,6 @@
 #include "../include/functs.h"
 #include "../include/boWords.h"
 #include "../include/mbh.h"
-// #include "."
 
 void test_createHash(void){
 
@@ -240,5 +239,8 @@ TEST_LIST = {
 	{"DATA_LIST .4: test_pop_dataList", test_pop_dataList},
 	{"LOGISTIC .1: test_logistic_create", test_logistic_create},
 	{"LOGISTIC .2: test_logistic_fit_dataList", test_logistic_fit_dataList},
+	{"BAG_OF_WORDS .1: test_create_boW", test_create_boW},
+	{"BAG_OF_WORDS .2: test_add_boW", test_add_boW},
+	{"BAG_OF_WORDS .3: test_delete_boW", test_delete_boW},
 	{NULL, NULL}
 };

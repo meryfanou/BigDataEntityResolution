@@ -1,4 +1,3 @@
-
 #define TEST_NO_MAIN
 
 #include <stdlib.h>
