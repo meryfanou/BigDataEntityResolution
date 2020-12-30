@@ -25,6 +25,6 @@ void test_logistic_fit_dataList(void){
 
     dataI* list = dataI_create(0);
     TEST_ASSERT(logistic_fit_dataList(model, list) == 0);
-
-
+    
+    logistic_destroy(model);  
 }
