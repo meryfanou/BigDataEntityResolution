@@ -37,7 +37,8 @@ int main(int argc, char** argv){
     char*   path_X = strdup(DATASET_X);
     char*   path_W = strdup(DATASET_W);
 
-    char    choose_model = 's';    // By default, use model with spars implementation
+    char    choose_model = 's';     // By default, use model with spars implementation
+    int     extract_awa = 0;       // By default, do not extract all with all pairs
     
     char* outputFileMatches = NULL;
     char* outputFileNegs = NULL;
@@ -84,6 +85,10 @@ int main(int argc, char** argv){
                 choose_model = argv[i+1][0];
             }
 
+            else if(!strcmp(argv[i], "-extract") || !strcmp(argv[i], "-e")){
+                if(!strcmp(argv[i], "all_with_all"))
+                    extract_awa = 1;
+            }
 
             i++;
         }
@@ -495,9 +500,12 @@ int main(int argc, char** argv){
 
     // ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~ ALL_WITH_ALL_METHOD !!!!!!! VERY SLOW !!!!
 
-    ppa_add_line_left(pp, "All_with_all ..");
-    // all_with_all(hashT, model, bow);
-    ppa_add_line_right(pp, "DONE", GRN);
+    // If the user asked to extract all with all pairs
+    if(extract_awa){
+        ppa_add_line_left(pp, "All_with_all ..");
+        all_with_all(hashT, model, bow);
+        ppa_add_line_right(pp, "DONE", GRN);
+    }
 
 
     // ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~ PRINT STATS
