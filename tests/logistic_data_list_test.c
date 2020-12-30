@@ -100,6 +100,10 @@ void test_pop_dataList(void){
     dataI_rewind_pop(list);
     node = dataI_pop(list);
     TEST_ASSERT(node == list->head);
+	
+	
+	dataI_destroy(list);
+	free(array);
 
 }
 
@@ -141,5 +145,6 @@ void test_delete_dataList(void){
 
     // TEST DELETE ALL
     dataI_destroy(list);
+	free(array);
 
 }
