@@ -240,5 +240,7 @@ TEST_LIST = {
 	{"DATA_LIST .4: test_pop_dataList", test_pop_dataList},
 	{"LOGISTIC .1: test_logistic_create", test_logistic_create},
 	{"LOGISTIC .2: test_logistic_fit_dataList", test_logistic_fit_dataList},
+	{"MBH .1: test_mbh_create", test_mbh_create},
+	{"MBH .2: test_mbh_insert & extract_root", test_mbh_insert_extract_root},
 	{NULL, NULL}
 };

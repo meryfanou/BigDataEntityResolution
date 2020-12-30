@@ -31,3 +31,5 @@ void test_push_dataList(void);
 void test_delete_dataList(void);
 void test_pop_dataList(void);
 
+void test_mbh_create(void);
+void test_mbh_insert_extract_root(void);

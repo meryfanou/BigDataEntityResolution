@@ -145,6 +145,9 @@ int mbh_insert(MBH* heap, char* word, float key){
 	if(heap == NULL)
 		return -1;
 
+	if(heap->maxNodes == 0)
+		return -1;
+
 	// If heap's maximum number of nodes has been reached
     if(heap->numofNodes == heap->maxNodes){
 		// If word's key is not high enough to be added in key
