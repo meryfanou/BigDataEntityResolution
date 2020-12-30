@@ -89,6 +89,9 @@ void test_seek_nlist(void){
 
     check = seek_nlist(list, &array[N-1]);
     TEST_ASSERT(check == NULL);
+	
+	destroy_nlist(list);
+	free(array);
 
 }
 
