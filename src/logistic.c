@@ -634,6 +634,8 @@ void logistic_extract(logM* model){
     fprintf(fpout, "\tsize_totrain: %d\n", model->size_totrain);
     fprintf(fpout, "\tweights_count: %d\n", model->weights_count);
     fprintf(fpout, "\ttrained_times: %d\n", model->trained_times);
+    fprintf(fpout, "\tfits \"1\": %d\n", model->fit1);
+    fprintf(fpout, "\tfits \"0\": %d\n", model->fit0);
 
     fclose(fpout);
 
@@ -670,6 +672,9 @@ void logistic_overfit(logM* model, int* tags, int tags_size){
 }
 
 void logistic_overfit_dataList(logM* model, dataI* info){
+
+
+
     dataN* node = info->head;
     while(node != NULL){
         if(node->label == 1)
@@ -679,16 +684,25 @@ void logistic_overfit_dataList(logM* model, dataI* info){
         node = node->next;
     }
 
+    if(model->finalWeights->threshold >= 0.8){
+        model->finalWeights->threshold = 0.8;
+        return;
+    }
+    else if(model->finalWeights->threshold <= 0.2){
+        model->finalWeights->threshold = 0.2;
+        return;
+    }
+
     float rate = 0.0;
     if(model->fit1 > model->fit0){
         if(model->fit0 == 0)
-            rate = 100.0;
+            rate = (float)model->fit1;
         else
             rate = (float)model->fit1 / (float)model->fit0;
     }
     else{
         if(model->fit1 == 0)
-            rate = -100.0;
+            rate = (float)model->fit0;
         else
             rate = -1.0* (float)model->fit0 / (float)model->fit1;
     }
@@ -811,7 +825,7 @@ void weights_extract(weights* myWeights){
     fprintf(fpout, "\tentries: %d\n", myWeights->entries);
     fprintf(fpout, "\tlimit: %.4f\n", myWeights->limit);
     fprintf(fpout, "\trate: %.4f\n", myWeights->rate);
-    fprintf(fpout, "\tthreshold: %.4f\n", myWeights->threshold);
+    fprintf(fpout, "\tthreshold: %.4f\n\n", myWeights->threshold);
     fprintf(fpout, "\tb: %.4f\n", myWeights->b);
     int i = 0;
     while( i < myWeights->entries){

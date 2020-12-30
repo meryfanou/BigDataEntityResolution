@@ -321,8 +321,8 @@ void extractMatches(matchesInfo* allMatches, char* fname){
 
 			// STATS PRINTS (EXTRA) - COMMENT IF U LIKE
 	// fprintf(fpout, "\t~ ~ ~ ~ ~ ~ ~ ~ ~ ~ ~ ~ ~ ~ ~ ~\n");
-	// fprintf(fpout, "Total Matches (Groups): %d\n", allMatches->entries);
-	// fprintf(fpout, "Total Pairs: %d\n", totalPairs);
+	fprintf(fpout, "Total Matches (Groups): %d\n", allMatches->entries);
+	fprintf(fpout, "Total Pairs: %d\n", totalPairs);
 
 	if(flag == 1)
 		fclose(fpout);

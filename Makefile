@@ -45,7 +45,7 @@ valgrind: main
 
 #-------------------------------------------------------------------------#
 
-all_tests:  $(ODIR)/myHash_test.o  $(ODIR)/myMatchesList_test.o $(ODIR)/myMatchesNegsList_test.o $(ODIR)/mySpec_test.o $(ODIR)/boWords_test.o $(ODIR)/myMatches.o $(ODIR)/mySpec.o  $(ODIR)/myHash.o $(ODIR)/logistic_test.o $(ODIR)/logistic_data_list_test.o $(ODIR)/logistic.o $(ODIR)/functs.o $(ODIR)/boWords.o $(ODIR)/mbh.o $(ODIR)/myThreads.o
+all_tests:  $(ODIR)/myHash_test.o  $(ODIR)/myMatchesList_test.o $(ODIR)/myMatchesNegsList_test.o $(ODIR)/mySpec_test.o $(ODIR)/boWords_test.o $(ODIR)/myMatches.o $(ODIR)/mySpec.o  $(ODIR)/myHash.o $(ODIR)/logistic_test.o $(ODIR)/mbh_test.o $(ODIR)/logistic_data_list_test.o $(ODIR)/logistic.o $(ODIR)/functs.o $(ODIR)/boWords.o $(ODIR)/mbh.o $(ODIR)/myThreads.o
 			@echo "\nCreating Unit Testing Files"
 			$(CC) $(CCFLAGS) -o $(BDIR)/$@ $^ $(LIBS)
 

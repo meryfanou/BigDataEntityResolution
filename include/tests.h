@@ -34,3 +34,6 @@ void test_pop_dataList(void);
 void test_create_boW(void);
 void test_add_boW(void);
 void test_delete_boW(void);
+
+void test_mbh_create(void);
+void test_mbh_insert_extract_root(void);

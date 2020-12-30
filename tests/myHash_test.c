@@ -242,5 +242,7 @@ TEST_LIST = {
 	{"BAG_OF_WORDS .1: test_create_boW", test_create_boW},
 	{"BAG_OF_WORDS .2: test_add_boW", test_add_boW},
 	{"BAG_OF_WORDS .3: test_delete_boW", test_delete_boW},
+	{"MBH .1: test_mbh_create", test_mbh_create},
+	{"MBH .2: test_mbh_insert & extract_root", test_mbh_insert_extract_root},
 	{NULL, NULL}
 };

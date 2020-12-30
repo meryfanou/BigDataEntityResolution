@@ -99,59 +99,15 @@ void test_add_boW(void){
 	}
 
 	bow_destroy(bow);		// Array is now Empty !
+    for(i=0; i<N; i++){
+        deleteSpec(array[i]);
+    }
 	free(array);
     for(i=0; i<N; i++)
         free(words[i]);
     free(words);
 }
 
-  	// ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
-/*
-void test_search_boW(void){
-	int bowSize = 1;
-	int bucSize = 100;
-
-	BoWords* bow = bow_create(bowSize, bucSize);
-
-	// ~~~~~~ CHECK SEARCHING HASH FOR KEY, by key
-
-		// Create a table with 100 specs
-	int N = 100;
-	mySpec** array = malloc(N*sizeof(mySpec*));
-
-		// Insert specs using distinct keys
-	int i = 0;
-	while(i < N){
-        char word[] = "word";
-		char to_add[100];
-		sprintf(to_add, "%d", i);
-		
-		char* mpla = malloc(4+strlen(to_add)+1);
-		memset(mpla, 0, 4+strlen(to_add)+1);
-		
-		strcat(mpla, "mpla");
-		strcat(mpla, to_add);
-
-		array[i] = specCreate(mpla, NULL, 0);
-
-		bow_add(bow, word, array[i], hash1(mpla));
-		TEST_ASSERT(bow->entries == i+1);
-		i++;
-	
-		free(mpla);
-	}
-
-	i = 0;
-	while(i < N){
-		mySpec* spec = findRecord_byKey(hash, array[i]->specID);
-		TEST_ASSERT(spec == array[i]);
-		i++;
-	}
-
-	hash_destroy(hash);
-	free(array);
-
-}*/
 
 void test_delete_boW(void){
 
@@ -159,7 +115,6 @@ void test_delete_boW(void){
 	int bucSize = 100;
 
 	BoWords* bow = bow_create(bowSize, bucSize);
-
 	int N = 100;
 	mySpec** array = malloc(N*sizeof(mySpec*));
 	char** words = malloc(N*sizeof(char*));
@@ -181,13 +136,12 @@ void test_delete_boW(void){
 		strcat(words[i], to_add);
 
 		array[i] = specCreate(mpla, NULL, 0);
-		
-		bow_add(bow, words[i], array[i], hash1(array[i]->specID));
+
+		bow_add(bow, words[i], array[i], hash1(words[i]));
 
 		i++;
 		free(mpla);
 	}
-
 	Bucket* buc = NULL;
 	Record* rec = NULL;
 	Bucket* temp_buc = NULL;
@@ -200,23 +154,30 @@ void test_delete_boW(void){
 		buc = buc->next;
 	}
 	rec = buc->rec;
-	while(rec->next != NULL){
-		if(rec->next->next == NULL)
-			temp_rec = rec;
-		rec = rec->next;
+    if(rec->next == NULL){
+        temp_rec = rec;
+    }
+    else{
+	    while(rec->next != NULL){
+		    if(rec->next->next == NULL)
+    			temp_rec = rec;
+	    	rec = rec->next;
+        }
 	}
 
 	// ~~~~~~ TEST DESTROYING LAST RECORD FROM BUCK 0
 	bow_record_destroy(bow, rec);
-	temp_rec->next = NULL;
+    if(temp_rec == rec)
+        buc->rec = NULL;
+    else
+	    temp_rec->next = NULL;
 	TEST_ASSERT(bow->entries == N-1);
 
-	// ~~~~~~ TEST DESTROYING A FULL BUCKET
+	// // ~~~~~~ TEST DESTROYING A FULL BUCKET
 	int keep = buc->cur;
 	bow_bucket_destroy(bow, buc);
 	temp_buc->next = NULL;
 	TEST_ASSERT(bow->entries == N-keep);
-
 
 	// ~~~~~~ TEST DESTROYING FULL BUCKET CHAIN at buc[1]
 	bow_bucket_destroy(bow, bow->myTable[1]);
@@ -224,6 +185,9 @@ void test_delete_boW(void){
 	TEST_ASSERT(bow->entries < N-keep);
 
 	bow_destroy(bow);
+    for(i=0; i<N; i++){
+        deleteSpec(array[i]);
+    }
 	free(array);
     for(i=0; i<N; i++)
         free(words[i]);

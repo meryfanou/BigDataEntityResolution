@@ -113,7 +113,7 @@ int main(int argc, char** argv){
 
 
     // ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~ SET PRETTY_PRINTS
-    
+
     ppa* pp  = ppa_create("LARGE");
     ppa_print_start(pp, "PROGRAM STATUS");
 
