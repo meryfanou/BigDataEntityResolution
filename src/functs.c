@@ -485,6 +485,7 @@ char* shuffleCSV(char* path){
     char extension[5];
     char* shuffled_name = malloc(strlen(path) + strlen("_shuffled") + 1);
 
+    // Temporarily create a shuffled csv file
     strcpy(shuffled_name, path);
     for(int i=4; i>=0; i--)
         extension[4-i] = shuffled_name[strlen(shuffled_name)-i];
@@ -492,10 +493,12 @@ char* shuffleCSV(char* path){
     strcat(shuffled_name, "_shuffled");
     strcat(shuffled_name, extension);
 
+    // Call bash command to shuffle the old csv file and store it in the new one (omit csv's first line with info)
+    // command: tail -n +2 old_csv > shuf > new_csv
     char* command = malloc(strlen("shuf ") + strlen(path) + strlen(" > ") + strlen(shuffled_name) + 1);
-    strcpy(command, "shuf ");
+    strcpy(command, "tail -n +2 ");
     strcat(command, path);
-    strcat(command, " > ");
+    strcat(command, " > shuf > ");
     strcat(command, shuffled_name);
 
     if(system(command) == -1){
