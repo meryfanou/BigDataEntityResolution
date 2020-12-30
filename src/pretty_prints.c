@@ -126,7 +126,7 @@ void ppa_add_line_left(ppa* pp, char* line){
 
 void ppa_add_line_right(ppa* pp, char* line, char* clr){
     // printf("\b\b\b\b");
-    printf(clr);
+    printf("%s",clr);
     ppa_put_at_mid(pp, pp->white_space_right, line);
     printf(RESET);
     printf("||\n");
