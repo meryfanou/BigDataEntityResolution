@@ -13,7 +13,7 @@
 #include "../include/pretty_prints.h"
 
 #define DATASET_X "../camera_specs/2013_camera_specs/"
-#define DATASET_W "../sigmod_large_labelled_dataset.csv"
+#define DATASET_W "../sigmod_medium_labelled_dataset.csv"
 
 #define HASH_SIZE 500
 #define BUC_SIZE 100
@@ -112,6 +112,8 @@ int main(int argc, char** argv){
 	sigaddset(&block_mask,SIGQUIT);
 
 
+    // ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~ SET PRETTY_PRINTS
+    
     ppa* pp  = ppa_create("LARGE");
     ppa_print_start(pp, "PROGRAM STATUS");
 
@@ -126,7 +128,6 @@ int main(int argc, char** argv){
 
     // ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~ CREATE HASH - INIT MATCHES_LIST
 
-    // printf("\nBuilding Hash ...\n");
     ppa_add_line_left(pp, "Building Hash ..");
 
     hashTable* hashT = hash_create(HASH_SIZE, BUC_SIZE);
@@ -153,8 +154,6 @@ int main(int argc, char** argv){
 
     ppa_add_line_right(pp, "DONE", GRN);
 
-    // ppa_print_end(pp);
-    // ppa_destroy(pp);
 
     // ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~ Check for signals
 
@@ -168,7 +167,7 @@ int main(int argc, char** argv){
         ppa_add_line_right(pp, "DONE", GRN);
         
         if(check == 1)
-            ppa_print_end(pp, "Exiting after receivinf signal ..");
+            ppa_print_end(pp, "Exiting after receiving signal ..");
         
         ppa_destroy(pp);
         exit(-4);
@@ -195,7 +194,6 @@ int main(int argc, char** argv){
 
     // ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~ READ CSV
 
-    // printf("\nReading CSV ...\n");
     ppa_add_line_left(pp, "Reading CSV ..");
 
                 // If a termination signal was received, return 1. If an error occured, return negative value. Otherwise return number of lines read
@@ -237,7 +235,7 @@ int main(int argc, char** argv){
         ppa_add_line_right(pp, "DONE", GRN);
 
         if(check == 1)
-            ppa_print_end(pp, "Exiting after receivinf signal ..");
+            ppa_print_end(pp, "Exiting after receiving signal ..");
 
         ppa_destroy(pp);
         exit(-5);
@@ -329,13 +327,14 @@ int main(int argc, char** argv){
 
         ppa_add_line_right(pp, "DONE", GRN);
 
-        ppa_print_end(pp, "Exiting after receivinf signal ..");
+        ppa_print_end(pp, "Exiting after receiving signal ..");
         ppa_destroy(pp);
 
         exit(-2);
     }
 
     ppa_add_line_right(pp, "DONE", GRN);
+
 
     // ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~ APPLY TF-IDF
 
@@ -358,7 +357,7 @@ int main(int argc, char** argv){
 
         ppa_add_line_right(pp, "DONE", GRN);
 
-        ppa_print_end(pp, "Exiting after receivinf signal ..");
+        ppa_print_end(pp, "Exiting after receiving signal ..");
         ppa_destroy(pp);
 
         exit(-2);
@@ -387,7 +386,7 @@ int main(int argc, char** argv){
 
         ppa_add_line_right(pp, "DONE", GRN);
 
-        ppa_print_end(pp, "Exiting after receivinf signal ..");
+        ppa_print_end(pp, "Exiting after receiving signal ..");
         ppa_destroy(pp);
         exit(-2);
     }
@@ -422,7 +421,7 @@ int main(int argc, char** argv){
 
         ppa_add_line_right(pp, "DONE", GRN);
 
-        ppa_print_end(pp, "Exiting after receivinf signal ..");
+        ppa_print_end(pp, "Exiting after receiving signal ..");
         ppa_destroy(pp);
 
         exit(-2);
@@ -468,6 +467,7 @@ int main(int argc, char** argv){
     ppa_add_line_right(pp, mssg_test, GRN);
     free(mssg_test);
 
+
     // ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~ Check for signals
 
     if(received_signal == 1){
@@ -479,7 +479,7 @@ int main(int argc, char** argv){
 
         ppa_add_line_right(pp, "DONE", GRN);
 
-        ppa_print_end(pp, "Exiting after receivinf signal ..");
+        ppa_print_end(pp, "Exiting after receiving signal ..");
         ppa_destroy(pp);
 
         exit(-2);
@@ -491,6 +491,7 @@ int main(int argc, char** argv){
     ppa_add_line_left(pp, "Extract Model ..");
     logistic_extract(model);
     ppa_add_line_right(pp, "DONE", GRN);
+
 
     // ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~ ALL_WITH_ALL_METHOD !!!!!!! VERY SLOW !!!!
 

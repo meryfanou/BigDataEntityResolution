@@ -26,11 +26,11 @@ struct print_array{
 
 
 ppa* ppa_create(char*);
+void ppa_destroy(ppa*);
 void ppa_print_start(ppa*, char*);
 void ppa_add_line_left(ppa*, char*);
 void ppa_add_line_right(ppa*, char*, char*);
 void ppa_print_end(ppa*, char*);
-void ppa_destroy(ppa*);
 void ppa_put_at_mid(ppa*, int, char*);
 
 void ppa_add_blanks(int);
