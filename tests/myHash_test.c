@@ -17,7 +17,6 @@ void test_createHash(void){
 	bucket* buc = bucket_create(5);
 	record* rec = record_create(NULL);
 
-
 			// TEST CREATION
 	TEST_ASSERT(hash != NULL);
 	TEST_ASSERT(buc != NULL);

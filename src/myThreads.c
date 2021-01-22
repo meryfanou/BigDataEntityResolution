@@ -80,3 +80,14 @@ void myThreads_MASSACRE(myThreads* threads){
 // 		i++;
 // 	}
 // }
+
+
+t_Info2* make_info2(void* scheduler){
+	t_Info2* newinfo = malloc(sizeof(t_Info2));
+	newinfo->Scheduler = scheduler;
+	return newinfo;
+}
+
+void destroy_Info2(t_Info2* info){
+	free(info);
+}

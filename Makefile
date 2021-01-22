@@ -14,7 +14,6 @@ TSTSDIR = tests
 TSTS = $(wildcard $(TSTSDIR)/*.c)
 ARGS = ""
 
-
 $(ODIR)/%.o: $(SRCDIR)/%.c
 		@echo "\nCreating object " $@
 		$(CC) $(CCFLAGS) -c -o $@ $<
@@ -29,7 +28,7 @@ all: dirs clean tests main run
 
 #-------------------------------------------------------------------------#
 
-main: $(ODIR)/main.o $(ODIR)/mySpec.o $(ODIR)/myHash.o $(ODIR)/myMatches.o $(ODIR)/functs.o $(ODIR)/boWords.o $(ODIR)/mbh.o $(ODIR)/logistic.o $(ODIR)/myThreads.o $(ODIR)/pretty_prints.o
+main: $(ODIR)/main.o $(ODIR)/mySpec.o $(ODIR)/myHash.o $(ODIR)/jobScheduler.o $(ODIR)/myMatches.o $(ODIR)/functs.o $(ODIR)/boWords.o $(ODIR)/mbh.o $(ODIR)/logistic.o $(ODIR)/myThreads.o $(ODIR)/pretty_prints.o
 		@echo "\nCreating main"
 		$(CC) $(CCFLAGS) -o $(BDIR)/$@ $^ $(LIBS)
 
@@ -45,7 +44,7 @@ valgrind: main
 
 #-------------------------------------------------------------------------#
 
-all_tests:  $(ODIR)/myHash_test.o  $(ODIR)/myMatchesList_test.o $(ODIR)/myMatchesNegsList_test.o $(ODIR)/mySpec_test.o $(ODIR)/boWords_test.o $(ODIR)/myMatches.o $(ODIR)/mySpec.o  $(ODIR)/myHash.o $(ODIR)/logistic_test.o $(ODIR)/mbh_test.o $(ODIR)/logistic_data_list_test.o $(ODIR)/logistic.o $(ODIR)/functs.o $(ODIR)/boWords.o $(ODIR)/mbh.o $(ODIR)/myThreads.o
+all_tests:  $(ODIR)/myHash_test.o  $(ODIR)/myMatchesList_test.o $(ODIR)/myMatchesNegsList_test.o $(ODIR)/mySpec_test.o $(ODIR)/boWords_test.o $(ODIR)/myMatches.o $(ODIR)/mySpec.o  $(ODIR)/myHash.o $(ODIR)/logistic_test.o $(ODIR)/mbh_test.o $(ODIR)/logistic_data_list_test.o $(ODIR)/logistic.o $(ODIR)/functs.o $(ODIR)/boWords.o $(ODIR)/mbh.o $(ODIR)/myThreads.o $(ODIR)/jobScheduler.o
 			@echo "\nCreating Unit Testing Files"
 			$(CC) $(CCFLAGS) -o $(BDIR)/$@ $^ $(LIBS)
 

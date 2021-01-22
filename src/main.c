@@ -11,6 +11,7 @@
 #include "../include/boWords.h"
 #include "../include/logistic.h"
 #include "../include/pretty_prints.h"
+#include "../include/jobScheduler.h"
 
 #define DATASET_X "../camera_specs/2013_camera_specs/"
 #define DATASET_W "../sigmod_large_labelled_dataset.csv"
@@ -23,6 +24,9 @@
 
 #define MOST_SIGN 1000
 
+// MY MAX THREADS ARE 62.439 ... WE USE 10.000 TO BE SURE
+#define T_NUM 10
+
  /*     
   !!  RUN COMMAND:
   !! ./main (-o (file_name)) (-n (file_name)) (-l medium or -l <path_to_W>) (-p <path_to_X>) (-m model)
@@ -30,7 +34,11 @@
 
 
 int main(int argc, char** argv){
-
+    jobSch* Scheduler = jobSch_Init(T_NUM);
+    // jobSch_subbmit(Scheduler, &test);
+    // jobSch_Start(Scheduler);
+    jobSch_Destroy(Scheduler);
+    return 0;
 
     // ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~ SET DEFAULT PATHS, MODEL METHODS, FILE NAMES
 
@@ -121,6 +129,13 @@ int main(int argc, char** argv){
 
     ppa* pp  = ppa_create("LARGE");
     ppa_print_start(pp, "PROGRAM STATUS");
+
+
+    // ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~ SET JOB_SCHEDULER
+
+    // jobSch* Scheduler = jobSch_Init(T_NUM);
+    // jobSch_Destroy(Scheduler);
+    // return 0;
 
     /*
     ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
