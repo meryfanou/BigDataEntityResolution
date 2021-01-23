@@ -29,6 +29,10 @@ struct logistic_model{
 
     dataI* dataList;
 
+
+    pthread_mutex_t model_mtx;
+    pthread_mutex_t weights_mtx;
+
     int fit1;
     int fit0; 
 

@@ -17,6 +17,8 @@
 
 #define PATH "./Outputs"
 
+#define MAX_TRAIN_SIZE_PER_THREAD 1024
+
 int received_signal = 0;
 
 pthread_mutex_t mtx_print = PTHREAD_MUTEX_INITIALIZER;
@@ -1347,7 +1349,7 @@ int isPair(mySpec* spec1, mySpec* spec2){
 
 // ~~~~~~~~~~~~~~~~~~~~~~~ DATA_LIST METHOD ~~~~~~~~~~~~~~~~~~~~~~
 
-logM* make_model_spars_list(BoWords* bow, mySpec** train_set, int set_size){
+logM* make_model_spars_list(BoWords* bow, mySpec** train_set, int set_size, jobSch* Scheduler){
 
     // Signal handling
     struct sigaction    act;
@@ -1365,14 +1367,8 @@ logM* make_model_spars_list(BoWords* bow, mySpec** train_set, int set_size){
 
     // Train_per_Spec
     // int check = train_per_spec_spars_list(train_set, set_size, bow, model);
-    int check = train_per_spec_spars_list_one_by_one(train_set, set_size, bow, model);
-
-
-    // printf("\tThrshold: %.4f\n", model->finalWeights->threshold);
-    // printf("\tModel trained Times: %d\n", model->trained_times);
-    // printf("\tModel trained Size: %d\n", model->size_totrain);
-    // printf("\t\tof whom \"0\": %d\n", model->fit0);
-    // printf("\t\tof whom \"1\": %d\n", model->fit1);
+    // int check = train_per_spec_spars_list_one_by_one(train_set, set_size, bow, model);
+    int check = train_per_spec_spars_list_threads(train_set, set_size, bow, model, Scheduler);
     
 
     // If a termination signal was recieved
@@ -1546,6 +1542,25 @@ int train_per_spec_spars_list_one_by_one(mySpec** train_set, int set_size, BoWor
     return 0;
 }
 
+int train_per_spec_spars_list_threads(mySpec** train_set, int set_size, BoWords* bow, logM* model, jobSch* Scheduler){
+        // Signal handling
+    struct sigaction    act;
+    sigset_t            block_mask;
+    received_signal = 0;
+    sigemptyset(&(act.sa_mask));
+	act.sa_flags = 0;
+    act.sa_handler = sig_int_quit_handler;
+    sigemptyset(&block_mask);
+	sigaddset(&block_mask,SIGINT);
+	sigaddset(&block_mask,SIGQUIT);
+
+    make_it_spars_list_threads_plus_train(model, train_set, set_size, bow, 1, Scheduler);
+    if(received_signal == 1)
+        return -1;
+    return 0;
+}
+    
+
 void make_it_spars_list_plus_train(logM* model, mySpec** set, int set_size, BoWords* bow, dataI* info_list, int use_tag){
     int row = 0;
     int col = 0;
@@ -1599,6 +1614,96 @@ void make_it_spars_list_plus_train(logM* model, mySpec** set, int set_size, BoWo
         }
         i++;
     }
+
+        // free mem
+    int i1 = 0;
+    while(i1 < set_size){
+        int i2 = 0;
+        while(i2 < all_spars_sizes[i1]){
+            free(all_spars[i1][i2++]);
+        }
+        free(all_spars[i1++]);
+    }
+    free(all_spars);
+    free(all_spars_sizes);
+
+}
+
+void make_it_spars_list_threads_plus_train(logM* model, mySpec** set, int set_size, BoWords* bow, int use_tag, jobSch* Scheduler){
+    int row = 0;
+    int col = 0;
+
+    float*** all_spars = malloc(set_size*sizeof(float**));
+    int* all_spars_sizes = malloc(set_size*sizeof(int));
+
+    // MAKE SPARS FOR EVERY SPEC
+    int i = 0;
+    while(i < set_size){
+        col = 0;
+        all_spars[i] = NULL;
+        all_spars_sizes[i] = 0;
+        bow_to_spars(bow, &all_spars[i], &all_spars_sizes[i], &row, &col, set[i]);
+        i++;
+    }
+
+    dataI* info_list = dataI_create(2*bow->entries);
+ 
+    // FIND PAIRS AND CONCAT THEIR SPARS
+    i = 0;
+    while(i<set_size){
+        if(received_signal == 1)
+            break;
+        int z = i + 1;
+        while(z < set_size){
+            if(received_signal == 1)
+                break;
+            if(all_spars[i] == NULL && all_spars[z] == NULL){
+                z++;
+                continue;
+            }
+            int tag = isPair(set[i], set[z]);
+            if((use_tag == 1 && tag != -1 ) || use_tag == -1){
+
+                float** temp = spars_concat_col(all_spars[i], all_spars[z], all_spars_sizes[i], all_spars_sizes[z], bow->entries);
+                int temp_size = all_spars_sizes[z] + all_spars_sizes[i];
+                dataI_push(info_list, set[i], set[z], temp, temp_size, tag);
+            }
+
+            // SUBBMIT JOB TO SCHED IF CONTENTS IS REACHED
+            if(info_list->all_pairs >= MAX_TRAIN_SIZE_PER_THREAD){
+                    //make info_train
+                t_Info_train* thread_info = make_info_train(model, info_list);
+
+                    /// sumbbit job
+                jobSch_subbmit(Scheduler, &logistic_fit_dataList, thread_info, "train");
+                jobSch_Start(Scheduler);
+                // empty list
+                info_list = dataI_create(2*bow->entries);
+                // printf("SUBBMITING WORK (%d) ..\n", info_list->all_pairs);
+            }
+
+            z++;
+        }
+        i++;
+    }
+
+        // SUBBMIT REMAINING JOBS
+    if(received_signal != 1 && info_list->all_pairs > 0){
+        t_Info_train* thread_info = make_info_train(model, info_list);
+            /// sumbbit job
+        jobSch_subbmit(Scheduler, &logistic_fit_dataList, thread_info, "train");
+        jobSch_Start(Scheduler);
+        // empty list
+        info_list = dataI_create(2*bow->entries);
+    }
+
+    // empty list
+    dataN_destroy(info_list, info_list->head);
+
+    if(received_signal != 1){
+        jobSch_waitAll(Scheduler);
+    }
+
 
         // free mem
     int i1 = 0;
@@ -1699,187 +1804,187 @@ void train_per_clique(myMatches* clique, mySpec** trainSet, int trainSize, BoWor
 
 // ~~~~~~~~~~~~~~~~~~~~~~~ ALL WITH ALL FUNCTS ~~~~~~~~~~~~~~~~~~~
 
-void all_with_all(hashTable* hashT, logM* model, BoWords* bow){
-             // Signal handling
-    struct sigaction    act;
-    sigset_t            block_mask;
-    received_signal = 0;
-    sigemptyset(&(act.sa_mask));
-	act.sa_flags = 0;
-    act.sa_handler = sig_int_quit_handler;
-    sigemptyset(&block_mask);
-	sigaddset(&block_mask,SIGINT);
-	sigaddset(&block_mask,SIGQUIT);
+// void all_with_all(hashTable* hashT, logM* model, BoWords* bow){
+//              // Signal handling
+//     struct sigaction    act;
+//     sigset_t            block_mask;
+//     received_signal = 0;
+//     sigemptyset(&(act.sa_mask));
+// 	act.sa_flags = 0;
+//     act.sa_handler = sig_int_quit_handler;
+//     sigemptyset(&block_mask);
+// 	sigaddset(&block_mask,SIGINT);
+// 	sigaddset(&block_mask,SIGQUIT);
 
-    int len = strlen(PATH) + 1 + strlen("strong_matches_DEF") + 1;
+//     int len = strlen(PATH) + 1 + strlen("strong_matches_DEF") + 1;
 
-    if(chdir(PATH) == -1){
-        if(mkdir(PATH, S_IRWXU|S_IRWXG|S_IROTH)){ 
-            error(EXIT_FAILURE, errno, "Failed to create directory");
-        }
-    }
-    else{
-        chdir("..");
-    }
+//     if(chdir(PATH) == -1){
+//         if(mkdir(PATH, S_IRWXU|S_IRWXG|S_IROTH)){ 
+//             error(EXIT_FAILURE, errno, "Failed to create directory");
+//         }
+//     }
+//     else{
+//         chdir("..");
+//     }
 
-    char* target = malloc(len);
-    memset(target, 0 , len);
+//     char* target = malloc(len);
+//     memset(target, 0 , len);
 
-    strcat(target, PATH);
-    strcat(target, "/");
-    strcat(target, "strong_matches_DEF");
+//     strcat(target, PATH);
+//     strcat(target, "/");
+//     strcat(target, "strong_matches_DEF");
 
-        // CREATE FILE WITH NAME: FNAME INT TARGET DIR
-    FILE* fpout = NULL;
-    fpout = fopen(target, "w");
-    fclose(fpout);
+//         // CREATE FILE WITH NAME: FNAME INT TARGET DIR
+//     FILE* fpout = NULL;
+//     fpout = fopen(target, "w");
+//     fclose(fpout);
     
-    myThreads* threads = myThreads_Init(hashT->tableSize);
+//     myThreads* threads = myThreads_Init(hashT->tableSize);
 
-    int cur_i = 0;
-    while(cur_i < hashT->tableSize){
-        if(received_signal == 1)
-            break;
+//     int cur_i = 0;
+//     while(cur_i < hashT->tableSize){
+//         if(received_signal == 1)
+//             break;
 
-            // Fill struct for each thread
-        t_Info* myInfo = malloc(sizeof(t_Info));
-        myInfo->bow = bow;
-        myInfo->cell = cur_i;
-        myInfo->hashT = hashT;
-        myInfo->model = model;
-        myInfo->target = strdup(target);
+//             // Fill struct for each thread
+//         t_Info* myInfo = malloc(sizeof(t_Info));
+//         myInfo->bow = bow;
+//         myInfo->cell = cur_i;
+//         myInfo->hashT = hashT;
+//         myInfo->model = model;
+//         myInfo->target = strdup(target);
 
-            // FOR EVERY CELL OF THE HASH_TABLE CREATE A THREAD
-        pthread_create(&threads->t_Nums[cur_i], NULL, &all_with_all_ThreadsStart, myInfo);
-        threads->active++;
+//             // FOR EVERY CELL OF THE HASH_TABLE CREATE A THREAD
+//         pthread_create(&threads->t_Nums[cur_i], NULL, &all_with_all_ThreadsStart, myInfo);
+//         threads->active++;
 
-        cur_i++;
-    }
+//         cur_i++;
+//     }
 
-    // sleep(5);
-    myThreads_Destroy(threads);
-    pthread_mutex_destroy(&mtx_print);
-    free(target);
-}
+//     // sleep(5);
+//     myThreads_Destroy(threads);
+//     pthread_mutex_destroy(&mtx_print);
+//     free(target);
+// }
 
-void* all_with_all_ThreadsStart(void* info){
-    // Start of all printing threads
-    t_Info* myInfo = (t_Info*) info;
+// void* all_with_all_ThreadsStart(void* info){
+//     // Start of all printing threads
+//     t_Info* myInfo = (t_Info*) info;
 
-    // printf("mpla: %d\n", myInfo->cell);
+//     // printf("mpla: %d\n", myInfo->cell);
 
-    bucket* tempBuc = myInfo->hashT->myTable[myInfo->cell];
+//     bucket* tempBuc = myInfo->hashT->myTable[myInfo->cell];
 
-    while(tempBuc != NULL){
-        if(received_signal == 1)
-            break;
+//     while(tempBuc != NULL){
+//         if(received_signal == 1)
+//             break;
         
-        record* tempRec = tempBuc->rec;
+//         record* tempRec = tempBuc->rec;
 
-        while(tempRec != NULL){
-            if(received_signal == 1)
-                break;
+//         while(tempRec != NULL){
+//             if(received_signal == 1)
+//                 break;
 
-            // FOR EVERY RECORD INSIDE THIS CELL IN HASH_TABLE FIND ALL MATCHES
-            one_with_all(myInfo->hashT, myInfo->model, myInfo->bow, tempRec, tempBuc, myInfo->cell, myInfo->target);
+//             // FOR EVERY RECORD INSIDE THIS CELL IN HASH_TABLE FIND ALL MATCHES
+//             one_with_all(myInfo->hashT, myInfo->model, myInfo->bow, tempRec, tempBuc, myInfo->cell, myInfo->target);
 
-            tempRec = tempRec->next;
-        }
-        tempBuc = tempBuc->next;
-    }
+//             tempRec = tempRec->next;
+//         }
+//         tempBuc = tempBuc->next;
+//     }
 
-    free(myInfo->target);
-    free(myInfo);
-    pthread_exit(NULL);
-}
+//     free(myInfo->target);
+//     free(myInfo);
+//     pthread_exit(NULL);
+// }
 
-void one_with_all(hashTable* hashT, logM* model, BoWords* bow, record* rec, bucket* buc, int cur_cell, char* target){
-    record* keep_next_rec = rec;
-    bucket* keep_next_buc = buc;
-    int keep_next_i = cur_cell;
+// void one_with_all(hashTable* hashT, logM* model, BoWords* bow, record* rec, bucket* buc, int cur_cell, char* target){
+//     record* keep_next_rec = rec;
+//     bucket* keep_next_buc = buc;
+//     int keep_next_i = cur_cell;
 
-    FILE* fpout = fopen(target, "a");
-    if(fpout == NULL){
-        printf("Error !! Cant Open Output File ~ one_with_all\n");
-        return;
-    }
+//     FILE* fpout = fopen(target, "a");
+//     if(fpout == NULL){
+//         printf("Error !! Cant Open Output File ~ one_with_all\n");
+//         return;
+//     }
 
-    dataI* info_list = dataI_create(2*bow->entries);
-    mySpec** specA = malloc(2*sizeof(mySpec*));
+//     dataI* info_list = dataI_create(2*bow->entries);
+//     mySpec** specA = malloc(2*sizeof(mySpec*));
 
-    // GET ALL NEXT RECORDS
-    specA[0] = rec->spec;
-    keep_next_rec = get_me_next(hashT, &keep_next_i, &keep_next_buc, &keep_next_rec);
-    while(keep_next_rec != NULL){
-        specA[1] = keep_next_rec->spec;
-        if(received_signal == 1)
-            break;
+//     // GET ALL NEXT RECORDS
+//     specA[0] = rec->spec;
+//     keep_next_rec = get_me_next(hashT, &keep_next_i, &keep_next_buc, &keep_next_rec);
+//     while(keep_next_rec != NULL){
+//         specA[1] = keep_next_rec->spec;
+//         if(received_signal == 1)
+//             break;
 
-        make_it_spars_list(specA, 2, bow, info_list, -1);
-        logistic_predict_proba_dataList(model, info_list);
+//         make_it_spars_list(specA, 2, bow, info_list, -1);
+//         logistic_predict_proba_dataList(model, info_list);
 
-                // Check if specs created a match (only reason not is 2 empty spars !!)
-        if(info_list->all_pairs == 0){
-            keep_next_rec = get_me_next(hashT, &keep_next_i, &keep_next_buc, &keep_next_rec);
-            continue;
-        }
+//                 // Check if specs created a match (only reason not is 2 empty spars !!)
+//         if(info_list->all_pairs == 0){
+//             keep_next_rec = get_me_next(hashT, &keep_next_i, &keep_next_buc, &keep_next_rec);
+//             continue;
+//         }
 
-        if(info_list->all_pairs == 0){
-            keep_next_rec = get_me_next(hashT, &keep_next_i, &keep_next_buc, &keep_next_rec);
-            continue;
-        }
+//         if(info_list->all_pairs == 0){
+//             keep_next_rec = get_me_next(hashT, &keep_next_i, &keep_next_buc, &keep_next_rec);
+//             continue;
+//         }
 
-                // Check if their match is strong and print them at the file
-        if(info_list->head->predict == 0){
-            if(info_list->head->proba - info_list->head->predict <= 0.01){
-                pthread_mutex_lock(&mtx_print);
-                fseek(fpout, 0, SEEK_END);
-                fprintf(fpout, "%s, %s, %d\n", specA[0]->specID, specA[1]->specID, info_list->head->predict);
-                pthread_mutex_unlock(&mtx_print);
-            }
-        }
-        else{
-            if(info_list->head->predict - info_list->head->proba <= 0.01){
-                pthread_mutex_lock(&mtx_print);
-                fseek(fpout, 0, SEEK_END);
-                fprintf(fpout, "%s, %s, %d\n", specA[0]->specID, specA[1]->specID, info_list->head->predict);
-                pthread_mutex_unlock(&mtx_print);
+//                 // Check if their match is strong and print them at the file
+//         if(info_list->head->predict == 0){
+//             if(info_list->head->proba - info_list->head->predict <= 0.01){
+//                 pthread_mutex_lock(&mtx_print);
+//                 fseek(fpout, 0, SEEK_END);
+//                 fprintf(fpout, "%s, %s, %d\n", specA[0]->specID, specA[1]->specID, info_list->head->predict);
+//                 pthread_mutex_unlock(&mtx_print);
+//             }
+//         }
+//         else{
+//             if(info_list->head->predict - info_list->head->proba <= 0.01){
+//                 pthread_mutex_lock(&mtx_print);
+//                 fseek(fpout, 0, SEEK_END);
+//                 fprintf(fpout, "%s, %s, %d\n", specA[0]->specID, specA[1]->specID, info_list->head->predict);
+//                 pthread_mutex_unlock(&mtx_print);
            
-            }
-        }
+//             }
+//         }
 
-        keep_next_rec = get_me_next(hashT, &keep_next_i, &keep_next_buc, &keep_next_rec);
-        dataN_destroy(info_list, info_list->head);
-    }
+//         keep_next_rec = get_me_next(hashT, &keep_next_i, &keep_next_buc, &keep_next_rec);
+//         dataN_destroy(info_list, info_list->head);
+//     }
 
-    fclose(fpout);
-    free(specA);
-    dataI_destroy(info_list);
-}
+//     fclose(fpout);
+//     free(specA);
+//     dataI_destroy(info_list);
+// }
 
-record* get_me_next(hashTable* hashT, int* cur_buc, bucket** buc, record** rec){
-        // get next rec if exist
-    if((*rec)->next != NULL){
-        return (*rec)->next;
-    }
-        // change buc if needed
-    else if((*buc)->next != NULL){
-        (*buc) = (*buc)->next;
-        return (*buc)->rec;
-    }
-        // change hash cell if needed
-    else if(*cur_buc < hashT->tableSize-1){
-        (*cur_buc) += 1;
-        while((*cur_buc) < hashT->tableSize){   // skip empty cells
-            (*buc) = hashT->myTable[(*cur_buc)];
-            if((*buc) != NULL){
-               return hashT->myTable[(*cur_buc)]->rec;
-            }
-            (*cur_buc) += 1;
-        }
-    }
-    return NULL;
-}
+// record* get_me_next(hashTable* hashT, int* cur_buc, bucket** buc, record** rec){
+//         // get next rec if exist
+//     if((*rec)->next != NULL){
+//         return (*rec)->next;
+//     }
+//         // change buc if needed
+//     else if((*buc)->next != NULL){
+//         (*buc) = (*buc)->next;
+//         return (*buc)->rec;
+//     }
+//         // change hash cell if needed
+//     else if(*cur_buc < hashT->tableSize-1){
+//         (*cur_buc) += 1;
+//         while((*cur_buc) < hashT->tableSize){   // skip empty cells
+//             (*buc) = hashT->myTable[(*cur_buc)];
+//             if((*buc) != NULL){
+//                return hashT->myTable[(*cur_buc)]->rec;
+//             }
+//             (*cur_buc) += 1;
+//         }
+//     }
+//     return NULL;
+// }
 
 
 // ~~~~~~~~~~~~~~~~~~~~~~~~~~~ SIGNALS ~~~~~~~~~~~~~~~~~~~~~~~~~~

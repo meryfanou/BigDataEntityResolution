@@ -21,15 +21,18 @@ jobSch* jobSch_Init(int tnum){
     jobSch* newSche = malloc(sizeof(jobSch));
 
     newSche->die = 0;
+    newSche->threads_waiting = 0;
 
     pthread_cond_init( &newSche->start_con, NULL);
     pthread_mutex_init(&newSche->queue_mtx, NULL);
 
     newSche->threads = myThreads_Init(tnum);
     newSche->queue = myQueue_Init();
-    
+
+   
+
     for(int i=0; i< tnum; i++){
-        t_Info2* info = make_info2(newSche);
+        t_Info* info = make_info(newSche);
         pthread_create(&newSche->threads->t_Nums[i], NULL, &main_thread_func, info);
         newSche->threads->active++;
     }
@@ -52,18 +55,18 @@ void jobSch_Destroy(jobSch* jSch){
     free(jSch);
 }
 
-void jobSch_subbmit(jobSch* sched, void* func){
+void jobSch_subbmit(jobSch* sched, void* func, void* info, char* mode){
     pthread_mutex_lock(&sched->queue_mtx);
 
-    myQueue_push(sched->queue, func);
+    myQueue_push(sched->queue, func, info, mode);
 
     pthread_mutex_unlock(&sched->queue_mtx);
 }
 
 void jobSch_Start(jobSch* sched){
-    printf("Scheduler: Im gonna sleep for (3) and then start my threads ...\n");
-    sleep(3);
-    printf("Scheduler: Begin Broadcasting ...\n");
+    // printf("Scheduler: Im gonna sleep for (3) and then start my threads ...\n");
+    // sleep(3);
+    // printf("Scheduler: Begin Broadcasting ...\n");
 
     pthread_mutex_lock(&sched->queue_mtx);
     pthread_cond_broadcast(&sched->start_con);
@@ -71,7 +74,9 @@ void jobSch_Start(jobSch* sched){
 }
 
 void jobSch_waitAll(jobSch* sched){
-    while(sched->queue->entries !=0){}
+    printf("Waiting .. \n");
+    while(sched->queue->entries !=0 && sched->threads_waiting != sched->threads->size){}
+    printf("\t .. Done\n");
 }
 
 ////////////////////////////////////////////////////
@@ -93,8 +98,8 @@ void myQueue_Destroy(myQueue* myQ){
     free(myQ);
 }
 
-void myQueue_push(myQueue* myQ, void* to_do){
-    qNode* to_push = qNode_Init(to_do);
+void myQueue_push(myQueue* myQ, void* to_do, void* info, char* mode){
+    qNode* to_push = qNode_Init(to_do, info, mode);
     
     if(myQ->entries == 0){
         myQ->head = to_push;
@@ -123,10 +128,10 @@ qNode* myQueue_pop(myQueue* myQ){
 ////////////////////////////////////////////////////
 
 
-qNode* qNode_Init(void* to_do){
+qNode* qNode_Init(void* to_do, void* info, char* mode){
     qNode* newQNode = malloc(sizeof(qNode));
     newQNode->next = NULL;
-    newQNode->job = jNode_Init(to_do);
+    newQNode->job = jNode_Init(to_do, info, mode);
 
     return newQNode;
 }
@@ -141,14 +146,18 @@ void qNode_Destroy(qNode* qN){
 ////////////////////////////////////////////////////
 
 
-jNode* jNode_Init(void* to_do){
+jNode* jNode_Init(void* to_do, void* info, char* mode){
     jNode* newjNode = malloc(sizeof(jNode));
     newjNode->to_do = to_do;
+    newjNode->info = info;
+    newjNode->mode = strdup(mode);
 
     return newjNode;
 }
 
 void jNode_Destroy(jNode* myjNode){
+    free(myjNode->mode);
+    destroy_Info_train((t_Info_train*) myjNode->info);
     free(myjNode);
 }
 
@@ -168,25 +177,50 @@ void test1(){
 
 void* main_thread_func(void* myInfo){
         // parsh info
-    t_Info2* info = (t_Info2*) myInfo;
+    t_Info* info = (t_Info*) myInfo;
     jobSch* sched = (jobSch*) info->Scheduler;
+
+    int waiting_flag = 0;
 
         // main job
     while(sched->die == 0){
         pthread_mutex_lock(&sched->queue_mtx);
-        while(sched->queue->entries == 0 && sched->die == 0)
+        while(sched->queue->entries == 0 && sched->die == 0){
+            if(waiting_flag == 0){
+                sched->threads_waiting++;
+                waiting_flag = 1;
+            }
             pthread_cond_wait(&sched->start_con, &sched->queue_mtx);
+        }
+
+        sched->threads_waiting--;
+        waiting_flag = 0;
 
         qNode* f = myQueue_pop(sched->queue);
+        pthread_mutex_unlock(&sched->queue_mtx);
         if(f == NULL){
-            printf("no jobs for me, exiting ..\n");
+            continue;
+            // printf("no jobs for me, exiting ..\n");
         }
         else{
-            f->job->to_do();
+            t_Info_train* info_to_train = NULL;
+            // printf("ACTUALLY DOING SMTHNIG ...\n");
+            if(strcmp(f->job->mode, "train") == 0){
+                info_to_train = (t_Info_train*) f->job->info;
+                // printf("\t CALLING TRAIN ..\n");
+                f->job->to_do(info_to_train->model, info_to_train->info_list);
+                // printf("\t TRAIN_ENDED !!\n");
+            }
+            else if(strcmp(f->job->mode, "test") == 0){
+                // printf("\t CALLING TRAIN ..\n");
+                f->job->to_do();
+                // printf("\t TRAIN_ENDED !!\n");
+            }  
+            
+            // printf("prin to destroy\n");
             qNode_Destroy(f);
+            // printf("meta to destroy\n");
         }
-
-        pthread_mutex_unlock(&sched->queue_mtx);
     }
 
         // return

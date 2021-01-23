@@ -10,6 +10,7 @@
 #include "math.h"
 #include "logistic.h"
 #include "myThreads.h"
+#include "jobScheduler.h"
 
 extern int received_signal;
 
@@ -56,13 +57,15 @@ void spars_concat_row(float***, float**, int*, int, int);
 logM* make_model_spars(BoWords*, mySpec**, int);
 
 	// !! spars list
-logM* make_model_spars_list(BoWords*, mySpec**, int);
+logM* make_model_spars_list(BoWords*, mySpec**, int, jobSch*);
 int train_per_spec_spars_list(mySpec**, int, BoWords*, logM*);
 void make_it_spars_list(mySpec**, int, BoWords*, dataI*, int);
 
 int train_per_spec_spars_list_one_by_one(mySpec**, int, BoWords*, logM*);
-void make_it_spars_list_plus_train(logM*, mySpec**, int, BoWords*, dataI*, int);
+int train_per_spec_spars_list_threads(mySpec**, int, BoWords*, logM*, jobSch*);
 
+void make_it_spars_list_plus_train(logM*, mySpec**, int, BoWords*, dataI*, int);
+void make_it_spars_list_threads_plus_train(logM*, mySpec**, int, BoWords*, int, jobSch*);
 
 int isPair(mySpec*, mySpec*);
 
@@ -76,7 +79,6 @@ float make_tests_spars_list(BoWords*, logM*, mySpec**, int);
 /* NOT USED */
 void train_per_clique(myMatches*, mySpec**, int, BoWords*, logM*);
 logM** make_models_array(BoWords*, mySpec**, matchesInfo*, int);
-
 
 void all_with_all(hashTable*, logM*, BoWords*);
 void one_with_all(hashTable*, logM*, BoWords*, record*, bucket*, int, char*);
@@ -92,7 +94,7 @@ void sig_int_quit_handler(int);
 
 // ~~~~~~~~~~~~~~~~ FREE MEM ~~~~~~~~~~~~~~~~
 
-#define FREE_MEM(pathX,pathW,outputFileMatches,outputFileNegs,allMatches,hashT,trainSet,testSet,validSet,bow,model)   \
+#define FREE_MEM(pathX,pathW,outputFileMatches,outputFileNegs,allMatches,hashT,trainSet,testSet,validSet,bow,model,scheduler)   \
 {																								\
 	if(pathX != NULL)																			\
 		free(pathX);																			\
@@ -123,6 +125,9 @@ void sig_int_quit_handler(int);
 																								\
 	if(model != NULL)																			\
 		logistic_destroy((logM*)model);															\
+																								\
+	if(scheduler != NULL)																			\
+		jobSch_Destroy((jobSch*)scheduler);															\
 }
 
 

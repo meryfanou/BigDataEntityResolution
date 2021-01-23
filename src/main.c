@@ -46,19 +46,19 @@
 
 int main(int argc, char** argv){
 
-    /*   EXMPLE USE
-        jobSch* Scheduler = jobSch_Init(T_NUM);
-        jobSch_subbmit(Scheduler, &test);
-        jobSch_Start(Scheduler);
+    //    EXMPLE USE
+        // jobSch* Scheduler_0 = jobSch_Init(T_NUM);
+        // jobSch_subbmit(Scheduler, &test);
+        // jobSch_Start(Scheduler_0);
         // sleep(10);
-        jobSch_waitAll(Scheduler);
-        printf("thats was one\n");
-        jobSch_subbmit(Scheduler, &test);
-        jobSch_subbmit(Scheduler, &test);
-        
-        jobSch_Destroy(Scheduler);
-        return 0;
-    */
+        // jobSch_waitAll(Scheduler_0);
+        // printf("thats was one\n");
+        // jobSch_subbmit(Scheduler, &test);
+        // jobSch_subbmit(Scheduler, &test);
+        // sleep(15);
+        // jobSch_Destroy(Scheduler_0);
+        // return 0;
+    
     // ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~ SET DEFAULT PATHS, MODEL METHODS, FILE NAMES
 
     char*   path_X = strdup(DATASET_X);
@@ -152,9 +152,7 @@ int main(int argc, char** argv){
 
     // ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~ SET JOB_SCHEDULER
 
-    // jobSch* Scheduler = jobSch_Init(T_NUM);
-    // jobSch_Destroy(Scheduler);
-    // return 0;
+    jobSch* Scheduler = jobSch_Init(T_NUM);
 
     /*
     ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
@@ -180,7 +178,7 @@ int main(int argc, char** argv){
         ppa_add_line_left(pp, "Cleaning Memory ..");
 
         int* null = NULL;
-        FREE_MEM(path_X,path_W,outputFileMatches,outputFileNegs,allMatches,hashT,null,null,null,null,null);
+        FREE_MEM(path_X,path_W,outputFileMatches,outputFileNegs,allMatches,hashT,null,null,null,null,null,Scheduler);
         ppa_add_line_right(pp, "DONE", GRN);
 
         exit(-3);
@@ -201,7 +199,7 @@ int main(int argc, char** argv){
         ppa_add_line_left(pp, "Cleaning Mem..");
         
         int* null = NULL;
-        FREE_MEM(path_X,path_W,outputFileMatches,outputFileNegs,allMatches,hashT,null,null,null,null,null);
+        FREE_MEM(path_X,path_W,outputFileMatches,outputFileNegs,allMatches,hashT,null,null,null,null,null,Scheduler);
 
         ppa_add_line_right(pp, "DONE", GRN);
         
@@ -222,7 +220,7 @@ int main(int argc, char** argv){
 
         free(shuffled);
         int* null = NULL;
-        FREE_MEM(path_X,path_W,outputFileMatches,outputFileNegs,allMatches,hashT,null,null,null,null,null);
+        FREE_MEM(path_X,path_W,outputFileMatches,outputFileNegs,allMatches,hashT,null,null,null,null,null,Scheduler);
         
         ppa_print_end(pp, "Exiting at shuffle");
         ppa_destroy(pp);
@@ -247,7 +245,7 @@ int main(int argc, char** argv){
 
         free(shuffled);
         int* null = NULL;
-        FREE_MEM(path_X,path_W,outputFileMatches,outputFileNegs,allMatches,hashT,null,null,null,null,null);
+        FREE_MEM(path_X,path_W,outputFileMatches,outputFileNegs,allMatches,hashT,null,null,null,null,null,Scheduler);
         ppa_add_line_right(pp, "DONE", GRN);
 
         ppa_print_end(pp, "Exiting ~ cant read csv");
@@ -269,7 +267,7 @@ int main(int argc, char** argv){
 
 
         int* null = NULL;
-        FREE_MEM(path_X,path_W,outputFileMatches,outputFileNegs,allMatches,hashT,null,null,null,null,null);
+        FREE_MEM(path_X,path_W,outputFileMatches,outputFileNegs,allMatches,hashT,null,null,null,null,null,Scheduler);
 
         ppa_add_line_right(pp, "DONE", GRN);
 
@@ -326,7 +324,7 @@ int main(int argc, char** argv){
         ppa_add_line_left(pp, "Cleaning Memory ..");
 
         int* null = NULL;
-        FREE_MEM(path_X,path_W,outputFileMatches,outputFileNegs,allMatches,hashT,trainSet,testSet,validSet,null,null);
+        FREE_MEM(path_X,path_W,outputFileMatches,outputFileNegs,allMatches,hashT,trainSet,testSet,validSet,null,null,Scheduler);
 
         ppa_add_line_right(pp, "DONE", GRN);
         
@@ -362,7 +360,7 @@ int main(int argc, char** argv){
         ppa_add_line_left(pp, "Cleaning Memory");
 
         int* null = NULL;
-        FREE_MEM(path_X,path_W,outputFileMatches,outputFileNegs,allMatches,hashT,trainSet,testSet,validSet,bow,null);
+        FREE_MEM(path_X,path_W,outputFileMatches,outputFileNegs,allMatches,hashT,trainSet,testSet,validSet,bow,null,Scheduler);
 
         ppa_add_line_right(pp, "DONE", GRN);
 
@@ -392,7 +390,7 @@ int main(int argc, char** argv){
         ppa_add_line_left(pp, "Cleaning Memory ..");
 
         int* null = NULL;
-        FREE_MEM(path_X,path_W,outputFileMatches,outputFileNegs,allMatches,hashT,trainSet,testSet,validSet,bow,null);
+        FREE_MEM(path_X,path_W,outputFileMatches,outputFileNegs,allMatches,hashT,trainSet,testSet,validSet,bow,null,Scheduler);
 
         ppa_add_line_right(pp, "DONE", GRN);
 
@@ -421,7 +419,7 @@ int main(int argc, char** argv){
 
 
         int* null = NULL;
-        FREE_MEM(path_X,path_W,outputFileMatches,outputFileNegs,allMatches,hashT,trainSet,testSet,validSet,bow,null);
+        FREE_MEM(path_X,path_W,outputFileMatches,outputFileNegs,allMatches,hashT,trainSet,testSet,validSet,bow,null,Scheduler);
 
         ppa_add_line_right(pp, "DONE", GRN);
 
@@ -444,7 +442,7 @@ int main(int argc, char** argv){
         model = make_model_vec(bow, trainSet, trainSize);
     }
     else if(choose_model == 's'){
-        model = make_model_spars_list(bow, trainSet, trainSize);
+        model = make_model_spars_list(bow, trainSet, trainSize, Scheduler);
         // model = make_model_spars(bow, trainSet, trainSize);
     }
 
@@ -456,7 +454,7 @@ int main(int argc, char** argv){
         ppa_add_line_right(pp, "Error", RED);
         ppa_add_line_left(pp, "Cleaning Memory ..");
 
-        FREE_MEM(path_X,path_W,outputFileMatches,outputFileNegs,allMatches,hashT,trainSet,testSet,validSet,bow,model);
+        FREE_MEM(path_X,path_W,outputFileMatches,outputFileNegs,allMatches,hashT,trainSet,testSet,validSet,bow,model,Scheduler);
 
         ppa_add_line_right(pp, "DONE", GRN);
 
@@ -514,7 +512,7 @@ int main(int argc, char** argv){
         ppa_add_line_left(pp, "Cleaning Memory ..");
 
 
-        FREE_MEM(path_X,path_W,outputFileMatches,outputFileNegs,allMatches,hashT,trainSet,testSet,validSet,bow,model);
+        FREE_MEM(path_X,path_W,outputFileMatches,outputFileNegs,allMatches,hashT,trainSet,testSet,validSet,bow,model,Scheduler);
 
         ppa_add_line_right(pp, "DONE", GRN);
 
@@ -537,7 +535,7 @@ int main(int argc, char** argv){
     // If the user asked to extract all with all pairs
     if(extract_awa){
         ppa_add_line_left(pp, "All_with_all ..");
-        all_with_all(hashT, model, bow);
+        // all_with_all(hashT, model, bow);
         ppa_add_line_right(pp, "DONE", GRN);
     }
 
@@ -551,7 +549,7 @@ int main(int argc, char** argv){
     // ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~ FREE MEM
     
     ppa_add_line_left(pp, "Cleaning Memory ..");
-    FREE_MEM(path_X,path_W,outputFileMatches,outputFileNegs,allMatches,hashT,trainSet,testSet,validSet,bow,model);
+    FREE_MEM(path_X,path_W,outputFileMatches,outputFileNegs,allMatches,hashT,trainSet,testSet,validSet,bow,model,Scheduler);
     ppa_add_line_right(pp, "DONE", GRN);
 
     ppa_print_end(pp, "PROJECT_2 <> ALL DONE");

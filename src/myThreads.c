@@ -82,12 +82,22 @@ void myThreads_MASSACRE(myThreads* threads){
 // }
 
 
-t_Info2* make_info2(void* scheduler){
-	t_Info2* newinfo = malloc(sizeof(t_Info2));
-	newinfo->Scheduler = scheduler;
+t_Info_train* make_info_train(void* model, void* info_list){
+	t_Info_train* newinfo = malloc(sizeof(t_Info_train));
+	newinfo->model = model;
+	newinfo->info_list = info_list;
+	
 	return newinfo;
 }
 
-void destroy_Info2(t_Info2* info){
+void destroy_Info_train(t_Info_train* info){
+	dataI* list = (dataI*) info->info_list;
+	dataN_destroy(list, list->head);
 	free(info);
+}
+
+t_Info* make_info(void* scheduler){
+	t_Info* newInfo = malloc(sizeof(t_Info));
+	newInfo->Scheduler = scheduler;
+	return newInfo;
 }

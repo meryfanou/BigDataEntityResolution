@@ -27,6 +27,9 @@ logM* logistic_create(){
     newModel->fit0 = 0;
     newModel->dataList = NULL;
 
+    pthread_mutex_init(&newModel->weights_mtx, NULL);
+    pthread_mutex_init(&newModel->model_mtx, NULL);
+
     newModel->finalWeights = weights_create();
 
     return newModel;
@@ -37,6 +40,9 @@ void logistic_destroy(logM* model){
     weights_destroy(model->finalWeights);
     if(model->dataList != NULL)
         dataI_destroy(model->dataList);
+
+    pthread_mutex_destroy(&model->weights_mtx);
+    pthread_mutex_destroy(&model->model_mtx);
     free(model);
 
 }
@@ -75,17 +81,24 @@ int logistic_fit_dataList(logM* model, dataI* info){
         return 0;
     }
         // set model
-    model->size_totrain = info->all_pairs;
+    pthread_mutex_lock(&model->model_mtx);
+    model->size_totrain += info->all_pairs;
         
         // set weights
-    weights_set(model->finalWeights, info->dimensions);
-    model->weights_count = info->dimensions;
-    
+    if(model->finalWeights->entries == 0){
+        weights_set(model->finalWeights, info->dimensions);
+        model->weights_count = info->dimensions;
+    }
+    pthread_mutex_unlock(&model->model_mtx);
+
         // train
     return logistic_regression_dataList(model, info);
 }
 
 int logistic_refit_dataList(logM* model, dataI* info){
+    if(model->finalWeights->entries == 0){
+        weights_set(model->finalWeights, info->dimensions);
+    }
     model->size_totrain += info->all_pairs;
     return logistic_regression_dataList(model, info);
 }
@@ -347,16 +360,15 @@ int logistic_regression_dataList(logM* model, dataI* info){
 
     float limit = 1.000;
 
-    logistic_overfit_dataList(model, info);
-
-
     while(limit > model->finalWeights->limit){
-
+                // printf("TRAINING\n");
         if(received_signal == 1)
             return 0;
 
             // 1. Make Predicts
+        pthread_mutex_lock(&model->weights_mtx);
         logistic_predict_proba_dataList(model, info);
+        pthread_mutex_unlock(&model->weights_mtx);
         
             // 2. Calc weights
                 // 2.1 Build Missed Table
@@ -427,9 +439,16 @@ int logistic_regression_dataList(logM* model, dataI* info){
         }
         
             // 3 Update Weights
+        pthread_mutex_lock(&model->weights_mtx);
         weights_update(model->finalWeights, grad, info->dimensions);
         limit = active_mean(missed_by, info->all_pairs);
         model->trained_times++;
+        pthread_mutex_unlock(&model->weights_mtx);
+
+            // 4 Balance threshold
+        // pthread_mutex_lock(&model->model_mtx);
+        // logistic_overfit_dataList(model, info);
+        // pthread_mutex_unlock(&model->model_mtx);
 
         // ΜAX ITERATIONS
         if(model->trained_times > 1)
@@ -755,7 +774,6 @@ float weights_update(weights* myWeights, float* grad, int size){
     
     float dif = 0.0000;
     int active = 1;
-// printf("size: %d, grad_test[1]: %.4f\n", size, grad[1]);
     
     float new_b = myWeights->b - myWeights->rate*grad[0];
     dif += new_b - myWeights->b;
