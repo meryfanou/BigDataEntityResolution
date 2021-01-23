@@ -483,7 +483,7 @@ specInfo** readFile(FILE *specFd, int *propNum, specInfo **properties){
 
 char* shuffleCSV(char* path){
     char extension[5];
-    char* shuffled_name = malloc(strlen(path) + strlen("_shuffled") + 1);
+    char* shuffled_name = malloc(strlen(path) + strlen("_shuffled") + 5);
 
     // Temporarily create a shuffled csv file
     strcpy(shuffled_name, path);
@@ -493,12 +493,28 @@ char* shuffleCSV(char* path){
     strcat(shuffled_name, "_shuffled");
     strcat(shuffled_name, extension);
 
-    // Call bash command to shuffle the old csv file and store it in the new one (omit csv's first line with info)
-    // command: tail -n +2 old_csv > shuf > new_csv
-    char* command = malloc(strlen("shuf ") + strlen(path) + strlen(" > ") + strlen(shuffled_name) + 1);
+    // Call bash command to omit csv's first line with info
+    // command: tail -n +2 old_csv > new_csv
+    char* command = malloc(strlen("tail -n +2 ") + strlen(path) + strlen(" > ") + strlen(shuffled_name) + 1);
     strcpy(command, "tail -n +2 ");
     strcat(command, path);
-    strcat(command, " > shuf > ");
+    strcat(command, " > ");
+    strcat(command, shuffled_name);
+
+    if(system(command) == -1){
+        perror("system");
+        free(shuffled_name);
+        free(command);
+        return NULL;
+    }
+
+    free(command);
+    // Call bash command to shuffle the old csv file and store it in the new one
+    // command: shuf new_csv -o new_csv
+    command = malloc(strlen("shuf ") + strlen(shuffled_name) + strlen(" -o ") + strlen(shuffled_name) + 1);
+    strcpy(command, "shuf ");
+    strcat(command, shuffled_name);
+    strcat(command, " -o ");
     strcat(command, shuffled_name);
 
     if(system(command) == -1){
