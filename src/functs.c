@@ -735,6 +735,9 @@ mySpec** get_set(char* path, hashTable* hashT, int* size, long int* offset, int 
         char* key2 = strtok(NULL, ",\n");
         char* isMatch = strtok(NULL, ",\n");
 
+	if(key1 == NULL || key2 == NULL || isMatch == NULL)
+	    continue;
+
         // Find spec with key1 in hash table, return it only if it has not been already used in the set
         spec1 = findRecord_forSet(hashT, key1, setType);
         // If the spec was found, add it to the set
