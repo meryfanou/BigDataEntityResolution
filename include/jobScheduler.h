@@ -14,12 +14,10 @@ struct jobScheduler{
     myThreads* threads;
     myQueue* queue;
 
-    pthread_cond_t start_con;
-    // pthread_mutex_t start;
-    pthread_mutex_t print;
+    pthread_cond_t start_con;    
+    pthread_mutex_t queue_mtx;
+
     int die;
-    int start;
-    int main_locked;
 };
 
 struct myQueue{
@@ -44,6 +42,7 @@ jobSch* jobSch_Init(int);
 void jobSch_Start(jobSch*);
 void jobSch_Destroy(jobSch*);
 void jobSch_subbmit(jobSch*, void*);
+void jobSch_waitAll(jobSch*);
 
 myQueue* myQueue_Init();
 void myQueue_Destroy(myQueue*);

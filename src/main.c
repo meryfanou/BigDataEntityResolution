@@ -3,6 +3,17 @@
 #include <string.h>
 #include <dirent.h>
 #include <signal.h>
+#include <time.h>
+#include <fcntl.h> 
+#include <sys/stat.h> 
+#include <sys/select.h>
+#include <sys/wait.h>
+#include <poll.h>
+#include <unistd.h>
+#include <pthread.h>
+#include <signal.h>
+#include <sys/types.h>
+#include <errno.h>
 #include "../include/mySpec.h"
 #include "../include/myMatches.h"
 #include "../include/myHash.h"
@@ -34,12 +45,20 @@
 
 
 int main(int argc, char** argv){
-    jobSch* Scheduler = jobSch_Init(T_NUM);
-    // jobSch_subbmit(Scheduler, &test);
-    // jobSch_Start(Scheduler);
-    jobSch_Destroy(Scheduler);
-    return 0;
 
+    /*   EXMPLE USE
+        jobSch* Scheduler = jobSch_Init(T_NUM);
+        jobSch_subbmit(Scheduler, &test);
+        jobSch_Start(Scheduler);
+        // sleep(10);
+        jobSch_waitAll(Scheduler);
+        printf("thats was one\n");
+        jobSch_subbmit(Scheduler, &test);
+        jobSch_subbmit(Scheduler, &test);
+        
+        jobSch_Destroy(Scheduler);
+        return 0;
+    */
     // ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~ SET DEFAULT PATHS, MODEL METHODS, FILE NAMES
 
     char*   path_X = strdup(DATASET_X);

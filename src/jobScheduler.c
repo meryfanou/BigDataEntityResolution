@@ -21,21 +21,14 @@ jobSch* jobSch_Init(int tnum){
     jobSch* newSche = malloc(sizeof(jobSch));
 
     newSche->die = 0;
-    newSche->start = 0;
-    newSche->main_locked = 0;
 
-    // pthread_mutex_init(&newSche->start, NULL);
     pthread_cond_init( &newSche->start_con, NULL);
+    pthread_mutex_init(&newSche->queue_mtx, NULL);
 
-    pthread_mutex_init(&newSche->print, NULL);
     newSche->threads = myThreads_Init(tnum);
     newSche->queue = myQueue_Init();
-
-    pthread_mutex_lock(&newSche->print);
-    newSche->main_locked = 1;
-
+    
     for(int i=0; i< tnum; i++){
-        // printf("mpou\n");
         t_Info2* info = make_info2(newSche);
         pthread_create(&newSche->threads->t_Nums[i], NULL, &main_thread_func, info);
         newSche->threads->active++;
@@ -46,31 +39,43 @@ jobSch* jobSch_Init(int tnum){
 
 void jobSch_Destroy(jobSch* jSch){
     jSch->die = 1;
-    pthread_cond_broadcast(&jSch->start_con);
-    if(jSch->main_locked == 1)
-        pthread_mutex_unlock(&jSch->print);
+    jobSch_waitAll(jSch);
+    jobSch_Start(jSch);
     
     myThreads_Destroy(jSch->threads);
     myQueue_Destroy(jSch->queue);
+    
     pthread_cond_destroy(&jSch->start_con);
-    pthread_mutex_destroy(&jSch->print);
-    // pthread_mutex_destroy(&jSch->start);
+
+    pthread_mutex_destroy(&jSch->queue_mtx);
+    
     free(jSch);
 }
 
 void jobSch_subbmit(jobSch* sched, void* func){
+    pthread_mutex_lock(&sched->queue_mtx);
+
     myQueue_push(sched->queue, func);
+
+    pthread_mutex_unlock(&sched->queue_mtx);
 }
 
 void jobSch_Start(jobSch* sched){
     printf("Scheduler: Im gonna sleep for (3) and then start my threads ...\n");
     sleep(3);
     printf("Scheduler: Begin Broadcasting ...\n");
-    sched->start = 1;
+
+    pthread_mutex_lock(&sched->queue_mtx);
     pthread_cond_broadcast(&sched->start_con);
-    sched->main_locked = 0;
-    pthread_mutex_unlock(&sched->print);
+    pthread_mutex_unlock(&sched->queue_mtx);
 }
+
+void jobSch_waitAll(jobSch* sched){
+    while(sched->queue->entries !=0){}
+}
+
+////////////////////////////////////////////////////
+////////////////////////////////////////////////////
 
 myQueue* myQueue_Init(){
     myQueue* newQ =  malloc(sizeof(myQueue));
@@ -113,6 +118,11 @@ qNode* myQueue_pop(myQueue* myQ){
     return to_pop;
 }
 
+
+////////////////////////////////////////////////////
+////////////////////////////////////////////////////
+
+
 qNode* qNode_Init(void* to_do){
     qNode* newQNode = malloc(sizeof(qNode));
     newQNode->next = NULL;
@@ -126,6 +136,11 @@ void qNode_Destroy(qNode* qN){
     free(qN);
 }
 
+
+////////////////////////////////////////////////////
+////////////////////////////////////////////////////
+
+
 jNode* jNode_Init(void* to_do){
     jNode* newjNode = malloc(sizeof(jNode));
     newjNode->to_do = to_do;
@@ -138,37 +153,48 @@ void jNode_Destroy(jNode* myjNode){
 }
 
 
+////////////////////////////////////////////////////
+////////////////////////////////////////////////////
+
+
 void test1(){
     printf("ciao !\n");
 }
 
+
+////////////////////////////////////////////////////
+////////////////////////////////////////////////////
+
+
 void* main_thread_func(void* myInfo){
+        // parsh info
     t_Info2* info = (t_Info2*) myInfo;
     jobSch* sched = (jobSch*) info->Scheduler;
+
+        // main job
     while(sched->die == 0){
-        // sleep(5);
-        pthread_mutex_lock(&sched->print);
-        while(sched->start != 1)
-            pthread_cond_wait(&sched->start_con, &sched->print);
-        
+        pthread_mutex_lock(&sched->queue_mtx);
+        while(sched->queue->entries == 0 && sched->die == 0)
+            pthread_cond_wait(&sched->start_con, &sched->queue_mtx);
+
         qNode* f = myQueue_pop(sched->queue);
         if(f == NULL){
             printf("no jobs for me, exiting ..\n");
-            pthread_mutex_unlock(&sched->print);
-            // break;
         }
         else{
             f->job->to_do();
+            qNode_Destroy(f);
         }
-        // printf("ciao !\n");
-        pthread_mutex_unlock(&sched->print);
+
+        pthread_mutex_unlock(&sched->queue_mtx);
     }
 
+        // return
     return info;
 }
 
 
-void* test(){
+void* test(){ // TEST FUNCT
     printf("! oaic\n");
     return NULL;
 }
