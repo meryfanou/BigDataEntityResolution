@@ -1539,21 +1539,23 @@ float make_it_spars_list_threads(mySpec** set, int set_size, logM* model, BoWord
     jobSch_waitAll(Scheduler);
 
         // calc acc
-    printf("calculating acc\n");
     float acc = 0.0;
     int cell = 0;
     while(cell < info_size){
-        printf("%d / %d\n", cell, info_size);
+        // printf("%d / %d\n", cell, info_size);
        acc += logistic_score_dataList(model, info_array[cell++]);
     }
 
     acc /= info_size;
 
+    // printf("teleiwse: %f\n", acc);
         // free mem
     while(info_size > 0){
         dataI_destroy(info_array[--info_size]);
     }
     free(info_array);
+
+    // printf("teleiwse: %f\n", acc);
 
     int i1 = 0;
     while(i1 < set_size){

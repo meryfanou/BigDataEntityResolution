@@ -75,7 +75,7 @@ void jobSch_Start(jobSch* sched){
 
 void jobSch_waitAll(jobSch* sched){
     // printf("Waiting .. \n");
-    while(sched->queue->entries !=0 && sched->threads_waiting != sched->threads->size){}
+    while(sched->queue->entries !=0 || sched->threads_waiting > 0){}
     // printf("\t .. Done\n");
 }
 
@@ -183,21 +183,12 @@ void* main_thread_func(void* myInfo){
     t_Info* info = (t_Info*) myInfo;
     jobSch* sched = (jobSch*) info->Scheduler;
 
-    int waiting_flag = 0;
-
         // main job
     while(sched->die == 0){
         pthread_mutex_lock(&sched->queue_mtx);
         while(sched->queue->entries == 0 && sched->die == 0){
-            if(waiting_flag == 0){
-                sched->threads_waiting++;
-                waiting_flag = 1;
-            }
             pthread_cond_wait(&sched->start_con, &sched->queue_mtx);
         }
-
-        sched->threads_waiting--;
-        waiting_flag = 0;
 
         qNode* f = myQueue_pop(sched->queue);
         pthread_mutex_unlock(&sched->queue_mtx);
@@ -206,6 +197,7 @@ void* main_thread_func(void* myInfo){
             // printf("no jobs for me, exiting ..\n");
         }
         else{
+            sched->threads_waiting++;
             if(strcmp(f->job->mode, "train") == 0){
                 t_Info_train* info_to_train = (t_Info_train*) f->job->info;
                 f->job->to_do(info_to_train->model, info_to_train->info_list);
@@ -217,9 +209,8 @@ void* main_thread_func(void* myInfo){
                 // printf("vghke apo to job\n");
             }
             
-            // printf("prin to destroy\n");
             qNode_Destroy(f);
-            // printf("meta to destroy\n");
+            sched->threads_waiting--;
         }
     }
 

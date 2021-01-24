@@ -25,7 +25,7 @@
 #include "../include/jobScheduler.h"
 
 #define DATASET_X "../camera_specs/2013_camera_specs/"
-#define DATASET_W "../sigmod_medium_labelled_dataset.csv"
+#define DATASET_W "../sigmod_large_labelled_dataset.csv"
 
 #define HASH_SIZE 500
 #define BUC_SIZE 100
