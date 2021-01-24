@@ -156,11 +156,11 @@ jNode* jNode_Init(void* to_do, void* info, char* mode){
 }
 
 void jNode_Destroy(jNode* myjNode){
-    free(myjNode->mode);
     if(strcmp(myjNode->mode, "test") == 0)
         destroy_Info_train((t_Info_train*) myjNode->info);
     else if(strcmp(myjNode->mode, "train") == 0)
         destroy_Info_test((t_Info_test*) myjNode->info);
+    free(myjNode->mode);
     free(myjNode);
 }
 
