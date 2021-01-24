@@ -213,21 +213,20 @@ int main(int argc, char** argv){
 
     // ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~ SHUFFLE CSV
 
-    char shuffled[] = "../sigmod_large_labelled_dataset_shuffled.csv";
-    // char* shuffled = shuffleCSV(path_W);
-    // if(shuffled == NULL){
-    //     ppa_add_line_left(pp, "Cleaning Memory");
-    //     ppa_add_line_right(pp, "DONE", GRN);
+    char* shuffled = shuffleCSV(path_W);
+    if(shuffled == NULL){
+        ppa_add_line_left(pp, "Cleaning Memory");
+        ppa_add_line_right(pp, "DONE", GRN);
 
-    //     free(shuffled);
-    //     int* null = NULL;
-    //     FREE_MEM(path_X,path_W,outputFileMatches,outputFileNegs,allMatches,hashT,null,null,null,null,null,Scheduler);
+        free(shuffled);
+        int* null = NULL;
+        FREE_MEM(path_X,path_W,outputFileMatches,outputFileNegs,allMatches,hashT,null,null,null,null,null,Scheduler);
         
-    //     ppa_print_end(pp, "Exiting at shuffle");
-    //     ppa_destroy(pp);
+        ppa_print_end(pp, "Exiting at shuffle");
+        ppa_destroy(pp);
 
-    //     exit(-5);
-    // }
+        exit(-5);
+    }
 
 
     // ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~ READ CSV
@@ -238,24 +237,24 @@ int main(int argc, char** argv){
     long int offset = 0;
     check = readCSV(shuffled, hashT, allMatches, TRAIN_PERC, &offset);
 
-    // if(remove(shuffled) == -1){
-    //     perror("remove");
-    //     ppa_add_line_right(pp, "Error", RED);
+    if(remove(shuffled) == -1){
+        perror("remove");
+        ppa_add_line_right(pp, "Error", RED);
 
-    //     ppa_add_line_left(pp, "Cleaning Memory ..");
+        ppa_add_line_left(pp, "Cleaning Memory ..");
 
-    //     free(shuffled);
-    //     int* null = NULL;
-    //     FREE_MEM(path_X,path_W,outputFileMatches,outputFileNegs,allMatches,hashT,null,null,null,null,null,Scheduler);
-    //     ppa_add_line_right(pp, "DONE", GRN);
+        free(shuffled);
+        int* null = NULL;
+        FREE_MEM(path_X,path_W,outputFileMatches,outputFileNegs,allMatches,hashT,null,null,null,null,null,Scheduler);
+        ppa_add_line_right(pp, "DONE", GRN);
 
-    //     ppa_print_end(pp, "Exiting ~ cant read csv");
-    //     ppa_destroy(pp);
+        ppa_print_end(pp, "Exiting ~ cant read csv");
+        ppa_destroy(pp);
 
-    //     exit(-5);
-    // }
+        exit(-5);
+    }
 
-    // free(shuffled);
+    free(shuffled);
     int train_lines = check;
     ppa_add_line_right(pp, "DONE", GRN);
 
