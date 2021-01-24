@@ -1824,9 +1824,7 @@ void make_it_spars_list_threads_plus_train(logM* model, mySpec** set, int set_si
         jobSch_Start(Scheduler);
     }
 
-    if(received_signal != 1){
-        jobSch_waitAll(Scheduler);
-    }
+    jobSch_waitAll(Scheduler);
     // empty list
     
     while(info_size > 0){

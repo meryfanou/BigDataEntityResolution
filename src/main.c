@@ -33,10 +33,10 @@
 #define TRAIN_PERC 0.6
 #define TEST_PERC 0.2
 
-#define MOST_SIGN 1000
+#define MOST_SIGN 10
 
 // MY MAX THREADS ARE 62.439 ... WE USE 10.000 TO BE SURE
-#define T_NUM 10
+#define T_NUM 100
 
  /*     
   !!  RUN COMMAND:
