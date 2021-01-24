@@ -1770,8 +1770,11 @@ void make_it_spars_list_threads_plus_train(logM* model, mySpec** set, int set_si
         i++;
     }
 
-    dataI* info_list = dataI_create(2*bow->entries);
- 
+    dataI** info_array = malloc(sizeof(dataI*));
+    info_array[0] = dataI_create(2*bow->entries);
+    int info_size = 1;
+
+
     // FIND PAIRS AND CONCAT THEIR SPARS
     i = 0;
     while(i<set_size){
@@ -1790,20 +1793,22 @@ void make_it_spars_list_threads_plus_train(logM* model, mySpec** set, int set_si
 
                 float** temp = spars_concat_col(all_spars[i], all_spars[z], all_spars_sizes[i], all_spars_sizes[z], bow->entries);
                 int temp_size = all_spars_sizes[z] + all_spars_sizes[i];
-                dataI_push(info_list, set[i], set[z], temp, temp_size, tag);
+                dataI_push(info_array[info_size-1], set[i], set[z], temp, temp_size, tag);
             }
 
             // SUBBMIT JOB TO SCHED IF CONTENTS IS REACHED
-            if(info_list->all_pairs >= MAX_TRAIN_SIZE_PER_THREAD){
+            if(info_array[info_size-1]->all_pairs >= MAX_TRAIN_SIZE_PER_THREAD){
+                info_array = realloc(info_array, sizeof(dataI*)*(info_size+1));
+                info_array[info_size] = dataI_create(2*bow->entries);
+                
                     //make info_train
-                t_Info_train* thread_info = make_info_train(model, info_list);
+                t_Info_train* thread_info = make_info_train(model, info_array[info_size-1]);
 
                     /// sumbbit job
                 jobSch_subbmit(Scheduler, &logistic_fit_dataList, thread_info, "train");
                 jobSch_Start(Scheduler);
-                // empty list
-                info_list = dataI_create(2*bow->entries);
-                // printf("SUBBMITING WORK (%d) ..\n", info_list->all_pairs);
+                
+                info_size++;
             }
 
             z++;
@@ -1812,22 +1817,22 @@ void make_it_spars_list_threads_plus_train(logM* model, mySpec** set, int set_si
     }
 
         // SUBBMIT REMAINING JOBS
-    if(received_signal != 1 && info_list->all_pairs > 0){
-        t_Info_train* thread_info = make_info_train(model, info_list);
+    if(received_signal != 1 && info_array[info_size-1]->all_pairs > 0){
+        t_Info_train* thread_info = make_info_train(model, info_array[info_size-1]);
             /// sumbbit job
         jobSch_subbmit(Scheduler, &logistic_fit_dataList, thread_info, "train");
         jobSch_Start(Scheduler);
-        // empty list
-        info_list = dataI_create(2*bow->entries);
     }
-
-    // empty list
-    dataN_destroy(info_list, info_list->head);
 
     if(received_signal != 1){
         jobSch_waitAll(Scheduler);
     }
-
+    // empty list
+    
+    while(info_size > 0){
+        dataI_destroy(info_array[--info_size]);
+    }
+    free(info_array);
 
         // free mem
     int i1 = 0;

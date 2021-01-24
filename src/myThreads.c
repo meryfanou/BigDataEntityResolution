@@ -93,8 +93,8 @@ t_Info_train* make_info_train(void* model, void* info_list){
 }
 
 void destroy_Info_train(t_Info_train* info){
-	dataI* list = (dataI*) info->info_list;
-	dataN_destroy(list, list->head);
+	// dataI* list = (dataI*) info->info_list;
+	// dataN_destroy(list, list->head);
 	free(info);
 }
 
