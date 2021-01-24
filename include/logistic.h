@@ -82,6 +82,7 @@ struct logistic_data_node{
 struct info_ar{
     dataI** info_array;
     int info_size;
+    pthread_mutex_t lock_it;
 };
 
 // ~~~~~~~~~~~~~~

@@ -1673,6 +1673,7 @@ void make_it_spars_list_threads_plus_train(hashTable* hashT, logM* model, mySpec
     myar->info_array = malloc(sizeof(dataI*));
     myar->info_array[0] = dataI_create(2*bow->entries);
     myar->info_size = 1;
+    pthread_mutex_init( &myar->lock_it, NULL);
 
 
     // FIND PAIRS AND CONCAT THEIR SPARS
@@ -1732,6 +1733,7 @@ void make_it_spars_list_threads_plus_train(hashTable* hashT, logM* model, mySpec
     int count_retrain = 0;
     while(count_retrain < 1){
         retrain_with_all(hashT, myar, model, Scheduler);
+        printf("teleiwse to ola me ola\n");
         int cell = 0;
         while(cell < myar->info_size){
             t_Info_train* thread_info = make_info_train(model, myar->info_array[cell]);
@@ -1747,6 +1749,7 @@ void make_it_spars_list_threads_plus_train(hashTable* hashT, logM* model, mySpec
         dataI_destroy(myar->info_array[--(myar->info_size)]);
     }
     free(myar->info_array);
+    pthread_mutex_destroy( &myar->lock_it);
     free(myar);
 
 }
@@ -1779,6 +1782,9 @@ void retrain_with_all(hashTable* hashT, info_ar* myar, logM* model, jobSch* Sche
     }
 
     jobSch_waitAll(Scheduler);
+    printf("~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~\n");
+    printf("ME TROLLAREI O KWDIKAS MOY\n");
+    printf("~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~\n");
 }
 
 
@@ -1807,7 +1813,8 @@ void get_all_bucket_pairs(logM* model, record* myrec, bucket* mybuc, info_ar* my
         if(temp != NULL){
             
             logistic_predict_proba_dataList(model, check_pr);
-            
+
+            // printf("proba: %f\n",check_pr->head->proba );            
             int tag = -1;
             if(check_pr->head->proba >= 0.9 && check_pr->head->proba != 1){
                 tag = 1;
@@ -1815,13 +1822,12 @@ void get_all_bucket_pairs(logM* model, record* myrec, bucket* mybuc, info_ar* my
             else if( check_pr->head->proba <= 0.1 && check_pr->head->proba != 0){
                 tag = 0;
             }
-            
             if(tag != -1){
                 float** temp2 = spars_concat_col(myrec->spec->mySpars, tempRec->spec->mySpars, myrec->spec->spars_size, tempRec->spec->spars_size, dimensions);
                 check_info_array(myar, myrec->spec, tempRec->spec, temp2);
             }
         }
-       
+
             // get next rec
         if(tempRec->next != NULL){
             tempRec = tempRec->next;
@@ -1840,41 +1846,49 @@ void get_all_bucket_pairs(logM* model, record* myrec, bucket* mybuc, info_ar* my
 void check_info_array(info_ar* myar, mySpec* spec1, mySpec* spec2, float** spars){
 
     int i = 0;
-    printf("checking ar\n");
-    pthread_mutex_lock(&plz);
+    int found = 0;
+    // printf("checking ar\n");
 
     while(i < myar->info_size){
-        printf("%d / %d\n", i, myar->info_size);
+        // printf("%d / %d\n", i, myar->info_size);
         dataN* node = myar->info_array[i]->head;
         while(node != NULL){
 
             if(node->spec1 == spec1 && node->spec2 == spec2){
-                node = node->next;
-                continue;
+                found = 1;
+                break;
             }
-            if(node->spec1 == spec2 && node->spec2 == spec1){
-                node = node->next;
-                continue;
+            else if(node->spec1 == spec2 && node->spec2 == spec1){
+                found = 1;
+                break;
             }
-
-
-            printf("\t\tinserting ar\n");
-
-            if(myar->info_array[myar->info_size-1]->all_pairs >= MAX_TRAIN_SIZE_PER_THREAD){
-                myar->info_array = realloc(myar->info_array, myar->info_size+1);
-                myar->info_size ++;
-            }
-            dataI_push(myar->info_array[myar->info_size-1], spec1, spec2, spars, spec1->spars_size+spec2->spars_size,-1);
-
             node = node->next;
-            printf("\t\tinsert done\n");
         }
 
         i++;
     }
+    
+    if(found == 0){
+        pthread_mutex_lock(&myar->lock_it);
+        // printf("\t\tinserting ar\n");
 
-    pthread_mutex_unlock(&plz);
-    printf("DONE\n");
+        int dimensions = myar->info_array[0]->dimensions;
+        printf("size: %d\n", myar->info_size);
+
+        if(myar->info_array[myar->info_size-1]->all_pairs >= MAX_TRAIN_SIZE_PER_THREAD){
+            myar->info_array = realloc(myar->info_array, myar->info_size+1);
+            if(myar->info_array == NULL)
+                printf("realloc failed ..\n");
+            myar->info_array[myar->info_size] = dataI_create(dimensions);
+            myar->info_size ++;
+            
+        }
+        dataI_push(myar->info_array[myar->info_size-1], spec1, spec2, spars, spec1->spars_size+spec2->spars_size,-1);
+
+        // printf("\t\tinsert done\n");
+        pthread_mutex_unlock(&myar->lock_it);
+    }
+    // printf("DONE\n");
 }
 
 
