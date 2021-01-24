@@ -82,6 +82,8 @@ void myThreads_MASSACRE(myThreads* threads){
 // }
 
 
+//////////////////////// TRAIN
+
 t_Info_train* make_info_train(void* model, void* info_list){
 	t_Info_train* newinfo = malloc(sizeof(t_Info_train));
 	newinfo->model = model;
@@ -95,6 +97,22 @@ void destroy_Info_train(t_Info_train* info){
 	dataN_destroy(list, list->head);
 	free(info);
 }
+
+////////////////////// TEST
+
+t_Info_test* make_info_test(void* model, void* info_list){
+	t_Info_test* newinfo = malloc(sizeof(t_Info_test));
+	newinfo->model = model;
+	newinfo->info_list = info_list;
+	
+	return newinfo;
+}
+
+void destroy_Info_test(t_Info_test* info){
+	free(info);
+}
+
+/////////////////// ???
 
 t_Info* make_info(void* scheduler){
 	t_Info* newInfo = malloc(sizeof(t_Info));

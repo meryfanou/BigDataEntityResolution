@@ -25,7 +25,7 @@
 #include "../include/jobScheduler.h"
 
 #define DATASET_X "../camera_specs/2013_camera_specs/"
-#define DATASET_W "../sigmod_large_labelled_dataset.csv"
+#define DATASET_W "../sigmod_medium_labelled_dataset.csv"
 
 #define HASH_SIZE 500
 #define BUC_SIZE 100
@@ -487,7 +487,8 @@ int main(int argc, char** argv){
         acc = make_tests(bow, model, testSet, testSize);
     }
     else if(choose_model == 's'){
-        acc = make_tests_spars_list(bow, model, testSet, testSize);
+        // acc = make_tests_spars_list(bow, model, testSet, testSize);
+        acc = make_tests_spars_list_threads(bow, model, testSet, testSize, Scheduler);
         //acc = make_tests_spars(bow, model, testSet, testSize);
     }
 

@@ -61,11 +61,13 @@ logM* make_model_spars_list(BoWords*, mySpec**, int, jobSch*);
 int train_per_spec_spars_list(mySpec**, int, BoWords*, logM*);
 void make_it_spars_list(mySpec**, int, BoWords*, dataI*, int);
 
+
 int train_per_spec_spars_list_one_by_one(mySpec**, int, BoWords*, logM*);
 int train_per_spec_spars_list_threads(mySpec**, int, BoWords*, logM*, jobSch*);
 
 void make_it_spars_list_plus_train(logM*, mySpec**, int, BoWords*, dataI*, int);
 void make_it_spars_list_threads_plus_train(logM*, mySpec**, int, BoWords*, int, jobSch*);
+float make_it_spars_list_threads(mySpec**, int, logM*, BoWords*, int, jobSch*);
 
 int isPair(mySpec*, mySpec*);
 
@@ -75,6 +77,7 @@ int isPair(mySpec*, mySpec*);
 float make_tests(BoWords*, logM*, mySpec**, int);
 float make_tests_spars(BoWords*, logM*, mySpec**, int);
 float make_tests_spars_list(BoWords*, logM*, mySpec**, int);
+float make_tests_spars_list_threads(BoWords*, logM*, mySpec**, int, jobSch*);
 
 /* NOT USED */
 void train_per_clique(myMatches*, mySpec**, int, BoWords*, logM*);

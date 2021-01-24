@@ -431,7 +431,7 @@ int logistic_regression_dataList(logM* model, dataI* info){
                     }
                     x++;
                 }
-                grad[1+y] = magic_num;
+                grad[1+y] = magic_num / (float) info->all_pairs;
                 count_trained++;
             }
             y++;
@@ -446,9 +446,9 @@ int logistic_regression_dataList(logM* model, dataI* info){
         pthread_mutex_unlock(&model->weights_mtx);
 
             // 4 Balance threshold
-        // pthread_mutex_lock(&model->model_mtx);
-        // logistic_overfit_dataList(model, info);
-        // pthread_mutex_unlock(&model->model_mtx);
+        pthread_mutex_lock(&model->model_mtx);
+        logistic_overfit_dataList(model, info);
+        pthread_mutex_unlock(&model->model_mtx);
 
         // ΜAX ITERATIONS
         if(model->trained_times > 1)

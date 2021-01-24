@@ -74,9 +74,9 @@ void jobSch_Start(jobSch* sched){
 }
 
 void jobSch_waitAll(jobSch* sched){
-    printf("Waiting .. \n");
+    // printf("Waiting .. \n");
     while(sched->queue->entries !=0 && sched->threads_waiting != sched->threads->size){}
-    printf("\t .. Done\n");
+    // printf("\t .. Done\n");
 }
 
 ////////////////////////////////////////////////////
@@ -157,7 +157,10 @@ jNode* jNode_Init(void* to_do, void* info, char* mode){
 
 void jNode_Destroy(jNode* myjNode){
     free(myjNode->mode);
-    destroy_Info_train((t_Info_train*) myjNode->info);
+    if(strcmp(myjNode->mode, "test") == 0)
+        destroy_Info_train((t_Info_train*) myjNode->info);
+    else if(strcmp(myjNode->mode, "train") == 0)
+        destroy_Info_test((t_Info_test*) myjNode->info);
     free(myjNode);
 }
 
@@ -203,19 +206,16 @@ void* main_thread_func(void* myInfo){
             // printf("no jobs for me, exiting ..\n");
         }
         else{
-            t_Info_train* info_to_train = NULL;
-            // printf("ACTUALLY DOING SMTHNIG ...\n");
             if(strcmp(f->job->mode, "train") == 0){
-                info_to_train = (t_Info_train*) f->job->info;
-                // printf("\t CALLING TRAIN ..\n");
+                t_Info_train* info_to_train = (t_Info_train*) f->job->info;
                 f->job->to_do(info_to_train->model, info_to_train->info_list);
-                // printf("\t TRAIN_ENDED !!\n");
             }
             else if(strcmp(f->job->mode, "test") == 0){
-                // printf("\t CALLING TRAIN ..\n");
-                f->job->to_do();
-                // printf("\t TRAIN_ENDED !!\n");
-            }  
+                t_Info_test* info_to_test = (t_Info_test*) f->job->info;
+                // printf("mphke sto job\n");
+                f->job->to_do(info_to_test->model, info_to_test->info_list);
+                // printf("vghke apo to job\n");
+            }
             
             // printf("prin to destroy\n");
             qNode_Destroy(f);

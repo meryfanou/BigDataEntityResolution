@@ -10,6 +10,7 @@
 typedef struct myThreads myThreads;
 typedef struct t_Info t_Info;
 typedef struct t_Info_train t_Info_train;
+typedef struct t_Info_test t_Info_test;
 
 struct myThreads{
 	pthread_t* t_Nums;
@@ -23,6 +24,11 @@ struct t_Info{
 };
 
 struct t_Info_train{
+	void* model;
+	void* info_list;
+};
+
+struct t_Info_test{
 	void* model;
 	void* info_list;
 };
@@ -42,9 +48,11 @@ void myThreads_MASSACRE(myThreads*);
 //////////////////////////////////////
 t_Info* make_info(void*);
 t_Info_train* make_info_train(void*, void*);
+t_Info_test* make_info_test(void*, void*);
 
 void destroy_Info(t_Info*);
 void destroy_Info_train(t_Info_train*);
+void destroy_Info_test(t_Info_test*);
 //////////////////////////////////////
 void* thread_Start();
 #endif

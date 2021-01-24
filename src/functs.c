@@ -17,7 +17,8 @@
 
 #define PATH "./Outputs"
 
-#define MAX_TRAIN_SIZE_PER_THREAD 1024
+#define MAX_TRAIN_SIZE_PER_THREAD 1000
+#define MAX_TRAIN_SIZE_PER_THREAD_TEST 100
 
 int received_signal = 0;
 
@@ -1476,6 +1477,98 @@ void make_it_spars_list(mySpec** set, int set_size, BoWords* bow, dataI* info_li
 
 }
 
+
+float make_it_spars_list_threads(mySpec** set, int set_size, logM* model, BoWords* bow, int use_tag, jobSch* Scheduler){
+    int row = 0;
+    int col = 0;
+
+    float*** all_spars = malloc(set_size*sizeof(float**));
+    int* all_spars_sizes = malloc(set_size*sizeof(int));
+
+    int info_size = 1;
+    dataI** info_array = malloc(sizeof(dataI*)*1);
+    info_array[0] = dataI_create(2*bow->entries);
+
+    // MAKE SPARS FOR EVERY SPEC
+    int i = 0;
+    while(i < set_size){
+        col = 0;
+        all_spars[i] = NULL;
+        all_spars_sizes[i] = 0;
+        bow_to_spars(bow, &all_spars[i], &all_spars_sizes[i], &row, &col, set[i]);
+        i++;
+    }
+
+    // FIND PAIRS AND CONCAT THEIR SPARS
+    i = 0;
+    while(i<set_size){
+        int z = i + 1;
+        while(z < set_size){
+            if(all_spars[i] == NULL && all_spars[z] == NULL){
+                z++;
+                continue;
+            }
+            int tag = isPair(set[i], set[z]);
+            if((use_tag == 1 && tag != -1 ) || use_tag == -1){
+
+                float** temp = spars_concat_col(all_spars[i], all_spars[z], all_spars_sizes[i], all_spars_sizes[z], bow->entries);
+                int temp_size = all_spars_sizes[z] + all_spars_sizes[i];
+                dataI_push(info_array[info_size-1], set[i], set[z], temp, temp_size, tag);
+                if(info_array[info_size-1]->all_pairs == MAX_TRAIN_SIZE_PER_THREAD_TEST){
+                    info_array = realloc(info_array, sizeof(dataI*)*(info_size+1));
+                    info_array[info_size] = dataI_create(2*bow->entries);
+
+                    t_Info_test* thread_info = make_info_test(model, info_array[info_size-1]);
+                    jobSch_subbmit(Scheduler, &logistic_predict_proba_dataList, thread_info, "test");
+                    jobSch_Start(Scheduler);
+                    
+                    info_size++;
+                }
+            }
+            z++;
+        }
+        i++;
+    }
+
+    if(info_array[info_size-1]->all_pairs != 0){
+        t_Info_test* thread_info = make_info_test(model, info_array[info_size-1]);
+        jobSch_subbmit(Scheduler, &logistic_fit_dataList, thread_info, "test");
+        jobSch_Start(Scheduler);
+    }
+
+    jobSch_waitAll(Scheduler);
+
+        // calc acc
+    printf("calculating acc\n");
+    float acc = 0.0;
+    int cell = 0;
+    while(cell < info_size){
+        printf("%d / %d\n", cell, info_size);
+       acc += logistic_score_dataList(model, info_array[cell++]);
+    }
+
+    acc /= info_size;
+
+        // free mem
+    while(info_size > 0){
+        dataI_destroy(info_array[--info_size]);
+    }
+    free(info_array);
+
+    int i1 = 0;
+    while(i1 < set_size){
+        int i2 = 0;
+        while(i2 < all_spars_sizes[i1]){
+            free(all_spars[i1][i2++]);
+        }
+        free(all_spars[i1++]);
+    }
+    free(all_spars);
+    free(all_spars_sizes);
+
+    return acc;
+}
+
 float make_tests_spars_list(BoWords* bow, logM* model, mySpec** test_set, int set_size){
          // Signal handling
     struct sigaction    act;
@@ -1511,6 +1604,32 @@ float make_tests_spars_list(BoWords* bow, logM* model, mySpec** test_set, int se
 
     return acc;
 }
+
+float make_tests_spars_list_threads(BoWords* bow, logM* model, mySpec** test_set, int set_size, jobSch* Scheduler){
+         // Signal handling
+    struct sigaction    act;
+    sigset_t            block_mask;
+    received_signal = 0;
+    sigemptyset(&(act.sa_mask));
+	act.sa_flags = 0;
+    act.sa_handler = sig_int_quit_handler;
+    sigemptyset(&block_mask);
+	sigaddset(&block_mask,SIGINT);
+	sigaddset(&block_mask,SIGQUIT);
+
+    float acc = make_it_spars_list_threads(test_set, set_size, model, bow, 1, Scheduler);
+
+    if(received_signal == 1){
+        //  FREE MEM;
+        return 0;
+    }
+
+    // logistic_predict_proba_dataList(model, info_list);
+    // float acc = logistic_score_dataList(model, info_list);
+
+    return acc;
+}
+
 
 
 int train_per_spec_spars_list_one_by_one(mySpec** train_set, int set_size, BoWords* bow, logM* model){
