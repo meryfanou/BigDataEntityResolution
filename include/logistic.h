@@ -5,6 +5,7 @@
 
 #include "../include/myMatches.h"
 #include "../include/mySpec.h"
+#include <pthread.h>
 
 #define LEARING_RATE 0.6
 #define STOP_LIMIT 0.15
@@ -16,10 +17,12 @@
 // #define PATH "./Outputs"
 
 
+
 typedef struct logistic_model logM;
 typedef struct logistic_weights weights;
 typedef struct logistic_data_node dataN;
 typedef struct logistic_data_info dataI;
+typedef struct info_ar info_ar;
 
 struct logistic_model{
     int size_totrain;
@@ -74,6 +77,11 @@ struct logistic_data_node{
     int label;
     float proba;
     int predict;
+};
+
+struct info_ar{
+    dataI** info_array;
+    int info_size;
 };
 
 // ~~~~~~~~~~~~~~

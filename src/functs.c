@@ -23,6 +23,8 @@
 int received_signal = 0;
 
 pthread_mutex_t mtx_print = PTHREAD_MUTEX_INITIALIZER;
+pthread_mutex_t plz = PTHREAD_MUTEX_INITIALIZER;
+
 
 // ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~ READ DATA ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 
@@ -1353,7 +1355,7 @@ int isPair(mySpec* spec1, mySpec* spec2){
 
 // ~~~~~~~~~~~~~~~~~~~~~~~ DATA_LIST METHOD ~~~~~~~~~~~~~~~~~~~~~~
 
-logM* make_model_spars_list(BoWords* bow, mySpec** train_set, int set_size, jobSch* Scheduler){
+logM* make_model_spars_list(hashTable* hashT, BoWords* bow, mySpec** train_set, int set_size, jobSch* Scheduler){
 
     // Signal handling
     struct sigaction    act;
@@ -1373,7 +1375,7 @@ logM* make_model_spars_list(BoWords* bow, mySpec** train_set, int set_size, jobS
     // int check = train_per_spec_spars_list(train_set, set_size, bow, model);
     // int check = train_per_spec_spars_list_one_by_one(train_set, set_size, bow, model);
 
-    int check = train_per_spec_spars_list_threads(train_set, set_size, bow, model, Scheduler);
+    int check = train_per_spec_spars_list_threads(hashT, train_set, set_size, bow, model, Scheduler);
         
     // If a termination signal was recieved
     if(received_signal == 1 || check == -1){
@@ -1605,7 +1607,7 @@ int train_per_spec_spars_list_one_by_one(mySpec** train_set, int set_size, BoWor
     return 0;
 }
 
-int train_per_spec_spars_list_threads(mySpec** train_set, int set_size, BoWords* bow, logM* model, jobSch* Scheduler){
+int train_per_spec_spars_list_threads(hashTable* hashT, mySpec** train_set, int set_size, BoWords* bow, logM* model, jobSch* Scheduler){
         // Signal handling
     struct sigaction    act;
     sigset_t            block_mask;
@@ -1617,7 +1619,7 @@ int train_per_spec_spars_list_threads(mySpec** train_set, int set_size, BoWords*
 	sigaddset(&block_mask,SIGINT);
 	sigaddset(&block_mask,SIGQUIT);
 
-    make_it_spars_list_threads_plus_train(model, train_set, set_size, bow, 1, Scheduler);
+    make_it_spars_list_threads_plus_train(hashT, model, train_set, set_size, bow, 1, Scheduler);
     if(received_signal == 1)
         return -1;
     return 0;
@@ -1664,11 +1666,13 @@ void make_it_spars_list_plus_train(logM* model, mySpec** set, int set_size, BoWo
 
 }
 
-void make_it_spars_list_threads_plus_train(logM* model, mySpec** set, int set_size, BoWords* bow, int use_tag, jobSch* Scheduler){
+void make_it_spars_list_threads_plus_train(hashTable* hashT, logM* model, mySpec** set, int set_size, BoWords* bow, int use_tag, jobSch* Scheduler){
 
-    dataI** info_array = malloc(sizeof(dataI*));
-    info_array[0] = dataI_create(2*bow->entries);
-    int info_size = 1;
+    info_ar* myar = malloc(sizeof(info_ar));
+
+    myar->info_array = malloc(sizeof(dataI*));
+    myar->info_array[0] = dataI_create(2*bow->entries);
+    myar->info_size = 1;
 
 
     // FIND PAIRS AND CONCAT THEIR SPARS
@@ -1689,22 +1693,22 @@ void make_it_spars_list_threads_plus_train(logM* model, mySpec** set, int set_si
 
                 float** temp = spars_concat_col(set[i]->mySpars, set[z]->mySpars, set[i]->spars_size, set[z]->spars_size, bow->entries);
                 int temp_size = set[z]->spars_size + set[i]->spars_size;
-                dataI_push(info_array[info_size-1], set[i], set[z], temp, temp_size, tag);
+                dataI_push(myar->info_array[myar->info_size-1], set[i], set[z], temp, temp_size, tag);
             }
 
             // SUBBMIT JOB TO SCHED IF CONTENTS IS REACHED
-            if(info_array[info_size-1]->all_pairs >= MAX_TRAIN_SIZE_PER_THREAD){
-                info_array = realloc(info_array, sizeof(dataI*)*(info_size+1));
-                info_array[info_size] = dataI_create(2*bow->entries);
+            if(myar->info_array[myar->info_size-1]->all_pairs >= MAX_TRAIN_SIZE_PER_THREAD){
+                myar->info_array = realloc(myar->info_array, sizeof(dataI*)*(myar->info_size+1));
+                myar->info_array[myar->info_size] = dataI_create(2*bow->entries);
                 
                     //make info_train
-                t_Info_train* thread_info = make_info_train(model, info_array[info_size-1]);
+                t_Info_train* thread_info = make_info_train(model, myar->info_array[myar->info_size-1]);
 
                     /// sumbbit job
                 jobSch_subbmit(Scheduler, &logistic_fit_dataList, thread_info, "train");
                 jobSch_Start(Scheduler);
                 
-                info_size++;
+                myar->info_size++;
             }
 
             z++;
@@ -1713,22 +1717,164 @@ void make_it_spars_list_threads_plus_train(logM* model, mySpec** set, int set_si
     }
 
         // SUBBMIT REMAINING JOBS
-    if(received_signal != 1 && info_array[info_size-1]->all_pairs > 0){
-        t_Info_train* thread_info = make_info_train(model, info_array[info_size-1]);
+    if(received_signal != 1 && myar->info_array[myar->info_size-1]->all_pairs > 0){
+        t_Info_train* thread_info = make_info_train(model, myar->info_array[myar->info_size-1]);
             /// sumbbit job
         jobSch_subbmit(Scheduler, &logistic_fit_dataList, thread_info, "train");
         jobSch_Start(Scheduler);
     }
 
-    sleep(2);
     jobSch_waitAll(Scheduler);
-    // empty list
-    
-    while(info_size > 0){
-        dataI_destroy(info_array[--info_size]);
-    }
-    free(info_array);
 
+    printf("egine to prwto train\n");
+
+        // RE-TRAIN
+    int count_retrain = 0;
+    while(count_retrain < 1){
+        retrain_with_all(hashT, myar, model, Scheduler);
+        int cell = 0;
+        while(cell < myar->info_size){
+            t_Info_train* thread_info = make_info_train(model, myar->info_array[cell]);
+            jobSch_subbmit(Scheduler, &logistic_fit_dataList, thread_info, "train");
+            jobSch_Start(Scheduler);
+            cell++;
+        }
+    }
+
+
+        // free mem
+    while(myar->info_size > 0){
+        dataI_destroy(myar->info_array[--(myar->info_size)]);
+    }
+    free(myar->info_array);
+    free(myar);
+
+}
+
+
+void retrain_with_all(hashTable* hashT, info_ar* myar, logM* model, jobSch* Scheduler){
+
+    int i = 0;
+    while(i < hashT->tableSize){
+
+        bucket* tempB = hashT->myTable[i];
+        while(tempB != NULL){
+            record* tempR = tempB->rec;
+            while(tempR != NULL){
+
+                int i_2 = 0;
+                while(i_2 < hashT->tableSize){
+                    // printf("vazw jobs\n");
+                    t_Info_retrain* thread_info = make_info_retrain(model, tempR, hashT->myTable[i_2], myar);
+                    jobSch_subbmit(Scheduler, &get_all_bucket_pairs, thread_info, "retrain");
+                    jobSch_Start(Scheduler);
+
+                    i_2++;
+                }
+                tempR = tempR->next;
+            }
+            tempB = tempB->next;
+        }
+        i++;
+    }
+
+    jobSch_waitAll(Scheduler);
+}
+
+
+void get_all_bucket_pairs(logM* model, record* myrec, bucket* mybuc, info_ar* myar){
+    
+    record* tempRec = NULL;
+    bucket* tempBuck = NULL;
+    if(myrec->next != NULL){
+        tempRec = myrec->next;
+        tempBuck = mybuc;
+    }
+    else if(mybuc->next != NULL){
+        tempBuck = mybuc->next;
+        tempRec = tempBuck->rec;
+    }
+
+    if(tempRec == NULL)
+        return;
+    
+    int dimensions = myar->info_array[0]->dimensions;
+    while(tempRec != NULL){
+        dataI* check_pr = dataI_create(dimensions);
+        float** temp = spars_concat_col(myrec->spec->mySpars, tempRec->spec->mySpars, myrec->spec->spars_size, tempRec->spec->spars_size, dimensions);
+        dataI_push(check_pr, myrec->spec, tempRec->spec, temp, myrec->spec->spars_size + tempRec->spec->spars_size, -1);
+
+        if(temp != NULL){
+            
+            logistic_predict_proba_dataList(model, check_pr);
+            
+            int tag = -1;
+            if(check_pr->head->proba >= 0.9 && check_pr->head->proba != 1){
+                tag = 1;
+            }
+            else if( check_pr->head->proba <= 0.1 && check_pr->head->proba != 0){
+                tag = 0;
+            }
+            
+            if(tag != -1){
+                float** temp2 = spars_concat_col(myrec->spec->mySpars, tempRec->spec->mySpars, myrec->spec->spars_size, tempRec->spec->spars_size, dimensions);
+                check_info_array(myar, myrec->spec, tempRec->spec, temp2);
+            }
+        }
+       
+            // get next rec
+        if(tempRec->next != NULL){
+            tempRec = tempRec->next;
+        }
+        else if(tempBuck->next != NULL){
+            tempBuck = tempBuck->next;
+            tempRec = tempBuck->rec;
+        }
+        else
+            tempRec = NULL;
+
+        dataI_destroy(check_pr);
+    }
+}
+
+void check_info_array(info_ar* myar, mySpec* spec1, mySpec* spec2, float** spars){
+
+    int i = 0;
+    printf("checking ar\n");
+    pthread_mutex_lock(&plz);
+
+    while(i < myar->info_size){
+        printf("%d / %d\n", i, myar->info_size);
+        dataN* node = myar->info_array[i]->head;
+        while(node != NULL){
+
+            if(node->spec1 == spec1 && node->spec2 == spec2){
+                node = node->next;
+                continue;
+            }
+            if(node->spec1 == spec2 && node->spec2 == spec1){
+                node = node->next;
+                continue;
+            }
+
+
+            printf("\t\tinserting ar\n");
+
+            if(myar->info_array[myar->info_size-1]->all_pairs >= MAX_TRAIN_SIZE_PER_THREAD){
+                myar->info_array = realloc(myar->info_array, myar->info_size+1);
+                myar->info_size ++;
+            }
+            dataI_push(myar->info_array[myar->info_size-1], spec1, spec2, spars, spec1->spars_size+spec2->spars_size,-1);
+
+            node = node->next;
+            printf("\t\tinsert done\n");
+        }
+
+        i++;
+    }
+
+    pthread_mutex_unlock(&plz);
+    printf("DONE\n");
 }
 
 

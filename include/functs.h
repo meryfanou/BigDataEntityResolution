@@ -61,17 +61,22 @@ void spars_concat_row(float***, float**, int*, int, int);
 logM* make_model_spars(BoWords*, mySpec**, int);
 
 	// !! spars list
-logM* make_model_spars_list(BoWords*, mySpec**, int, jobSch*);
+logM* make_model_spars_list(hashTable* hashT, BoWords*, mySpec**, int, jobSch*);
 int train_per_spec_spars_list(mySpec**, int, BoWords*, logM*);
 void make_it_spars_list(mySpec**, int, BoWords*, dataI*, int);
 
 
 int train_per_spec_spars_list_one_by_one(mySpec**, int, BoWords*, logM*);
-int train_per_spec_spars_list_threads(mySpec**, int, BoWords*, logM*, jobSch*);
+int train_per_spec_spars_list_threads(hashTable*, mySpec**, int, BoWords*, logM*, jobSch*);
 
 void make_it_spars_list_plus_train(logM*, mySpec**, int, BoWords*, dataI*, int);
-void make_it_spars_list_threads_plus_train(logM*, mySpec**, int, BoWords*, int, jobSch*);
+void make_it_spars_list_threads_plus_train(hashTable*, logM*, mySpec**, int, BoWords*, int, jobSch*);
 float make_it_spars_list_threads(mySpec**, int, logM*, BoWords*, int, jobSch*);
+
+void retrain_with_all(hashTable*, info_ar*, logM*, jobSch*);
+void get_all_bucket_pairs(logM*, record*, bucket*, info_ar*);
+void check_info_array(info_ar*, mySpec*, mySpec*, float**);
+
 
 int isPair(mySpec*, mySpec*);
 

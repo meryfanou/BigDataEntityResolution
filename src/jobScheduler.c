@@ -202,15 +202,20 @@ void* main_thread_func(void* myInfo){
                 t_Info_train* info_to_train = (t_Info_train*) f->job->info;
                 f->job->to_do(info_to_train->model, info_to_train->info_list);
             }
+            
             else if(strcmp(f->job->mode, "test") == 0){
                 t_Info_test* info_to_test = (t_Info_test*) f->job->info;
-                // printf("mphke sto job\n");
                 f->job->to_do(info_to_test->model, info_to_test->info_list);
-                // printf("vghke apo to job\n");
             }
-
-            qNode_Destroy(f);
+            
+            else if(strcmp(f->job->mode, "retrain") == 0){
+                t_Info_retrain* info_retrain = (t_Info_retrain*) f->job->info;
+                f->job->to_do(info_retrain->model, info_retrain->myrec, info_retrain->mybuc, info_retrain->myar);
+            }    
         }
+
+        qNode_Destroy(f);
+
         sched->threads_waiting--;
     }
 

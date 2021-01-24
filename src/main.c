@@ -25,7 +25,7 @@
 #include "../include/jobScheduler.h"
 
 #define DATASET_X "../camera_specs/2013_camera_specs/"
-#define DATASET_W "../sigmod_large_labelled_dataset.csv"
+#define DATASET_W "../sigmod_medium_labelled_dataset.csv"
 
 #define HASH_SIZE 500
 #define BUC_SIZE 100
@@ -449,7 +449,7 @@ int main(int argc, char** argv){
         model = make_model_vec(bow, trainSet, trainSize);
     }
     else if(choose_model == 's'){
-        model = make_model_spars_list(bow, trainSet, trainSize, Scheduler);
+        model = make_model_spars_list(hashT, bow, trainSet, trainSize, Scheduler);
         // model = make_model_spars(bow, trainSet, trainSize);
     }
 

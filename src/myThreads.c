@@ -112,6 +112,22 @@ void destroy_Info_test(t_Info_test* info){
 	free(info);
 }
 
+//////////////////////// RETRAIN
+
+t_Info_retrain* make_info_retrain(void* model, void* myrec, void* mybuc, info_ar* myar){
+	t_Info_retrain* newInfo = malloc(sizeof(t_Info_retrain));
+	newInfo->model = model;
+	newInfo->myar = myar;
+	newInfo->myrec = myrec;
+	newInfo->mybuc = mybuc;
+	return newInfo;
+}
+
+void destroy_Info_retrain(t_Info_retrain* info){
+	free(info);
+}
+
+
 /////////////////// ???
 
 t_Info* make_info(void* scheduler){
@@ -119,3 +135,4 @@ t_Info* make_info(void* scheduler){
 	newInfo->Scheduler = scheduler;
 	return newInfo;
 }
+
