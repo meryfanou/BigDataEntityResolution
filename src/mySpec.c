@@ -13,6 +13,8 @@ mySpec* specInit(){			// MALLOC AND RETURN NEW SPEC NODE
 	spec->properties = NULL;
 	spec->propNum = 0;
 	spec->numofWords = 0;
+	spec->spars_size = 0;
+	spec->mySpars = NULL;
 
 	return spec;
 }
@@ -64,6 +66,12 @@ void deleteSpec(mySpec* spec){		// free mem
 	}
 	if(spec->properties != NULL)
 		free(spec->properties);
+
+
+	while(spec->spars_size > 0){
+		free(spec->mySpars[--spec->spars_size]);
+	}
+	free(spec->mySpars);
 
 	free(spec);
 	spec = NULL;

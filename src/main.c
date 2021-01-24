@@ -33,7 +33,7 @@
 #define TRAIN_PERC 0.6
 #define TEST_PERC 0.2
 
-#define MOST_SIGN 10
+#define MOST_SIGN 1000
 
 // MY MAX THREADS ARE 62.439 ... WE USE 10.000 TO BE SURE
 #define T_NUM 100
@@ -428,8 +428,15 @@ int main(int argc, char** argv){
         exit(-2);
     }
 
+
+    // ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~ HASH TO SPARS
+
     ppa_add_line_right(pp, "DONE", GRN);
 
+    ppa_add_line_left(pp, "HASH TO SPARS ..");
+    hash_to_spars(hashT, bow);
+    ppa_add_line_right(pp, "DONE", GRN);
+    
 
     // ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~ CREATE & TRAIN LOGISTIC MODEL
 

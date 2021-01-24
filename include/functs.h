@@ -38,6 +38,10 @@ void text_to_bow(mySpec**, int, BoWords**);					// Turn a text to bow
 void set_mostSignificantWords(BoWords*, int);			// Mark the most significant words in bow
 void keep_mostSignificantWords(BoWords*);				// Remove all insignificant words from bow
 
+// ~~~~~~~~~~~~~~ MAKE HASH SPARS ~~~~~~~~~~~~~
+
+void hash_to_spars(hashTable*, BoWords*);
+
 // ~~~~~~~~~~~~~~~~ TRAINING ~~~~~~~~~~~~~~~~
 	// !! vec
 logM* make_model_vec(BoWords*, mySpec**, int);

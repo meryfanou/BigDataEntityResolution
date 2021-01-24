@@ -16,6 +16,9 @@ struct mySpec{
 	specInfo** properties;
 	int propNum;
 	int numofWords;
+
+	float** mySpars;
+	int spars_size;
 };
 
 struct specInfo{

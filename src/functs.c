@@ -1372,9 +1372,9 @@ logM* make_model_spars_list(BoWords* bow, mySpec** train_set, int set_size, jobS
     // Train_per_Spec
     // int check = train_per_spec_spars_list(train_set, set_size, bow, model);
     // int check = train_per_spec_spars_list_one_by_one(train_set, set_size, bow, model);
-    int check = train_per_spec_spars_list_threads(train_set, set_size, bow, model, Scheduler);
-    
 
+    int check = train_per_spec_spars_list_threads(train_set, set_size, bow, model, Scheduler);
+        
     // If a termination signal was recieved
     if(received_signal == 1 || check == -1){
         logistic_destroy(model);
@@ -1426,93 +1426,49 @@ int train_per_spec_spars_list(mySpec** train_set, int set_size, BoWords* bow, lo
 }
 
 void make_it_spars_list(mySpec** set, int set_size, BoWords* bow, dataI* info_list, int use_tag){
-    int row = 0;
-    int col = 0;
-
-    float*** all_spars = malloc(set_size*sizeof(float**));
-    int* all_spars_sizes = malloc(set_size*sizeof(int));
-
-    // MAKE SPARS FOR EVERY SPEC
-    int i = 0;
-    while(i < set_size){
-        col = 0;
-        all_spars[i] = NULL;
-        all_spars_sizes[i] = 0;
-        bow_to_spars(bow, &all_spars[i], &all_spars_sizes[i], &row, &col, set[i]);
-        i++;
-    }
-
     // FIND PAIRS AND CONCAT THEIR SPARS
-    i = 0;
+    int i = 0;
     while(i<set_size){
         int z = i + 1;
         while(z < set_size){
-            if(all_spars[i] == NULL && all_spars[z] == NULL){
+            if(set[i]->mySpars == NULL && set[z]->mySpars == NULL){
                 z++;
                 continue;
             }
             int tag = isPair(set[i], set[z]);
             if((use_tag == 1 && tag != -1 ) || use_tag == -1){
 
-                float** temp = spars_concat_col(all_spars[i], all_spars[z], all_spars_sizes[i], all_spars_sizes[z], bow->entries);
-                int temp_size = all_spars_sizes[z] + all_spars_sizes[i];
+                float** temp = spars_concat_col(set[i]->mySpars, set[z]->mySpars, set[i]->spars_size, set[z]->spars_size, bow->entries);
+                int temp_size = set[z]->spars_size + set[i]->spars_size;
                 dataI_push(info_list, set[i], set[z], temp, temp_size, tag);
             }
             z++;
         }
         i++;
     }
-
-        // free mem
-    int i1 = 0;
-    while(i1 < set_size){
-        int i2 = 0;
-        while(i2 < all_spars_sizes[i1]){
-            free(all_spars[i1][i2++]);
-        }
-        free(all_spars[i1++]);
-    }
-    free(all_spars);
-    free(all_spars_sizes);
-
 }
 
 
 float make_it_spars_list_threads(mySpec** set, int set_size, logM* model, BoWords* bow, int use_tag, jobSch* Scheduler){
-    int row = 0;
-    int col = 0;
-
-    float*** all_spars = malloc(set_size*sizeof(float**));
-    int* all_spars_sizes = malloc(set_size*sizeof(int));
 
     int info_size = 1;
     dataI** info_array = malloc(sizeof(dataI*)*1);
     info_array[0] = dataI_create(2*bow->entries);
 
-    // MAKE SPARS FOR EVERY SPEC
-    int i = 0;
-    while(i < set_size){
-        col = 0;
-        all_spars[i] = NULL;
-        all_spars_sizes[i] = 0;
-        bow_to_spars(bow, &all_spars[i], &all_spars_sizes[i], &row, &col, set[i]);
-        i++;
-    }
-
     // FIND PAIRS AND CONCAT THEIR SPARS
-    i = 0;
+    int i = 0;
     while(i<set_size){
         int z = i + 1;
         while(z < set_size){
-            if(all_spars[i] == NULL && all_spars[z] == NULL){
+            if(set[i]->mySpars == NULL && set[z]->mySpars == NULL){
                 z++;
                 continue;
             }
             int tag = isPair(set[i], set[z]);
             if((use_tag == 1 && tag != -1 ) || use_tag == -1){
 
-                float** temp = spars_concat_col(all_spars[i], all_spars[z], all_spars_sizes[i], all_spars_sizes[z], bow->entries);
-                int temp_size = all_spars_sizes[z] + all_spars_sizes[i];
+                float** temp = spars_concat_col(set[i]->mySpars, set[z]->mySpars, set[i]->spars_size, set[z]->spars_size, bow->entries);
+                int temp_size = set[z]->spars_size + set[i]->spars_size;
                 dataI_push(info_array[info_size-1], set[i], set[z], temp, temp_size, tag);
                 if(info_array[info_size-1]->all_pairs == MAX_TRAIN_SIZE_PER_THREAD_TEST){
                     info_array = realloc(info_array, sizeof(dataI*)*(info_size+1));
@@ -1542,31 +1498,16 @@ float make_it_spars_list_threads(mySpec** set, int set_size, logM* model, BoWord
     float acc = 0.0;
     int cell = 0;
     while(cell < info_size){
-        // printf("%d / %d\n", cell, info_size);
        acc += logistic_score_dataList(model, info_array[cell++]);
     }
 
     acc /= info_size;
 
-    // printf("teleiwse: %f\n", acc);
         // free mem
     while(info_size > 0){
         dataI_destroy(info_array[--info_size]);
     }
     free(info_array);
-
-    // printf("teleiwse: %f\n", acc);
-
-    int i1 = 0;
-    while(i1 < set_size){
-        int i2 = 0;
-        while(i2 < all_spars_sizes[i1]){
-            free(all_spars[i1][i2++]);
-        }
-        free(all_spars[i1++]);
-    }
-    free(all_spars);
-    free(all_spars_sizes);
 
     return acc;
 }
@@ -1632,8 +1573,6 @@ float make_tests_spars_list_threads(BoWords* bow, logM* model, mySpec** test_set
     return acc;
 }
 
-
-
 int train_per_spec_spars_list_one_by_one(mySpec** train_set, int set_size, BoWords* bow, logM* model){
         // Signal handling
     struct sigaction    act;
@@ -1686,24 +1625,9 @@ int train_per_spec_spars_list_threads(mySpec** train_set, int set_size, BoWords*
     
 
 void make_it_spars_list_plus_train(logM* model, mySpec** set, int set_size, BoWords* bow, dataI* info_list, int use_tag){
-    int row = 0;
-    int col = 0;
-
-    float*** all_spars = malloc(set_size*sizeof(float**));
-    int* all_spars_sizes = malloc(set_size*sizeof(int));
-
-    // MAKE SPARS FOR EVERY SPEC
-    int i = 0;
-    while(i < set_size){
-        col = 0;
-        all_spars[i] = NULL;
-        all_spars_sizes[i] = 0;
-        bow_to_spars(bow, &all_spars[i], &all_spars_sizes[i], &row, &col, set[i]);
-        i++;
-    }
 
     // FIND PAIRS AND CONCAT THEIR SPARS
-    i = 0;
+    int  i = 0;
     while(i<set_size){
         if(received_signal == 1)
             break;
@@ -1711,17 +1635,16 @@ void make_it_spars_list_plus_train(logM* model, mySpec** set, int set_size, BoWo
         while(z < set_size){
             if(received_signal == 1)
                 break;
-            if(all_spars[i] == NULL && all_spars[z] == NULL){
+            if(set[i]->mySpars == NULL && set[z]->mySpars == NULL){
                 z++;
                 continue;
             }
             int tag = isPair(set[i], set[z]);
             if((use_tag == 1 && tag != -1 ) || use_tag == -1){
 
-                float** temp = spars_concat_col(all_spars[i], all_spars[z], all_spars_sizes[i], all_spars_sizes[z], bow->entries);
-                int temp_size = all_spars_sizes[z] + all_spars_sizes[i];
+                float** temp = spars_concat_col(set[i]->mySpars, set[z]->mySpars, set[i]->spars_size, set[z]->spars_size, bow->entries);
+                int temp_size = set[z]->spars_size + set[i]->spars_size;
                 dataI_push(info_list, set[i], set[z], temp, temp_size, tag);
-
 
                 // train one by one
                 if(model->trained_times == 0){
@@ -1739,36 +1662,9 @@ void make_it_spars_list_plus_train(logM* model, mySpec** set, int set_size, BoWo
         i++;
     }
 
-        // free mem
-    int i1 = 0;
-    while(i1 < set_size){
-        int i2 = 0;
-        while(i2 < all_spars_sizes[i1]){
-            free(all_spars[i1][i2++]);
-        }
-        free(all_spars[i1++]);
-    }
-    free(all_spars);
-    free(all_spars_sizes);
-
 }
 
 void make_it_spars_list_threads_plus_train(logM* model, mySpec** set, int set_size, BoWords* bow, int use_tag, jobSch* Scheduler){
-    int row = 0;
-    int col = 0;
-
-    float*** all_spars = malloc(set_size*sizeof(float**));
-    int* all_spars_sizes = malloc(set_size*sizeof(int));
-
-    // MAKE SPARS FOR EVERY SPEC
-    int i = 0;
-    while(i < set_size){
-        col = 0;
-        all_spars[i] = NULL;
-        all_spars_sizes[i] = 0;
-        bow_to_spars(bow, &all_spars[i], &all_spars_sizes[i], &row, &col, set[i]);
-        i++;
-    }
 
     dataI** info_array = malloc(sizeof(dataI*));
     info_array[0] = dataI_create(2*bow->entries);
@@ -1776,7 +1672,7 @@ void make_it_spars_list_threads_plus_train(logM* model, mySpec** set, int set_si
 
 
     // FIND PAIRS AND CONCAT THEIR SPARS
-    i = 0;
+    int i = 0;
     while(i<set_size){
         if(received_signal == 1)
             break;
@@ -1784,15 +1680,15 @@ void make_it_spars_list_threads_plus_train(logM* model, mySpec** set, int set_si
         while(z < set_size){
             if(received_signal == 1)
                 break;
-            if(all_spars[i] == NULL && all_spars[z] == NULL){
+            if(set[i]->mySpars == NULL && set[z]->mySpars == NULL){
                 z++;
                 continue;
             }
             int tag = isPair(set[i], set[z]);
             if((use_tag == 1 && tag != -1 ) || use_tag == -1){
 
-                float** temp = spars_concat_col(all_spars[i], all_spars[z], all_spars_sizes[i], all_spars_sizes[z], bow->entries);
-                int temp_size = all_spars_sizes[z] + all_spars_sizes[i];
+                float** temp = spars_concat_col(set[i]->mySpars, set[z]->mySpars, set[i]->spars_size, set[z]->spars_size, bow->entries);
+                int temp_size = set[z]->spars_size + set[i]->spars_size;
                 dataI_push(info_array[info_size-1], set[i], set[z], temp, temp_size, tag);
             }
 
@@ -1824,6 +1720,7 @@ void make_it_spars_list_threads_plus_train(logM* model, mySpec** set, int set_si
         jobSch_Start(Scheduler);
     }
 
+    sleep(2);
     jobSch_waitAll(Scheduler);
     // empty list
     
@@ -1831,18 +1728,6 @@ void make_it_spars_list_threads_plus_train(logM* model, mySpec** set, int set_si
         dataI_destroy(info_array[--info_size]);
     }
     free(info_array);
-
-        // free mem
-    int i1 = 0;
-    while(i1 < set_size){
-        int i2 = 0;
-        while(i2 < all_spars_sizes[i1]){
-            free(all_spars[i1][i2++]);
-        }
-        free(all_spars[i1++]);
-    }
-    free(all_spars);
-    free(all_spars_sizes);
 
 }
 
@@ -1929,7 +1814,35 @@ void train_per_clique(myMatches* clique, mySpec** trainSet, int trainSize, BoWor
 }
 
 
+// ~~~~~~~~~~~~~~~~~~~~~~~ MAKE HASH TO SPARS ~~~~~~~~~~~~~~~~~~~~
+
+void hash_to_spars(hashTable* hashT, BoWords* bow){
+    int i = 0;
+    int row = 0;
+    int col = 0;
+    while(i < hashT->tableSize){
+        // printf("i: %d\n", i);
+        bucket* tempBuc = hashT->myTable[i];
+        while(tempBuc != NULL){
+            // printf("buc\n");
+            record* tempRec = tempBuc->rec;
+            while(tempRec != NULL){
+                // printf("rec\n");
+                bow_to_spars(bow, &tempRec->spec->mySpars, &tempRec->spec->spars_size, &row, &col, tempRec->spec);
+                tempRec = tempRec->next;
+            }
+            tempBuc = tempBuc->next;
+        }
+        i++;
+    }
+}
+
 // ~~~~~~~~~~~~~~~~~~~~~~~ ALL WITH ALL FUNCTS ~~~~~~~~~~~~~~~~~~~
+
+
+
+
+
 
 // void all_with_all(hashTable* hashT, logM* model, BoWords* bow){
 //              // Signal handling
@@ -1965,7 +1878,7 @@ void train_per_clique(myMatches* clique, mySpec** trainSet, int trainSize, BoWor
 //     FILE* fpout = NULL;
 //     fpout = fopen(target, "w");
 //     fclose(fpout);
-    
+
 //     myThreads* threads = myThreads_Init(hashT->tableSize);
 
 //     int cur_i = 0;
@@ -2005,7 +1918,7 @@ void train_per_clique(myMatches* clique, mySpec** trainSet, int trainSize, BoWor
 //     while(tempBuc != NULL){
 //         if(received_signal == 1)
 //             break;
-        
+
 //         record* tempRec = tempBuc->rec;
 
 //         while(tempRec != NULL){

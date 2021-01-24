@@ -190,6 +190,7 @@ void* main_thread_func(void* myInfo){
             pthread_cond_wait(&sched->start_con, &sched->queue_mtx);
         }
 
+        sched->threads_waiting++;
         qNode* f = myQueue_pop(sched->queue);
         pthread_mutex_unlock(&sched->queue_mtx);
         if(f == NULL){
@@ -197,7 +198,6 @@ void* main_thread_func(void* myInfo){
             // printf("no jobs for me, exiting ..\n");
         }
         else{
-            sched->threads_waiting++;
             if(strcmp(f->job->mode, "train") == 0){
                 t_Info_train* info_to_train = (t_Info_train*) f->job->info;
                 f->job->to_do(info_to_train->model, info_to_train->info_list);
@@ -208,10 +208,10 @@ void* main_thread_func(void* myInfo){
                 f->job->to_do(info_to_test->model, info_to_test->info_list);
                 // printf("vghke apo to job\n");
             }
-            
+
             qNode_Destroy(f);
-            sched->threads_waiting--;
         }
+        sched->threads_waiting--;
     }
 
         // return
