@@ -17,7 +17,7 @@
 
 #define PATH "./Outputs"
 
-#define MAX_TRAIN_SIZE_PER_THREAD 1000
+#define MAX_TRAIN_SIZE_PER_THREAD 500
 #define MAX_TRAIN_SIZE_PER_THREAD_TEST 100
 
 int received_signal = 0;
