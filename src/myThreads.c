@@ -114,10 +114,10 @@ void destroy_Info_test(t_Info_test* info){
 
 //////////////////////// RETRAIN
 
-t_Info_retrain* make_info_retrain(void* model, void* myrec, void* mybuc, info_ar* myar){
+t_Info_retrain* make_info_retrain(void* model, void* myrec, void* mybuc, void* list){
 	t_Info_retrain* newInfo = malloc(sizeof(t_Info_retrain));
 	newInfo->model = model;
-	newInfo->myar = myar;
+	newInfo->list = list;
 	newInfo->myrec = myrec;
 	newInfo->mybuc = mybuc;
 	return newInfo;

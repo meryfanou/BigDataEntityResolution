@@ -1118,3 +1118,85 @@ void dataN_destroy(dataI* info, dataN* node){
 
     info->all_pairs--;
 }
+
+
+////////////////////////////////////
+////////////////////////////////////
+
+threads_list* t_list_create(int max, jobSch* Scheduler, logM* model){
+    threads_list* newlist = malloc(sizeof(threads_list));
+
+    pthread_mutex_init(&newlist->lock_it, NULL);
+
+    newlist->entries = 0;
+    newlist->head = NULL;
+    newlist->tail = NULL;
+    newlist->point = 0;
+    newlist->max = max;
+    newlist->Scheduler = Scheduler;
+    newlist->model = model;
+
+    return newlist;
+}
+
+void t_list_destroy(threads_list* list){
+    threads_node* temp = list->head;
+    while(temp != NULL){
+        list->head = temp->next;
+        t_node_destroy(temp);
+        temp = list->head;
+    }
+    pthread_mutex_destroy(&list->lock_it);
+    free(list);
+}
+
+void t_list_push(threads_list* list, mySpec* spec1, mySpec* spec2, float** spars, int spars_size, int tag, int d){
+    pthread_mutex_lock(&list->lock_it);
+    if(list->head == NULL){
+        list->head = t_node_create(d);
+        list->tail = list->head;
+        list->entries++;
+    }
+    else{
+        if(list->tail->node->all_pairs >= list->max){
+            t_Info_train* thread_info = make_info_train(list->model, list->tail->node);
+
+            /// sumbbit job
+            jobSch_subbmit(list->Scheduler, &logistic_fit_dataList, thread_info, "train");
+            jobSch_Start(list->Scheduler);
+
+            list->tail->next = t_node_create(d);
+            list->tail = list->tail->next;
+            list->entries++;
+        }
+    }
+    
+    dataI_push(list->tail->node, spec1, spec2, spars, spars_size, tag);
+    pthread_mutex_unlock(&list->lock_it);
+}
+
+void t_list_subbmit_all(threads_list* list){
+    threads_node* temp = list->head;
+    while(temp != NULL){
+        //make info_train
+        t_Info_train* thread_info = make_info_train(list->model, temp->node);
+
+            /// sumbbit job
+        jobSch_subbmit(list->Scheduler, &logistic_fit_dataList, thread_info, "train");
+        jobSch_Start(list->Scheduler);
+    }
+    jobSch_waitAll(list->Scheduler);
+}
+
+threads_node* t_node_create(int dimensions){
+    threads_node* newnode = malloc(sizeof(threads_node));
+
+    newnode->next = NULL;
+    newnode->node = dataI_create(dimensions);
+
+    return newnode;
+}
+
+void t_node_destroy(threads_node* node){
+    dataI_destroy(node->node);
+}

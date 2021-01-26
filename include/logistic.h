@@ -5,6 +5,7 @@
 
 #include "../include/myMatches.h"
 #include "../include/mySpec.h"
+#include "../include/jobScheduler.h"
 #include <pthread.h>
 
 #define LEARING_RATE 0.6
@@ -22,7 +23,8 @@ typedef struct logistic_model logM;
 typedef struct logistic_weights weights;
 typedef struct logistic_data_node dataN;
 typedef struct logistic_data_info dataI;
-typedef struct info_ar info_ar;
+typedef struct info_threads_Node threads_node;
+typedef struct info_threads_List threads_list;
 
 struct logistic_model{
     int size_totrain;
@@ -57,7 +59,7 @@ struct logistic_data_info{
     int all_pairs;
     int corrects;
     int dimensions;
-
+    
     float score;
 
     dataN* head;
@@ -79,10 +81,21 @@ struct logistic_data_node{
     int predict;
 };
 
-struct info_ar{
-    dataI** info_array;
-    int info_size;
+
+struct info_threads_List{
+    threads_node* head;
+    int entries;
+    threads_node* tail;
+    int point;
     pthread_mutex_t lock_it;
+    int max;
+    jobSch* Scheduler;
+    logM* model;
+};
+
+struct info_threads_Node{
+    dataI* node;
+    threads_node* next;
 };
 
 // ~~~~~~~~~~~~~~
@@ -157,5 +170,18 @@ dataN* dataN_create();
 void dataN_destroy(dataI*, dataN*);
 
 // ~~~~~~~~~~~~~~
+
+threads_list* t_list_create(int, jobSch*, logM* model);
+void t_list_destroy(threads_list*);
+
+void t_list_push(threads_list*, mySpec*, mySpec*, float**, int, int, int d);
+
+void t_list_subbmit_all(threads_list* list);
+void t_list_subbmit_tail(threads_list* list);
+
+threads_node* t_node_create();
+void t_node_destroy(threads_node*);
+
+
 
 #endif

@@ -1,8 +1,8 @@
 #ifndef THREADS_H
 #define THREADS_H
-#include "myHash.h"
-#include "logistic.h"
-#include "boWords.h"
+// #include "myHash.h"
+// #include "logistic.h"
+// #include "boWords.h"
 #include <pthread.h>
 // #include "jobScheduler.h"
 
@@ -40,7 +40,7 @@ struct t_Info_retrain{
 	void* model;
 	void* myrec;
 	void* mybuc;
-	info_ar* myar;
+	void* list;
 };
 
 //functs
@@ -58,7 +58,7 @@ void myThreads_MASSACRE(myThreads*);
 t_Info* make_info(void*);
 t_Info_train* make_info_train(void*, void*);
 t_Info_test* make_info_test(void*, void*);
-t_Info_retrain* make_info_retrain(void*, void*, void*, info_ar*);
+t_Info_retrain* make_info_retrain(void*, void*, void*, void*);
 
 void destroy_Info(t_Info*);
 void destroy_Info_train(t_Info_train*);

@@ -73,9 +73,9 @@ void make_it_spars_list_plus_train(logM*, mySpec**, int, BoWords*, dataI*, int);
 void make_it_spars_list_threads_plus_train(hashTable*, logM*, mySpec**, int, BoWords*, int, jobSch*);
 float make_it_spars_list_threads(mySpec**, int, logM*, BoWords*, int, jobSch*);
 
-void retrain_with_all(hashTable*, info_ar*, logM*, jobSch*);
-void get_all_bucket_pairs(logM*, record*, bucket*, info_ar*);
-void check_info_array(info_ar*, mySpec*, mySpec*, float**);
+void retrain_with_all(hashTable*, threads_list*, logM*, jobSch*);
+void get_all_bucket_pairs(logM*, record*, bucket*, threads_list*);
+void check_info_list(threads_list*, mySpec*, mySpec*, float**);
 
 
 int isPair(mySpec*, mySpec*);
