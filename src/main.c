@@ -36,7 +36,7 @@
 #define MOST_SIGN 1000
 
 // MY MAX THREADS ARE 62.439 ... WE USE 10.000 TO BE SURE
-#define T_NUM 10
+#define T_NUM 1000
 
  /*     
   !!  RUN COMMAND:

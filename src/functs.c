@@ -1806,9 +1806,13 @@ void get_all_bucket_pairs(logM* model, record* myrec, bucket* mybuc, threads_lis
         if(tempRec->next != NULL){
             tempRec = tempRec->next;
         }
-        else if(tempBuck->next != NULL){
-            tempBuck = tempBuck->next;
-            tempRec = tempBuck->rec;
+        else if(tempBuck!= NULL){
+            if(tempBuck->next != NULL){
+                tempBuck = tempBuck->next;
+                tempRec = tempBuck->rec;
+            }
+            else
+                tempRec = NULL;
         }
         else
             tempRec = NULL;
@@ -1839,12 +1843,15 @@ void check_info_list(threads_list* list, mySpec* spec1, mySpec* spec2, float** s
             }
             node = node->next;
         }
+        if(found == 1)
+            break;
 
         temp = temp->next;
         i++;
     }
     
     if(found == 0){
+        // printf("kanw push sth lista\n");
         int dimensions = list->head->node->dimensions;
         t_list_push(list, spec1, spec2, spars, spec1->spars_size+spec2->spars_size, -1, dimensions);
     }
