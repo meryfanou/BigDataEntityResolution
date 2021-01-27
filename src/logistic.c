@@ -1170,7 +1170,7 @@ void t_list_push(threads_list* list, mySpec* spec1, mySpec* spec2, float** spars
             list->entries++;
         }
     }
-    
+
     dataI_push(list->tail->node, spec1, spec2, spars, spars_size, tag);
     pthread_mutex_unlock(&list->lock_it);
 }

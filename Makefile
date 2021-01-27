@@ -40,7 +40,7 @@ run:	bin/main
         endif
 
 valgrind: main
-		  valgrind --tool=memcheck --leak-check=full ./bin/main -o matches_log_DEF -n negs_matches_log_DEF
+		  valgrind --tool=memcheck --max-threads=1000 --leak-check=full ./bin/main -o matches_log_DEF -n negs_matches_log_DEF
 
 #-------------------------------------------------------------------------#
 

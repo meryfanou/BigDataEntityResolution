@@ -1735,11 +1735,16 @@ void retrain_with_all(hashTable* hashT, threads_list* list, logM* model, jobSch*
         while(tempB != NULL){
             record* tempR = tempB->rec;
             while(tempR != NULL){
+                if(tempR->spec->matches->specsCount <= 1 && tempR->spec->matches->negs->entries == 0){
+                    tempR = tempR->next;
+                    continue;
+                }
+
                 t_Info_retrain* thread_info = make_info_retrain(model, tempR, tempB, list);
                 jobSch_subbmit(Scheduler, &get_all_bucket_pairs, thread_info, "retrain");
                 jobSch_Start(Scheduler);
 
-                int i_2 = i;
+                int i_2 = i+1;
                 while(i_2 < hashT->tableSize){
                     // printf("vazw jobs\n");
                     t_Info_retrain* thread_info = make_info_retrain(model, tempR, hashT->myTable[i_2], list);
@@ -1763,43 +1768,49 @@ void retrain_with_all(hashTable* hashT, threads_list* list, logM* model, jobSch*
 
 
 void get_all_bucket_pairs(logM* model, record* myrec, bucket* mybuc, threads_list* list){
-    
+
     record* tempRec = NULL;
     bucket* tempBuck = NULL;
     if(myrec->next != NULL){
         tempRec = myrec->next;
         tempBuck = mybuc;
     }
-    else if(mybuc->next != NULL){
-        tempBuck = mybuc->next;
-        tempRec = tempBuck->rec;
+    else if(mybuc != NULL){
+        if(mybuc->next != NULL){
+            tempBuck = mybuc->next;
+            tempRec = tempBuck->rec;
+        }
     }
 
     if(tempRec == NULL)
         return;
-    
+
     int dimensions = list->head->node->dimensions;
     while(tempRec != NULL){
-        dataI* check_pr = dataI_create(dimensions);
-        float** temp = spars_concat_col(myrec->spec->mySpars, tempRec->spec->mySpars, myrec->spec->spars_size, tempRec->spec->spars_size, dimensions);
-        dataI_push(check_pr, myrec->spec, tempRec->spec, temp, myrec->spec->spars_size + tempRec->spec->spars_size, -1);
+        if(tempRec->spec->matches->specsCount > 1 || tempRec->spec->matches->negs->entries != 0){
 
-        if(temp != NULL){
-            
-            logistic_predict_proba_dataList(model, check_pr);
+            dataI* check_pr = dataI_create(dimensions);
+            float** temp = spars_concat_col(myrec->spec->mySpars, tempRec->spec->mySpars, myrec->spec->spars_size, tempRec->spec->spars_size, dimensions);
+            dataI_push(check_pr, myrec->spec, tempRec->spec, temp, myrec->spec->spars_size + tempRec->spec->spars_size, -1);
 
-            // printf("proba: %f\n",check_pr->head->proba );            
-            int tag = -1;
-            if(check_pr->head->proba >= 0.9 && check_pr->head->proba != 1){
-                tag = 1;
+            if(temp != NULL){
+
+                logistic_predict_proba_dataList(model, check_pr);
+
+                // printf("proba: %f\n",check_pr->head->proba );            
+                int tag = -1;
+                if(check_pr->head->proba >= 0.85 && check_pr->head->proba < 1.0){
+                    tag = 1;
+                }
+                else if( check_pr->head->proba <= 0.15 && check_pr->head->proba > 0.0){
+                    tag = 0;
+                }
+                if(tag != -1){
+                    float** temp2 = spars_concat_col(myrec->spec->mySpars, tempRec->spec->mySpars, myrec->spec->spars_size, tempRec->spec->spars_size, dimensions);
+                    check_info_list(list, myrec->spec, tempRec->spec, temp2);
+                }
             }
-            else if( check_pr->head->proba <= 0.1 && check_pr->head->proba != 0){
-                tag = 0;
-            }
-            if(tag != -1){
-                float** temp2 = spars_concat_col(myrec->spec->mySpars, tempRec->spec->mySpars, myrec->spec->spars_size, tempRec->spec->spars_size, dimensions);
-                check_info_list(list, myrec->spec, tempRec->spec, temp2);
-            }
+            dataI_destroy(check_pr);
         }
 
             // get next rec
@@ -1817,7 +1828,6 @@ void get_all_bucket_pairs(logM* model, record* myrec, bucket* mybuc, threads_lis
         else
             tempRec = NULL;
 
-        dataI_destroy(check_pr);
     }
 }
 
@@ -1849,7 +1859,7 @@ void check_info_list(threads_list* list, mySpec* spec1, mySpec* spec2, float** s
         temp = temp->next;
         i++;
     }
-    
+
     if(found == 0){
         // printf("kanw push sth lista\n");
         int dimensions = list->head->node->dimensions;
@@ -1862,7 +1872,7 @@ void check_info_list(threads_list* list, mySpec* spec1, mySpec* spec2, float** s
 // ~~~~~~~~~~~~~~~~~~~~~~~~ TRAIN_PER_CLIQUE ~~~~~~~~~~~~~~~~~~~~~
 
 logM** make_models_array(BoWords* bow, mySpec** set, matchesInfo* matches, int set_size){
-    
+
     // make array
     logM** modelsT = malloc(matches->entries*sizeof(logM*));
 
