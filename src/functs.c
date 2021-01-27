@@ -1744,12 +1744,48 @@ void retrain_with_all(hashTable* hashT, threads_list* list, logM* model, jobSch*
                 jobSch_subbmit(Scheduler, &get_all_bucket_pairs, thread_info, "retrain");
                 jobSch_Start(Scheduler);
 
-                int i_2 = i+1;
-                while(i_2 < hashT->tableSize){
-                    // printf("vazw jobs\n");
-                    t_Info_retrain* thread_info = make_info_retrain(model, tempR, hashT->myTable[i_2], list);
+                bucket* tempB_2 = tempB;
+                bucket* keep = tempB_2;
+                int count = 0;
+                while(tempB_2 != NULL){
+                    if(count == 4){
+                        t_Info_retrain* thread_info = make_info_retrain(model, tempR, tempB_2, list);
+                        jobSch_subbmit(Scheduler, &get_all_bucket_pairs, thread_info, "retrain");
+                        jobSch_Start(Scheduler);
+                        count = 0;
+                        keep = tempB_2;
+                    }
+                    tempB_2 = tempB_2->next;
+                    count++;
+                }
+                
+                if(count != 4){
+                    t_Info_retrain* thread_info = make_info_retrain(model, tempR, keep, list);
                     jobSch_subbmit(Scheduler, &get_all_bucket_pairs, thread_info, "retrain");
                     jobSch_Start(Scheduler);
+                }
+
+                int i_2 = i+1;
+                while(i_2 < hashT->tableSize){
+                    tempB_2 = hashT->myTable[i_2];// printf("vazw jobs\n");
+                    count = 0;
+                    keep = tempB_2;
+                    while(tempB_2 != NULL){
+                        if(count == 4){
+                            t_Info_retrain* thread_info = make_info_retrain(model, tempR, tempB_2, list);
+                            jobSch_subbmit(Scheduler, &get_all_bucket_pairs, thread_info, "retrain");
+                            jobSch_Start(Scheduler);
+                            count = 0;
+                            keep = tempB_2;
+                        }
+                        tempB_2 = tempB_2->next;
+                        count++;
+                    }
+                    if(count != 4){
+                        t_Info_retrain* thread_info = make_info_retrain(model, tempR, keep, list);
+                        jobSch_subbmit(Scheduler, &get_all_bucket_pairs, thread_info, "retrain");
+                        jobSch_Start(Scheduler);
+                    }
 
                     i_2++;
                 }
@@ -1759,7 +1795,7 @@ void retrain_with_all(hashTable* hashT, threads_list* list, logM* model, jobSch*
         }
         i++;
     }
-
+    printf("kanw wait ta threads\n");
     jobSch_waitAll(Scheduler);
     printf("~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~\n");
     printf("ME TROLLAREI O KWDIKAS MOY\n");
@@ -1784,6 +1820,8 @@ void get_all_bucket_pairs(logM* model, record* myrec, bucket* mybuc, threads_lis
 
     if(tempRec == NULL)
         return;
+
+    int count = 0;
 
     int dimensions = list->head->node->dimensions;
     while(tempRec != NULL){
@@ -1813,6 +1851,9 @@ void get_all_bucket_pairs(logM* model, record* myrec, bucket* mybuc, threads_lis
             dataI_destroy(check_pr);
         }
 
+        if(count == 4)
+            break;
+
             // get next rec
         if(tempRec->next != NULL){
             tempRec = tempRec->next;
@@ -1821,6 +1862,7 @@ void get_all_bucket_pairs(logM* model, record* myrec, bucket* mybuc, threads_lis
             if(tempBuck->next != NULL){
                 tempBuck = tempBuck->next;
                 tempRec = tempBuck->rec;
+                count++;
             }
             else
                 tempRec = NULL;
