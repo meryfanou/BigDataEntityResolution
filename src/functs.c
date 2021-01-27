@@ -1787,31 +1787,30 @@ void get_all_bucket_pairs(logM* model, record* myrec, bucket* mybuc, threads_lis
 
     int dimensions = list->head->node->dimensions;
     while(tempRec != NULL){
-        if(tempRec->spec->matches->specsCount <= 1 && tempRec->spec->matches->negs->entries == 0){
-            tempRec = tempRec->next;
-            continue;
-        }
+        if(tempRec->spec->matches->specsCount > 1 || tempRec->spec->matches->negs->entries != 0){
 
-        dataI* check_pr = dataI_create(dimensions);
-        float** temp = spars_concat_col(myrec->spec->mySpars, tempRec->spec->mySpars, myrec->spec->spars_size, tempRec->spec->spars_size, dimensions);
-        dataI_push(check_pr, myrec->spec, tempRec->spec, temp, myrec->spec->spars_size + tempRec->spec->spars_size, -1);
+            dataI* check_pr = dataI_create(dimensions);
+            float** temp = spars_concat_col(myrec->spec->mySpars, tempRec->spec->mySpars, myrec->spec->spars_size, tempRec->spec->spars_size, dimensions);
+            dataI_push(check_pr, myrec->spec, tempRec->spec, temp, myrec->spec->spars_size + tempRec->spec->spars_size, -1);
 
-        if(temp != NULL){
+            if(temp != NULL){
 
-            logistic_predict_proba_dataList(model, check_pr);
+                logistic_predict_proba_dataList(model, check_pr);
 
-            // printf("proba: %f\n",check_pr->head->proba );            
-            int tag = -1;
-            if(check_pr->head->proba >= 0.85 && check_pr->head->proba < 1.0){
-                tag = 1;
+                // printf("proba: %f\n",check_pr->head->proba );            
+                int tag = -1;
+                if(check_pr->head->proba >= 0.85 && check_pr->head->proba < 1.0){
+                    tag = 1;
+                }
+                else if( check_pr->head->proba <= 0.15 && check_pr->head->proba > 0.0){
+                    tag = 0;
+                }
+                if(tag != -1){
+                    float** temp2 = spars_concat_col(myrec->spec->mySpars, tempRec->spec->mySpars, myrec->spec->spars_size, tempRec->spec->spars_size, dimensions);
+                    check_info_list(list, myrec->spec, tempRec->spec, temp2);
+                }
             }
-            else if( check_pr->head->proba <= 0.15 && check_pr->head->proba > 0.0){
-                tag = 0;
-            }
-            if(tag != -1){
-                float** temp2 = spars_concat_col(myrec->spec->mySpars, tempRec->spec->mySpars, myrec->spec->spars_size, tempRec->spec->spars_size, dimensions);
-                check_info_list(list, myrec->spec, tempRec->spec, temp2);
-            }
+            dataI_destroy(check_pr);
         }
 
             // get next rec
@@ -1829,7 +1828,6 @@ void get_all_bucket_pairs(logM* model, record* myrec, bucket* mybuc, threads_lis
         else
             tempRec = NULL;
 
-        dataI_destroy(check_pr);
     }
 }
 
