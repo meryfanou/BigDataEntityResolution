@@ -1672,7 +1672,9 @@ void make_it_spars_list_threads_plus_train(hashTable* hashT, logM* model, mySpec
 
     threads_list* list = t_list_create(MAX_TRAIN_SIZE_PER_THREAD, Scheduler, model);
 
-    list->pairs_limit = set_size*LIMIT_FACTOR; printf("PAIR LIMIT: %d\n",list->pairs_limit);
+    // list->pairs_limit = set_size*LIMIT_FACTOR;
+    list->pairs_limit = 10000;
+    // printf("PAIR LIMIT: %d\n",list->pairs_limit);
 
     // FIND PAIRS AND CONCAT THEIR SPARS
     int i = 0;
@@ -1693,7 +1695,7 @@ void make_it_spars_list_threads_plus_train(hashTable* hashT, logM* model, mySpec
                 float** temp = spars_concat_col(set[i]->mySpars, set[z]->mySpars, set[i]->spars_size, set[z]->spars_size, bow->entries);
                 int temp_size = set[z]->spars_size + set[i]->spars_size;
                 t_list_push(list, set[i], set[z], temp, temp_size, tag, 2*bow->entries);
-                (list->pairs_limit)--;
+                // (list->pairs_limit)--;
             }
             z++;
         }
@@ -1710,16 +1712,17 @@ void make_it_spars_list_threads_plus_train(hashTable* hashT, logM* model, mySpec
 
     jobSch_waitAll(Scheduler);
 
-    printf("egine to prwto train\n");
+    // printf("egine to prwto train\n");
 
     list->point = list->entries;
 
     //     // RE-TRAIN
     int count_retrain = 0;
     while(count_retrain < 1){
+        list->pairs_limit = 10000;
         retrain_with_all(hashT, list, model, Scheduler);
         list->point = list->entries;   
-        printf("teleiwse to ola me ola\n");
+        // printf("teleiwse to ola me ola\n");
         t_list_subbmit_all(list);
         count_retrain++;
     }

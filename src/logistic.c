@@ -1178,13 +1178,17 @@ void t_list_push(threads_list* list, mySpec* spec1, mySpec* spec2, float** spars
 
 void t_list_subbmit_all(threads_list* list){
     threads_node* temp = list->head;
+    int count = 0;
     while(temp != NULL){
+        if(count > list->point)
+            break;
         //make info_train
         t_Info_train* thread_info = make_info_train(list->model, temp->node);
 
             /// sumbbit job
         jobSch_subbmit(list->Scheduler, &logistic_fit_dataList, thread_info, "train");
         jobSch_Start(list->Scheduler);
+        count++;
     }
     jobSch_waitAll(list->Scheduler);
 }
