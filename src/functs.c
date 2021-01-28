@@ -1918,6 +1918,13 @@ void check_info_list(threads_list* list, mySpec* spec1, mySpec* spec2, float** s
         int dimensions = list->head->node->dimensions;
         t_list_push(list, spec1, spec2, spars, spec1->spars_size+spec2->spars_size, -1, dimensions);
     }
+    else{
+        int fr = 0;
+        while(fr < spec1->spars_size+spec2->spars_size){
+            free(spars[fr++]);
+        }
+        free(spars);
+    }
 }
 
 

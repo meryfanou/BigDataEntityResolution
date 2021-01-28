@@ -1205,4 +1205,5 @@ threads_node* t_node_create(int dimensions){
 
 void t_node_destroy(threads_node* node){
     dataI_destroy(node->node);
+    free(node);
 }
