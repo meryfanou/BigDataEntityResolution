@@ -35,7 +35,6 @@
 
 #define MOST_SIGN 1000
 
-// MY MAX THREADS ARE 62.439 ... WE USE 10.000 TO BE SURE
 #define T_NUM 700
 
  /*     
@@ -65,7 +64,6 @@ int main(int argc, char** argv){
     char*   path_W = strdup(DATASET_W);
 
     char    choose_model = 's';     // By default, use model with spars implementation
-    int     extract_awa = 0;       // By default, do not extract all with all pairs
     
     char* outputFileMatches = NULL;
     char* outputFileNegs = NULL;
@@ -110,11 +108,6 @@ int main(int argc, char** argv){
             else if(!strcmp(argv[i], "-model") || !strcmp(argv[i], "-m")){
                 // 's' for spars, 'v' for vector
                 choose_model = argv[i+1][0];
-            }
-
-            else if(!strcmp(argv[i], "-extract") || !strcmp(argv[i], "-e")){
-                if(!strcmp(argv[i], "all_with_all"))
-                    extract_awa = 1;
             }
 
             i++;
@@ -213,21 +206,20 @@ int main(int argc, char** argv){
 
     // ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~ SHUFFLE CSV
 
-    char shuffled[] = "../sigmod_large_labelled_dataset_shuffled.csv";
-    // char* shuffled = shuffleCSV(path_W);
-    // if(shuffled == NULL){
-    //     ppa_add_line_left(pp, "Cleaning Memory");
-    //     ppa_add_line_right(pp, "DONE", GRN);
+    char* shuffled = shuffleCSV(path_W);
+    if(shuffled == NULL){
+        ppa_add_line_left(pp, "Cleaning Memory");
+        ppa_add_line_right(pp, "DONE", GRN);
 
-    //     free(shuffled);
-    //     int* null = NULL;
-    //     FREE_MEM(path_X,path_W,outputFileMatches,outputFileNegs,allMatches,hashT,null,null,null,null,null,Scheduler);
+        free(shuffled);
+        int* null = NULL;
+        FREE_MEM(path_X,path_W,outputFileMatches,outputFileNegs,allMatches,hashT,null,null,null,null,null,Scheduler);
         
-    //     ppa_print_end(pp, "Exiting at shuffle");
-    //     ppa_destroy(pp);
+        ppa_print_end(pp, "Exiting at shuffle");
+        ppa_destroy(pp);
 
-    //     exit(-5);
-    // }
+        exit(-5);
+    }
 
 
     // ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~ READ CSV
@@ -238,24 +230,24 @@ int main(int argc, char** argv){
     long int offset = 0;
     check = readCSV(shuffled, hashT, allMatches, TRAIN_PERC, &offset);
 
-    // if(remove(shuffled) == -1){
-    //     perror("remove");
-    //     ppa_add_line_right(pp, "Error", RED);
+    if(remove(shuffled) == -1){
+        perror("remove");
+        ppa_add_line_right(pp, "Error", RED);
 
-    //     ppa_add_line_left(pp, "Cleaning Memory ..");
+        ppa_add_line_left(pp, "Cleaning Memory ..");
 
-    //     free(shuffled);
-    //     int* null = NULL;
-    //     FREE_MEM(path_X,path_W,outputFileMatches,outputFileNegs,allMatches,hashT,null,null,null,null,null,Scheduler);
-    //     ppa_add_line_right(pp, "DONE", GRN);
+        free(shuffled);
+        int* null = NULL;
+        FREE_MEM(path_X,path_W,outputFileMatches,outputFileNegs,allMatches,hashT,null,null,null,null,null,Scheduler);
+        ppa_add_line_right(pp, "DONE", GRN);
 
-    //     ppa_print_end(pp, "Exiting ~ cant read csv");
-    //     ppa_destroy(pp);
+        ppa_print_end(pp, "Exiting ~ cant read csv");
+        ppa_destroy(pp);
 
-    //     exit(-5);
-    // }
+        exit(-5);
+    }
 
-    // free(shuffled);
+    free(shuffled);
     int train_lines = check;
     ppa_add_line_right(pp, "DONE", GRN);
 
@@ -535,16 +527,6 @@ int main(int argc, char** argv){
     ppa_add_line_left(pp, "Extract Model ..");
     logistic_extract(model);
     ppa_add_line_right(pp, "DONE", GRN);
-
-
-    // ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~ ALL_WITH_ALL_METHOD !!!!!!! VERY SLOW !!!!
-
-    // If the user asked to extract all with all pairs
-    if(extract_awa){
-        ppa_add_line_left(pp, "All_with_all ..");
-        // all_with_all(hashT, model, bow);
-        ppa_add_line_right(pp, "DONE", GRN);
-    }
 
 
     // ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~ PRINT STATS
