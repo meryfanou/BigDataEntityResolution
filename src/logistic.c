@@ -1135,6 +1135,7 @@ threads_list* t_list_create(int max, jobSch* Scheduler, logM* model){
     newlist->max = max;
     newlist->Scheduler = Scheduler;
     newlist->model = model;
+    newlist->pairs_limit = 0;
 
     return newlist;
 }

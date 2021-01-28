@@ -16,6 +16,7 @@
 #include <errno.h>
 
 #include "../include/jobScheduler.h"
+#include "../include/logistic.h"
 
 jobSch* jobSch_Init(int tnum){
     jobSch* newSche = malloc(sizeof(jobSch));
@@ -210,7 +211,10 @@ void* main_thread_func(void* myInfo){
             
             else if(strcmp(f->job->mode, "retrain") == 0){
                 t_Info_retrain* info_retrain = (t_Info_retrain*) f->job->info;
-                f->job->to_do(info_retrain->model, info_retrain->myrec, info_retrain->mybuc, info_retrain->list);
+                threads_list* list = (threads_list*) info_retrain->list;
+                if(list->pairs_limit > 0){
+                    f->job->to_do(info_retrain->model, info_retrain->myrec, info_retrain->mybuc, info_retrain->list);
+                }
             }    
         }
 

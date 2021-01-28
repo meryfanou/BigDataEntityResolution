@@ -20,6 +20,8 @@
 #define MAX_TRAIN_SIZE_PER_THREAD 500
 #define MAX_TRAIN_SIZE_PER_THREAD_TEST 100
 
+#define LIMIT_FACTOR 380
+
 int received_signal = 0;
 
 pthread_mutex_t mtx_print = PTHREAD_MUTEX_INITIALIZER;
@@ -1669,7 +1671,9 @@ void make_it_spars_list_plus_train(logM* model, mySpec** set, int set_size, BoWo
 void make_it_spars_list_threads_plus_train(hashTable* hashT, logM* model, mySpec** set, int set_size, BoWords* bow, int use_tag, jobSch* Scheduler){
 
     threads_list* list = t_list_create(MAX_TRAIN_SIZE_PER_THREAD, Scheduler, model);
-    
+
+    list->pairs_limit = set_size*LIMIT_FACTOR; printf("PAIR LIMIT: %d\n",list->pairs_limit);
+
     // FIND PAIRS AND CONCAT THEIR SPARS
     int i = 0;
     while(i<set_size){
@@ -1689,7 +1693,7 @@ void make_it_spars_list_threads_plus_train(hashTable* hashT, logM* model, mySpec
                 float** temp = spars_concat_col(set[i]->mySpars, set[z]->mySpars, set[i]->spars_size, set[z]->spars_size, bow->entries);
                 int temp_size = set[z]->spars_size + set[i]->spars_size;
                 t_list_push(list, set[i], set[z], temp, temp_size, tag, 2*bow->entries);
-                
+                (list->pairs_limit)--;
             }
             z++;
         }
@@ -1830,6 +1834,7 @@ void get_all_bucket_pairs(logM* model, record* myrec, bucket* mybuc, threads_lis
             dataI* check_pr = dataI_create(dimensions);
             float** temp = spars_concat_col(myrec->spec->mySpars, tempRec->spec->mySpars, myrec->spec->spars_size, tempRec->spec->spars_size, dimensions);
             dataI_push(check_pr, myrec->spec, tempRec->spec, temp, myrec->spec->spars_size + tempRec->spec->spars_size, -1);
+            (list->pairs_limit)--;
 
             if(temp != NULL){
 
@@ -1851,7 +1856,7 @@ void get_all_bucket_pairs(logM* model, record* myrec, bucket* mybuc, threads_lis
             dataI_destroy(check_pr);
         }
 
-        if(count == 4)
+        if(count == 4 || list->pairs_limit <= 0)
             break;
 
             // get next rec
@@ -1904,6 +1909,10 @@ void check_info_list(threads_list* list, mySpec* spec1, mySpec* spec2, float** s
 
     if(found == 0){
         // printf("kanw push sth lista\n");
+        int all = 0;
+        for(int i=0; i<list->entries; i++)
+            all += list->head->node->all_pairs;
+        printf("%ld:\t%d %d\n",pthread_self(),all, list->pairs_limit);
         int dimensions = list->head->node->dimensions;
         t_list_push(list, spec1, spec2, spars, spec1->spars_size+spec2->spars_size, -1, dimensions);
     }

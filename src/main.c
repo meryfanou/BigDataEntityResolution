@@ -25,7 +25,7 @@
 #include "../include/jobScheduler.h"
 
 #define DATASET_X "../camera_specs/2013_camera_specs/"
-#define DATASET_W "../sigmod_medium_labelled_dataset.csv"
+#define DATASET_W "../sigmod_large_labelled_dataset.csv"
 
 #define HASH_SIZE 500
 #define BUC_SIZE 100
@@ -36,7 +36,7 @@
 #define MOST_SIGN 1000
 
 // MY MAX THREADS ARE 62.439 ... WE USE 10.000 TO BE SURE
-#define T_NUM 500
+#define T_NUM 700
 
  /*     
   !!  RUN COMMAND:
@@ -213,6 +213,7 @@ int main(int argc, char** argv){
 
     // ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~ SHUFFLE CSV
 
+    // char shuffled[] = "../sigmod_large_labelled_dataset_shuffled.csv";
     char* shuffled = shuffleCSV(path_W);
     if(shuffled == NULL){
         ppa_add_line_left(pp, "Cleaning Memory");
@@ -440,8 +441,8 @@ int main(int argc, char** argv){
 
     // ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~ CREATE & TRAIN LOGISTIC MODEL
 
+    printf("%d\n",trainSize);
     ppa_add_line_left(pp, "Training Logistic Model ..");
-    
             // !! Uncomment to choose method for training
 
     logM* model = NULL;

@@ -91,6 +91,7 @@ struct info_threads_List{
     int max;
     jobSch* Scheduler;
     logM* model;
+    int pairs_limit;
 };
 
 struct info_threads_Node{
