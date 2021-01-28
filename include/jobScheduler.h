@@ -18,6 +18,7 @@ struct jobScheduler{
 
     pthread_cond_t start_con;    
     pthread_mutex_t queue_mtx;
+    pthread_mutex_t lock_wait;
 
     int die;
 };

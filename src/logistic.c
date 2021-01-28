@@ -1189,6 +1189,7 @@ void t_list_subbmit_all(threads_list* list){
         jobSch_subbmit(list->Scheduler, &logistic_fit_dataList, thread_info, "train");
         jobSch_Start(list->Scheduler);
         count++;
+        temp = temp->next;
     }
     jobSch_waitAll(list->Scheduler);
 }

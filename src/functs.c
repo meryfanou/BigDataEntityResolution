@@ -1721,15 +1721,14 @@ void make_it_spars_list_threads_plus_train(hashTable* hashT, logM* model, mySpec
     while(count_retrain < 1){
         list->pairs_limit = 10000;
         retrain_with_all(hashT, list, model, Scheduler);
-        list->point = list->entries;   
-        // printf("teleiwse to ola me ola\n");
+        list->point = list->entries;
+        printf("teleiwse to ola me ola\n");
         t_list_subbmit_all(list);
         count_retrain++;
     }
 
 
     t_list_destroy(list);
-
 }
 
 
@@ -1803,6 +1802,7 @@ void retrain_with_all(hashTable* hashT, threads_list* list, logM* model, jobSch*
         i++;
     }
     printf("kanw wait ta threads\n");
+    jobSch_Start(Scheduler);
     jobSch_waitAll(Scheduler);
     printf("~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~\n");
     printf("ME TROLLAREI O KWDIKAS MOY\n");
@@ -1811,6 +1811,9 @@ void retrain_with_all(hashTable* hashT, threads_list* list, logM* model, jobSch*
 
 
 void get_all_bucket_pairs(logM* model, record* myrec, bucket* mybuc, threads_list* list){
+
+    if(list->pairs_limit <= 0)
+        return;
 
     record* tempRec = NULL;
     bucket* tempBuck = NULL;

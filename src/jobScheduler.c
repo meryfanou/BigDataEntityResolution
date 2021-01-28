@@ -26,6 +26,7 @@ jobSch* jobSch_Init(int tnum){
 
     pthread_cond_init( &newSche->start_con, NULL);
     pthread_mutex_init(&newSche->queue_mtx, NULL);
+    pthread_mutex_init(&newSche->lock_wait, NULL);
 
     newSche->threads = myThreads_Init(tnum);
     newSche->queue = myQueue_Init();
@@ -52,6 +53,7 @@ void jobSch_Destroy(jobSch* jSch){
     pthread_cond_destroy(&jSch->start_con);
 
     pthread_mutex_destroy(&jSch->queue_mtx);
+    pthread_mutex_destroy(&jSch->lock_wait);
     
     free(jSch);
 }
@@ -76,7 +78,12 @@ void jobSch_Start(jobSch* sched){
 
 void jobSch_waitAll(jobSch* sched){
     // printf("Waiting .. \n");
-    while(sched->queue->entries !=0 || sched->threads_waiting > 0){}
+    pthread_mutex_lock(&sched->queue_mtx);
+    pthread_cond_init( &sched->start_con, NULL);
+    pthread_mutex_unlock(&sched->queue_mtx);
+    while(sched->queue->entries !=0 || sched->threads_waiting > 0){
+        printf("entries: %d, waiting: %d\n", sched->queue->entries, sched->threads_waiting);
+    }
     // printf("\t .. Done\n");
 }
 
@@ -191,9 +198,13 @@ void* main_thread_func(void* myInfo){
             pthread_cond_wait(&sched->start_con, &sched->queue_mtx);
         }
 
-        sched->threads_waiting++;
         qNode* f = myQueue_pop(sched->queue);
         pthread_mutex_unlock(&sched->queue_mtx);
+
+        pthread_mutex_lock(&sched->lock_wait);
+        sched->threads_waiting++;
+        pthread_mutex_unlock(&sched->lock_wait);
+        
         if(f == NULL){
             continue;
             // printf("no jobs for me, exiting ..\n");
@@ -220,7 +231,10 @@ void* main_thread_func(void* myInfo){
 
         qNode_Destroy(f);
 
+
+        pthread_mutex_lock(&sched->lock_wait);
         sched->threads_waiting--;
+        pthread_mutex_unlock(&sched->lock_wait);
     }
 
         // return
