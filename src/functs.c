@@ -20,7 +20,7 @@
 #define MAX_TRAIN_SIZE_PER_THREAD 500
 #define MAX_TRAIN_SIZE_PER_THREAD_TEST 100
 
-#define LIMIT_FACTOR 380
+#define LIMIT_FACTOR 12
 
 int received_signal = 0;
 
@@ -1495,7 +1495,7 @@ float make_it_spars_list_threads(mySpec** set, int set_size, logM* model, BoWord
         jobSch_subbmit(Scheduler, &logistic_fit_dataList, thread_info, "test");
         jobSch_Start(Scheduler);
     }
-
+    jobSch_Start(Scheduler);
     jobSch_waitAll(Scheduler);
 
         // calc acc
@@ -1672,10 +1672,6 @@ void make_it_spars_list_threads_plus_train(hashTable* hashT, logM* model, mySpec
 
     threads_list* list = t_list_create(MAX_TRAIN_SIZE_PER_THREAD, Scheduler, model);
 
-    // list->pairs_limit = set_size*LIMIT_FACTOR;
-    list->pairs_limit = 10000;
-    // printf("PAIR LIMIT: %d\n",list->pairs_limit);
-
     // FIND PAIRS AND CONCAT THEIR SPARS
     int i = 0;
     while(i<set_size){
@@ -1716,13 +1712,13 @@ void make_it_spars_list_threads_plus_train(hashTable* hashT, logM* model, mySpec
 
     list->point = list->entries;
 
-    //     // RE-TRAIN
+    // //     // RE-TRAIN
     int count_retrain = 0;
     while(count_retrain < 1){
-        list->pairs_limit = 10000;
+        list->pairs_limit = set_size*LIMIT_FACTOR;
         retrain_with_all(hashT, list, model, Scheduler);
         list->point = list->entries;
-        printf("teleiwse to ola me ola\n");
+        // printf("teleiwse to ola me ola\n");
         t_list_subbmit_all(list);
         count_retrain++;
     }
@@ -1801,12 +1797,12 @@ void retrain_with_all(hashTable* hashT, threads_list* list, logM* model, jobSch*
         }
         i++;
     }
-    printf("kanw wait ta threads\n");
+    // printf("kanw wait ta threads\n");
     jobSch_Start(Scheduler);
     jobSch_waitAll(Scheduler);
-    printf("~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~\n");
-    printf("ME TROLLAREI O KWDIKAS MOY\n");
-    printf("~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~\n");
+    // printf("~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~\n");
+    // printf("ME TROLLAREI O KWDIKAS MOY\n");
+    // printf("~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~\n");
 }
 
 
@@ -1918,7 +1914,7 @@ void check_info_list(threads_list* list, mySpec* spec1, mySpec* spec2, float** s
         int all = 0;
         for(int i=0; i<list->entries; i++)
             all += list->head->node->all_pairs;
-        printf("%ld:\t%d %d\n",pthread_self(),all, list->pairs_limit);
+        // printf("%ld:\t%d %d\n",pthread_self(),all, list->pairs_limit);
         int dimensions = list->head->node->dimensions;
         t_list_push(list, spec1, spec2, spars, spec1->spars_size+spec2->spars_size, -1, dimensions);
     }

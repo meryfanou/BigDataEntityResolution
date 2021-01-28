@@ -78,12 +78,14 @@ void jobSch_Start(jobSch* sched){
 
 void jobSch_waitAll(jobSch* sched){
     // printf("Waiting .. \n");
-    pthread_mutex_lock(&sched->queue_mtx);
-    pthread_cond_init( &sched->start_con, NULL);
-    pthread_mutex_unlock(&sched->queue_mtx);
+    // pthread_mutex_lock(&sched->queue_mtx);
+    // pthread_cond_init( &sched->start_con, NULL);
+    // pthread_mutex_unlock(&sched->queue_mtx);
+
     while(sched->queue->entries !=0 || sched->threads_waiting > 0){
-        printf("entries: %d, waiting: %d\n", sched->queue->entries, sched->threads_waiting);
+        // printf("entries: %d, waiting: %d\n", sched->queue->entries, sched->threads_waiting);
     }
+
     // printf("\t .. Done\n");
 }
 

@@ -441,7 +441,7 @@ int main(int argc, char** argv){
 
     // ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~ CREATE & TRAIN LOGISTIC MODEL
 
-    printf("%d\n",trainSize);
+    // printf("%d\n",trainSize);
     ppa_add_line_left(pp, "Training Logistic Model ..");
             // !! Uncomment to choose method for training
 
